@@ -1,0 +1,1 @@
+Carpeta para el acceso a la base de datos (DAO o JPA)
