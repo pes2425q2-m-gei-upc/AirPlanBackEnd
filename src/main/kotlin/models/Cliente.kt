@@ -3,7 +3,7 @@ import org.example.models.Usuario
 import org.example.enums.Idioma
 
 class Cliente(
-    idUsuario: Int,
+    username: String,
     nom: String,
     email: String,
     contraseña: String,
@@ -11,5 +11,6 @@ class Cliente(
     sesionIniciada: Boolean,
     isAdmin: Boolean,
     var level: Int
-) : Usuario(idUsuario, nom, email, contraseña, idioma, sesionIniciada, isAdmin) {
+) : Usuario(username, nom, email, contraseña, idioma, sesionIniciada, isAdmin) {
+
 }

@@ -2,7 +2,7 @@ package org.example.models
 import org.example.enums.Idioma
 
 open class Usuario(
-    protected var idUsuario: Int,
+    protected var username: String,
     protected var nom: String,
     private var email: String,
     private var contraseña: String,
