@@ -9,5 +9,12 @@ class Administrador(
     idioma: Idioma,
     sesionIniciada: Boolean,
     isAdmin: Boolean
-) : Usuario(username, nom, email, contraseña, idioma, sesionIniciada, isAdmin) {
-}
+) : Usuario(
+    username = username,
+    nom = nom,
+    email = email,
+    contraseña = contraseña,
+    idioma = idioma,
+    sesionIniciada = false,
+    isAdmin = true // Siempre true para administradores
+)
