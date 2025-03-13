@@ -5,9 +5,16 @@ class Administrador(
     username: String,
     nom: String,
     email: String,
-    contraseña: String,
+    contrasena: String,
     idioma: Idioma,
     sesionIniciada: Boolean,
     isAdmin: Boolean
-) : Usuario(username, nom, email, contraseña, idioma, sesionIniciada, isAdmin) {
-}
+) : Usuario(
+    username = username,
+    nom = nom,
+    email = email,
+    contrasena = contrasena,
+    idioma = idioma,
+    sesionIniciada = false,
+    isAdmin = true // Siempre true para administradores
+)
