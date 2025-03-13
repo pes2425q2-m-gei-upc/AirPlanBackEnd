@@ -4,12 +4,13 @@ import org.example.enums.Idioma
 
 open class Usuario(
     var username: String,
-    protected var nom: String,
-    private var email: String,
-    private var contraseña: String,
-    protected var idioma: Idioma,
+    var nom: String,
+    var email: String,
+    var contrasena: String,
+    var idioma: Idioma,
     private var sesionIniciada: Boolean,
-    private var isAdmin: Boolean
+    var isAdmin: Boolean,
+    val activitats: MutableList<Activitat> = mutableListOf()
 ) {
 
     companion object {
@@ -17,24 +18,47 @@ open class Usuario(
             username: String,
             nom: String,
             email: String,
-            contraseña: String,
+            contrasena: String,
             idioma: Idioma,
             isAdmin: Boolean = false
         ): Usuario {
             // Validaciones antes de la creación del usuario
             require(username.length >= 5) { "El nombre de usuario debe tener al menos 5 caracteres." }
             require(email.contains("@")) { "El correo electrónico debe ser válido." }
-            require(contraseña.length >= 8) { "La contraseña debe tener al menos 8 caracteres." }
+            require(contrasena.length >= 8) { "La contraseña debe tener al menos 8 caracteres." }
 
             return Usuario(
                 username = username,
                 nom = nom,
                 email = email,
-                contraseña = contraseña,
+                contrasena = contrasena,
                 idioma = idioma,
                 sesionIniciada = false, // Inicialmente la sesión no está iniciada
                 isAdmin = isAdmin // Determinado por un parámetro
             )
         }
+    }
+
+    fun modificarUsuario(
+        nuevoNom: String? = null,    // Parámetros opcionales para actualizar
+        nuevoEmail: String? = null,
+        nuevaContrasena: String? = null,
+        nuevoIdioma: Idioma? = null,
+    ): Boolean {
+        // Modificar los campos si se proporcionan valores nuevos
+        nuevoNom?.let { this.nom = it }
+        nuevoEmail?.let { this.email = it }
+        nuevaContrasena?.let { this.contrasena = it }
+        nuevoIdioma?.let { this.idioma = it }
+
+        println("El usuario ha sido modificado.")
+        return true
+    }
+
+    fun eliminarUsuario() {
+        // Eliminar de la base de dades
+    }
+    fun afegirActivitat(activitat: Activitat) {
+        activitats.add(activitat)
     }
 }

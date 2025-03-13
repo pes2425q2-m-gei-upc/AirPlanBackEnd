@@ -5,7 +5,7 @@ class Administrador(
     username: String,
     nom: String,
     email: String,
-    contraseña: String,
+    contrasena: String,
     idioma: Idioma,
     sesionIniciada: Boolean,
     isAdmin: Boolean
@@ -13,7 +13,7 @@ class Administrador(
     username = username,
     nom = nom,
     email = email,
-    contraseña = contraseña,
+    contrasena = contrasena,
     idioma = idioma,
     sesionIniciada = false,
     isAdmin = true // Siempre true para administradores

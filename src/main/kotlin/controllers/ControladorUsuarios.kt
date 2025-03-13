@@ -11,7 +11,7 @@ class ControladorUsuarios {
         username: String,
         nom: String,
         email: String,
-        contraseña: String,
+        contrasena: String,
         idioma: Idioma,
         isAdmin: Boolean = false
     ): Usuario {
@@ -19,7 +19,7 @@ class ControladorUsuarios {
             username = username,
             nom = nom,
             email = email,
-            contraseña = contraseña,
+            contrasena = contrasena,
             idioma = idioma,
             isAdmin = isAdmin
         )
@@ -29,9 +29,10 @@ class ControladorUsuarios {
 
     // Método para borrar un usuario por nombre de usuario
     fun borrarUsuario(username: String): Boolean {
-        val usuario = usuarios.find { it.username == username }
+        val usuario = usuarios.find { it.username == username } // Busca al usuario
         return if (usuario != null) {
-            usuarios.remove(usuario)
+            usuario.eliminarUsuario()
+            usuarios.remove(usuario) // Elimina al usuario de la lista
             println("El usuario con username '$username' ha sido eliminado.")
             true
         } else {
@@ -39,6 +40,22 @@ class ControladorUsuarios {
             false
         }
     }
+
+
+
+    // Método para modificar un usuario existente
+    fun modificarUsuario(
+        username: String,            // Identificador del usuario a buscar
+        nuevoNom: String? = null,    // Parámetros opcionales para actualizar
+        nuevoEmail: String? = null,
+        nuevaContrasena: String? = null,
+        nuevoIdioma: Idioma? = null,
+    ): Boolean? {
+        val usuario = usuarios.find { it.username == username }
+        return usuario?.modificarUsuario(nuevoNom, nuevoEmail, nuevaContrasena, nuevoIdioma)
+
+    }
+
 
     // Método para listar usuarios
     fun listarUsuarios(): List<Usuario> {
