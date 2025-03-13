@@ -11,14 +11,18 @@ import io.ktor.server.routing.get
 import io.ktor.server.application.install
 
 fun main() {
-    embeddedServer(Netty, port = 8080) {
-        install(ContentNegotiation) {
-            json()
-        }
-        routing {
-            get("/") {
-                call.respond("Hello, Ktor!")
+    try {
+        embeddedServer(Netty, port = 8080) {
+            install(ContentNegotiation) {
+                json()
             }
-        }
-    }.start(wait = true)
+            routing {
+                get("/") {
+                    call.respond("Hello, Ktor!")
+                }
+            }
+        }.start(wait = true)
+    } catch (e: Exception) {
+        println("Error al iniciar el servidor: ${e.message}")
+    }
 }
