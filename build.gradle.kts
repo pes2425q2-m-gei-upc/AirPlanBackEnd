@@ -18,10 +18,9 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:3.1.1") // Negociación de contenido
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.1.1") // Serialización JSON
     implementation("io.ktor:ktor-server-status-pages:3.1.1") // Manejo de páginas de estado
+    implementation("io.ktor:ktor-server-cors:3.1.1") // Dependencia CORS actualizada para Ktor 3.1.1
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("ch.qos.logback:logback-classic:1.4.6")
-
-
 }
 
 tasks.test {
@@ -29,5 +28,5 @@ tasks.test {
 }
 
 application {
-    mainClass.set("Main.kt") // Asegúrate de que el nombre de la clase sea correcto
+    mainClass.set("MainKt") // Asegúrate de que el nombre de la clase sea correcto (MainKt es el nombre por defecto para main.kt)
 }
