@@ -21,6 +21,16 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:3.1.1") // Dependencia CORS actualizada para Ktor 3.1.1
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("ch.qos.logback:logback-classic:1.4.6")
+    // Exposed (ORM para Kotlin)
+    implementation("org.jetbrains.exposed:exposed-core:0.41.1")
+    implementation("org.jetbrains.exposed:exposed-dao:0.41.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.41.1")
+
+    // Soporte para fechas en Exposed
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.41.1")
+
+    // Driver de base de datos (elige uno)
+    implementation("org.postgresql:postgresql:42.5.1")  // Para PostgreSQL
 }
 
 tasks.test {

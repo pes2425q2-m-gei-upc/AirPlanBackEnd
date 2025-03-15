@@ -1,14 +1,16 @@
 package org.example.models
 
+import kotlinx.serialization.Serializable
 import org.example.enums.Idioma
 
+@Serializable
 open class Usuario(
     var username: String,
     var nom: String,
     var email: String,
     var contrasena: String,
     var idioma: Idioma,
-    private var sesionIniciada: Boolean,
+    var sesionIniciada: Boolean,
     var isAdmin: Boolean,
     val activitats: MutableList<Activitat> = mutableListOf()
 ) {
