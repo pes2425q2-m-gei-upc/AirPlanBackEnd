@@ -3,7 +3,9 @@ import java.time.LocalDateTime
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
+import kotlinx.serialization.Serializable
 
+@Serializable
 class Activitat(
     val id: Int,
     var nom: String,
