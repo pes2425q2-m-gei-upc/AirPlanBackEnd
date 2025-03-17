@@ -1,5 +1,8 @@
 package org.example.models
 import java.time.LocalDateTime
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.PreparedStatement
 
 class Activitat(
     val id: Int,
@@ -10,9 +13,36 @@ class Activitat(
     var dataFi: LocalDateTime,
     var creador: String,
     var participants: MutableList<String>
+    //var imatge: String
 ) {
     fun afegirActivitat() {
         // Afegir a la base de dades
+        val url = "jdbc:postgresql://nattech.fib.upc.edu:40351/midb"
+        val user = "airplan"
+        val password = "airplan1234"
+
+        val sql = """
+            INSERT INTO activitats (nom, descripcio, ubicacio, data_inici, data_fi, creador, participants)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """.trimIndent()
+
+        try {
+            val conn: Connection = DriverManager.getConnection(url, user, password)
+            val pstmt: PreparedStatement = conn.prepareStatement(sql)
+            pstmt.setString(1, nom)
+            pstmt.setString(2, descripcio)
+            pstmt.setString(3, ubicacio.toString())
+            pstmt.setObject(4, dataInici)
+            pstmt.setObject(5, dataFi)
+            pstmt.setString(6, creador)
+            pstmt.setArray(7, conn.createArrayOf("VARCHAR", participants.toTypedArray()))
+
+            pstmt.executeUpdate()
+            pstmt.close()
+            conn.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun modificarActivitat(
