@@ -10,6 +10,9 @@ import io.ktor.server.netty.Netty
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.routing.get
+import org.example.models.Localitzacio
+import org.example.controllers.ControladorActivitat
+import java.time.LocalDateTime
 
 fun main() {
     try {
@@ -32,6 +35,13 @@ fun main() {
             routing {
                 get("/") {
                     call.respond("Hello, Ktor!")
+                }
+
+                get("/activitats") {
+                    val activitats = listOf(
+                        ControladorActivitat().afegirActivitat("Futbol", "Partit de futbol", Localitzacio(41.3851, 2.1734), LocalDateTime.now(), LocalDateTime.now(), "Pepito"),
+                    )
+                    call.respond(activitats)
                 }
 
                 // Ejemplo de endpoint API

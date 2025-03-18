@@ -4,7 +4,7 @@ import org.example.models.Activitat
 import org.example.models.Localitzacio
 import java.time.LocalDateTime
 
-class ControladorActivitat {
+class ActivitatController {
     private val activitats = mutableListOf<Activitat>()
 
     fun obtenirActivitats(): List<Activitat> {
