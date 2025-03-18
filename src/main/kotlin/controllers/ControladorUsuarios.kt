@@ -6,7 +6,7 @@ import org.example.models.Usuario
 class ControladorUsuarios {
     private val usuarios = mutableListOf<Usuario>()
 
-    // Método para crear un usuario y agregarlo a la lista
+    // Función para crear un nuevo usuario
     fun crearUsuario(
         username: String,
         nom: String,
@@ -15,16 +15,14 @@ class ControladorUsuarios {
         idioma: Idioma,
         isAdmin: Boolean = false
     ): Usuario {
-        val usuario = Usuario.crear(
-            username = username,
-            nom = nom,
-            email = email,
-            contrasena = contrasena,
-            idioma = idioma,
-            isAdmin = isAdmin
-        )
-        usuarios.add(usuario)
-        return usuario
+        // Aquí se instancia un objeto Usuario llamando a su método `crear`
+        val nuevoUsuario = Usuario(username, nom, email, contrasena, idioma, false, isAdmin)
+
+        // Agregarlo a la "base de datos"
+        usuarios.add(nuevoUsuario)
+
+        // Retorna el usuario creado
+        return nuevoUsuario
     }
 
     // Método para borrar un usuario por nombre de usuario
@@ -61,4 +59,5 @@ class ControladorUsuarios {
     fun listarUsuarios(): List<Usuario> {
         return usuarios
     }
+
 }

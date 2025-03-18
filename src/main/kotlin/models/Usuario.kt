@@ -15,31 +15,26 @@ open class Usuario(
     val activitats: MutableList<Activitat> = mutableListOf()
 ) {
 
-    companion object {
-        fun crear(
-            username: String,
-            nom: String,
-            email: String,
-            contrasena: String,
-            idioma: Idioma,
-            isAdmin: Boolean = false
-        ): Usuario {
-            // Validaciones antes de la creación del usuario
-            require(username.length >= 5) { "El nombre de usuario debe tener al menos 5 caracteres." }
-            require(email.contains("@")) { "El correo electrónico debe ser válido." }
-            require(contrasena.length >= 8) { "La contraseña debe tener al menos 8 caracteres." }
-
-            return Usuario(
-                username = username,
-                nom = nom,
-                email = email,
-                contrasena = contrasena,
-                idioma = idioma,
-                sesionIniciada = false, // Inicialmente la sesión no está iniciada
-                isAdmin = isAdmin // Determinado por un parámetro
-            )
-        }
+    fun crear(
+        username: String,
+        nom: String,
+        email: String,
+        contrasena: String,
+        idioma: Idioma,
+        isAdmin: Boolean = false
+    ): Usuario {
+        // Crear y retornar el objeto Usuario sin validaciones
+        return Usuario(
+            username = username,
+            nom = nom,
+            email = email,
+            contrasena = contrasena,
+            idioma = idioma,
+            sesionIniciada = false, // Inicialmente la sesión no está iniciada
+            isAdmin = isAdmin // Determinado por un parámetro
+        )
     }
+
 
     fun modificarUsuario(
         nuevoNom: String? = null,    // Parámetros opcionales para actualizar

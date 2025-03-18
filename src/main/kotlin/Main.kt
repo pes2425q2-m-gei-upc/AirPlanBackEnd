@@ -1,17 +1,18 @@
 package org.example
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
-import io.ktor.server.netty.Netty
-import io.ktor.server.plugins.cors.routing.CORS
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.response.respond
-import io.ktor.server.routing.routing
-import io.ktor.server.routing.get
+import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import org.example.controllers.ControladorUsuarios
+import org.example.enums.Idioma
 import java.io.File
 import java.security.KeyStore
+
 
 fun main() {
     val keyStoreFile = File("keystore.jks")
@@ -96,6 +97,22 @@ fun main() {
 
                 get("/api/data") {
                     call.respond(mapOf("message" to "Hello from Kotlin Backend"))
+                }
+                get("/api/users") {
+                    val controladorUsuario = ControladorUsuarios()
+
+                    // Crear un usuario de muestra
+                    controladorUsuario.crearUsuario(
+                        username = "usuario123",
+                        nom = "Carlos Gómez",
+                        email = "carlos.gomez@example.com",
+                        contrasena = "contraseñaSegura123",
+                        idioma = Idioma.Castellano,
+                        isAdmin = false
+                    )
+
+                    val usuarios = controladorUsuario.listarUsuarios()
+                    call.respond(usuarios)
                 }
             }
         }
