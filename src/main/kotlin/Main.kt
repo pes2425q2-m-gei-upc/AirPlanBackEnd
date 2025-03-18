@@ -15,6 +15,7 @@ import java.security.KeyStore
 
 
 fun main() {
+    val controladorUsuario = ControladorUsuarios()
     val keyStoreFile = File("keystore.jks")
     val keyStorePassword = "airplan"
     val privateKeyPassword = "airplan"
@@ -99,7 +100,6 @@ fun main() {
                     call.respond(mapOf("message" to "Hello from Kotlin Backend"))
                 }
                 get("/api/users") {
-                    val controladorUsuario = ControladorUsuarios()
 
                     // Crear un usuario de muestra
                     controladorUsuario.crearUsuario(
@@ -113,6 +113,14 @@ fun main() {
 
                     val usuarios = controladorUsuario.listarUsuarios()
                     call.respond(usuarios)
+                }
+                get("/check-username/{username}") {
+                    val username = call.parameters["username"]
+                    if (username != null && controladorUsuario.comprobarNombreUsuario(username)) {
+                        call.respond(HttpStatusCode.Conflict, "El nombre de usuario ya está en uso")
+                    } else {
+                        call.respond(HttpStatusCode.OK, "El nombre de usuario está disponible")
+                    }
                 }
             }
         }

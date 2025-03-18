@@ -60,4 +60,7 @@ class ControladorUsuarios {
         return usuarios
     }
 
+    fun comprobarNombreUsuario(username: String): Boolean {
+        return usuarios.any { it.username == username }
+    }
 }
