@@ -15,7 +15,7 @@ class Cliente(
     username = username,
     nom = nom,
     email = email,
-    contrasena = contrasena,
+    contrasenya = contrasena,
     idioma = idioma,
     sesionIniciada = false,
     isAdmin = false // Siempre false para clientes

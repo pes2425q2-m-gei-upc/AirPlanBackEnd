@@ -13,7 +13,7 @@ class Administrador(
     username = username,
     nom = nom,
     email = email,
-    contrasena = contrasena,
+    contrasenya = contrasena,
     idioma = idioma,
     sesionIniciada = false,
     isAdmin = true // Siempre true para administradores

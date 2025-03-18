@@ -113,7 +113,7 @@ fun main() {
                         username = "usuario123",
                         nom = "Carlos Gómez",
                         email = "carlos.gomez@example.com",
-                        contrasena = "contraseñaSegura123",
+                        contrasenya = "contraseñaSegura123",
                         idioma = Idioma.Castellano,
                         isAdmin = false
                     )
