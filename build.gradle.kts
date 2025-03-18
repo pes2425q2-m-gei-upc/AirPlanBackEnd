@@ -1,10 +1,10 @@
 plugins {
-    kotlin("jvm") version "2.0.21"
-    application
+    kotlin("jvm") version "2.0.0" // Usa una versión válida de Kotlin
+    id("application") // Aplicar el plugin application correctamente
 }
 
 group = "org.example"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 repositories {
     mavenCentral()
@@ -12,15 +12,14 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
-    implementation("io.ktor:ktor-server-core:3.1.1") // Core de Ktor
-    implementation("io.ktor:ktor-server-netty:3.1.1") // Motor Netty para Ktor
-    implementation("io.ktor:ktor-server-content-negotiation:3.1.1") // Negociación de contenido
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.1.1") // Serialización JSON
-    implementation("io.ktor:ktor-server-status-pages:3.1.1") // Manejo de páginas de estado
-    implementation("io.ktor:ktor-server-cors:3.1.1") // Dependencia CORS actualizada para Ktor 3.1.1
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("ch.qos.logback:logback-classic:1.4.6")
+    implementation("io.ktor:ktor-server-core:2.3.8") // Core de Ktor
+    implementation("io.ktor:ktor-server-netty:2.3.8") // Motor Netty para Ktor
+    implementation("io.ktor:ktor-server-content-negotiation:2.3.8") // Negociación de contenido
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8") // Serialización JSON
+    implementation("io.ktor:ktor-server-status-pages:2.3.8") // Manejo de páginas de estado
+    implementation("io.ktor:ktor-server-cors:2.3.8") // Dependencia CORS
+    implementation("ch.qos.logback:logback-classic:1.4.14")
+
     // Exposed (ORM para Kotlin)
     implementation("org.jetbrains.exposed:exposed-core:0.41.1")
     implementation("org.jetbrains.exposed:exposed-dao:0.41.1")
@@ -30,7 +29,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.41.1")
 
     // Driver de base de datos (elige uno)
-    implementation("org.postgresql:postgresql:42.5.1")  // Para PostgreSQL
+    implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL
 }
 
 tasks.test {
@@ -38,5 +37,19 @@ tasks.test {
 }
 
 application {
-    mainClass.set("MainKt") // Asegúrate de que el nombre de la clase sea correcto (MainKt es el nombre por defecto para main.kt)
+    mainClass.set("org.example.MainKt") // Asegúrate de que el nombre de la clase sea correcto
+}
+
+// Configurar el JAR ejecutable
+tasks.jar {
+    manifest {
+        attributes(
+            "Manifest-Version" to "1.0",
+            "Main-Class" to "org.example.MainKt"
+        )
+    }
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+        exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA")
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
