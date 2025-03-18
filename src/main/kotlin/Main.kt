@@ -1,7 +1,6 @@
 package org.example
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
-import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.http.HttpHeaders
