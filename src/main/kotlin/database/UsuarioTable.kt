@@ -8,8 +8,8 @@ object UsuarioTable : Table("usuaritemp") {
     val email = varchar("email", 100).uniqueIndex()
     val contrasenya = varchar("contrasenya", 255)
     val idioma = varchar("idioma", 20)
-    val sesionIniciada = bool("sesion_iniciada").default(false)
-    val isAdmin = bool("is_admin").default(false)
+    val sesionIniciada = bool("sesioniniciada").default(false)
+    val isAdmin = bool("isadmin").default(false)
 
     override val primaryKey = PrimaryKey(username, name = "PK_username")
 }

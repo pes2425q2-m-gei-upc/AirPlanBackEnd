@@ -12,23 +12,35 @@ import org.example.repositories.UsuarioRepository
 
 fun Route.usuarioRoutes() {
     val usuarioController = ControladorUsuarios(UsuarioRepository())
-
+    println("Ha arribat a UsuarioRoutes")  // Depuració
     route("/api/usuaris") {
+        println("Ha arribat a /api/usuaris")  // Depuració
         post("/crear") {
-            val usuario = call.receive<Usuario>()
-            val resultado = usuarioController.crearUsuario(
-                username = usuario.username,
-                nom = usuario.nom,
-                email = usuario.email,
-                contrasenya = usuario.contrasenya,
-                idioma = usuario.idioma,
-                isAdmin = usuario.isAdmin
-            )
+            try {
+                val receivedText = call.receiveText()
+                println("Dades rebudes: $receivedText")
 
-            if (resultado != null) {
-                call.respond(HttpStatusCode.Created, "Usuario creado exitosamente")
-            } else {
-                call.respond(HttpStatusCode.Conflict, "El usuario ya existe")
+                // Deserialitzar manualment el JSON
+                val usuario = kotlinx.serialization.json.Json.decodeFromString<Usuario>(receivedText)
+                println("Usuari deserialitzat: $usuario")
+
+                val resultado = usuarioController.crearUsuario(
+                    username = usuario.username,
+                    nom = usuario.nom,
+                    email = usuario.email,
+                    contrasenya = usuario.contrasenya,
+                    idioma = usuario.idioma,
+                    isAdmin = usuario.isAdmin
+                )
+
+                if (resultado != null) {
+                    call.respond(HttpStatusCode.Created, "Usuari creat correctament")
+                } else {
+                    call.respond(HttpStatusCode.Conflict, "L'usuari ja existeix")
+                }
+            } catch (e: Exception) {
+                println("Error: ${e.message}")
+                call.respond(HttpStatusCode.BadRequest, "Error en processar la petició")
             }
         }
     }

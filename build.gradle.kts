@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.0.0" // Usa una versión válida de Kotlin
     id("application") // Aplicar el plugin application correctamente
+    kotlin("plugin.serialization") version "1.8.10"
 }
 
 group = "org.example"
@@ -19,6 +20,8 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages:2.3.8") // Manejo de páginas de estado
     implementation("io.ktor:ktor-server-cors:2.3.8") // Dependencia CORS
     implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
     // Exposed (ORM para Kotlin)
     implementation("org.jetbrains.exposed:exposed-core:0.45.0")

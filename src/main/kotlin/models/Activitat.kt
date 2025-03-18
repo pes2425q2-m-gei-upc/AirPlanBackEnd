@@ -1,4 +1,5 @@
 package org.example.models
+import kotlinx.serialization.Contextual
 import java.time.LocalDateTime
 import java.sql.Connection
 import java.sql.DriverManager
@@ -11,8 +12,8 @@ class Activitat(
     var nom: String,
     var descripcio: String,
     var ubicacio: Localitzacio,
-    var dataInici: LocalDateTime,
-    var dataFi: LocalDateTime,
+    @Contextual var dataInici: LocalDateTime,
+    @Contextual var dataFi: LocalDateTime,
     var creador: String,
     var participants: MutableList<String>
     //var imatge: String
