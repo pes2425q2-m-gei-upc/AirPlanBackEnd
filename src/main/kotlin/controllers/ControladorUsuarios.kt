@@ -2,8 +2,9 @@ package org.example.controllers
 
 import org.example.enums.Idioma
 import org.example.models.Usuario
+import org.example.repositories.UsuarioRepository
 
-class ControladorUsuarios {
+class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
     private val usuarios = mutableListOf<Usuario>()
 
     // Función para crear un nuevo usuario
@@ -11,15 +12,14 @@ class ControladorUsuarios {
         username: String,
         nom: String,
         email: String,
-        contrasena: String,
+        contrasenya: String,
         idioma: Idioma,
         isAdmin: Boolean = false
     ): Usuario {
         // Aquí se instancia un objeto Usuario llamando a su método `crear`
-        val nuevoUsuario = Usuario(username, nom, email, contrasena, idioma, false, isAdmin)
+        val nuevoUsuario = Usuario(username, nom, email, contrasenya, idioma, false, isAdmin)
 
-        // Agregarlo a la "base de datos"
-        usuarios.add(nuevoUsuario)
+        usuarioRepository.agregarUsuario(nuevoUsuario)
 
         // Retorna el usuario creado
         return nuevoUsuario
@@ -46,11 +46,11 @@ class ControladorUsuarios {
         username: String,            // Identificador del usuario a buscar
         nuevoNom: String? = null,    // Parámetros opcionales para actualizar
         nuevoEmail: String? = null,
-        nuevaContrasena: String? = null,
+        nuevaContrasenya: String? = null,
         nuevoIdioma: Idioma? = null,
     ): Boolean? {
         val usuario = usuarios.find { it.username == username }
-        return usuario?.modificarUsuario(nuevoNom, nuevoEmail, nuevaContrasena, nuevoIdioma)
+        return usuario?.modificarUsuario(nuevoNom, nuevoEmail, nuevaContrasenya, nuevoIdioma)
 
     }
 

@@ -12,10 +12,12 @@ import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import java.io.File
 import java.security.KeyStore
+import org.example.database.DatabaseFactory
+import org.example.repositories.UsuarioRepository
+import org.example.routes.usuarioRoutes
 
 
 fun main() {
-    val controladorUsuario = ControladorUsuarios()
     val keyStoreFile = File("keystore.jks")
     val keyStorePassword = "airplan"
     val privateKeyPassword = "airplan"
@@ -55,8 +57,13 @@ fun main() {
                 json()
             }
 
+            DatabaseFactory.init()
+            val usuarioRepository = UsuarioRepository()
+            val controladorUsuario = ControladorUsuarios(usuarioRepository)
+
             // Configuració de rutes
             routing {
+                usuarioRoutes()
                 get("/") {
                     call.respond(
                         """
@@ -99,7 +106,7 @@ fun main() {
                 get("/api/data") {
                     call.respond(mapOf("message" to "Hello from Kotlin Backend"))
                 }
-                get("/api/users") {
+                get("/users") {
 
                     // Crear un usuario de muestra
                     controladorUsuario.crearUsuario(

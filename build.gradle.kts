@@ -21,12 +21,14 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.14")
 
     // Exposed (ORM para Kotlin)
-    implementation("org.jetbrains.exposed:exposed-core:0.41.1")
-    implementation("org.jetbrains.exposed:exposed-dao:0.41.1")
-    implementation("org.jetbrains.exposed:exposed-jdbc:0.41.1")
+    implementation("org.jetbrains.exposed:exposed-core:0.45.0")
+    implementation("org.jetbrains.exposed:exposed-dao:0.45.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.45.0")
 
     // Soporte para fechas en Exposed
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.41.1")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.45.0")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.45.0")
+
 
     // Driver de base de datos (elige uno)
     implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL
