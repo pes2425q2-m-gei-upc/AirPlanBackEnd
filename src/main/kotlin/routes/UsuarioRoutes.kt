@@ -59,5 +59,42 @@ fun Route.usuarioRoutes() {
                 call.respond(HttpStatusCode.NotFound, "No se encontró un usuario con ese correo")
             }
         }
+        get("/usuarios/{email}") {
+            val email = call.parameters["email"]
+
+            if (email != null) {
+                val usuario = usuarioController.obtenerUsuarioPorEmail(email)
+                if (usuario != null) {
+                    call.respond(HttpStatusCode.OK, "Usuario encontrado correctamente")
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Debe proporcionar un email")
+            }
+        }
+        post("/login") {
+            // Obtener los parámetros directamente desde la solicitud JSON
+            val params = call.receive<Map<String, String>>()  // Recibe los datos como un mapa
+            val email = params["email"]
+            val contrasena = params["contrasena"]
+
+            // Verificamos si el email y la contraseña son correctos
+            val usuario = usuarioController.login(email, contrasena)
+
+            if (usuario != null) {
+                // Actualizamos el atributo sesionIniciada
+                usuario.sesionIniciada = true
+
+                // Guardamos el usuario actualizado en la base de datos
+                usuarioController.actualizarUsuario(usuario)
+
+                // Respondemos que el login fue exitoso
+                call.respond(HttpStatusCode.OK, "Login exitoso")
+            } else {
+                // Respondemos que el login falló
+                call.respond(HttpStatusCode.Unauthorized, "Email o contraseña incorrectos")
+            }
+        }
     }
 }

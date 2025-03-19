@@ -1,6 +1,7 @@
 package org.example.repositories
 
 import org.example.database.UsuarioTable
+import org.example.enums.Idioma
 import org.example.models.Usuario
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -26,4 +27,28 @@ class UsuarioRepository {
             filasEliminadas > 0  // Retorna `true` si eliminó algún usuario
         }
     }
+    fun obtenerUsuarioPorEmail(email: String): Usuario? {
+        return UsuarioTable
+            .select { UsuarioTable.email eq email }
+            .map {
+                Usuario(
+                    username = it[UsuarioTable.username],
+                    nom = it[UsuarioTable.nom],
+                    email = it[UsuarioTable.email],
+                    contrasenya = it[UsuarioTable.contrasenya],
+                    idioma = Idioma.valueOf(it[UsuarioTable.idioma]),  // Asumiendo que se ha mapeado adecuadamente
+                    sesionIniciada = it[UsuarioTable.sesionIniciada],
+                    isAdmin = it[UsuarioTable.isAdmin]
+                )
+            }.singleOrNull() // Devuelve el único usuario o null si no se encuentra
+    }
+
+    // Actualizar usuario
+    fun actualizar(usuario: Usuario) {
+        UsuarioTable
+            .update({ UsuarioTable.email eq usuario.email }) {
+                it[sesionIniciada] = usuario.sesionIniciada
+            }
+    }
+
 }

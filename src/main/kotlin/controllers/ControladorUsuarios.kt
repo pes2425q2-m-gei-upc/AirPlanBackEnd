@@ -50,7 +50,26 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
         return usuarios
     }
 
+    fun obtenerUsuarioPorEmail(email: String): Usuario? {
+        return usuarioRepository.obtenerUsuarioPorEmail(email)
+    }
+
     fun comprobarNombreUsuario(username: String): Boolean {
         return usuarios.any { it.username == username }
+    }
+
+    fun login(email: String?, contrasenya: String?): Usuario? {
+        // Buscar el usuario por email y verificar la contraseña
+        val usuario = usuarioRepository.obtenerUsuarioPorEmail(email ?: "")
+        return if (usuario != null && usuario.contrasenya == contrasenya) {
+            usuario
+        } else {
+            null  // Si no existe o la contraseña no es correcta
+        }
+    }
+
+    // Método para actualizar el usuario en la base de datos (para cambiar sesionIniciada)
+    fun actualizarUsuario(usuario: Usuario) {
+        usuarioRepository.actualizar(usuario)
     }
 }
