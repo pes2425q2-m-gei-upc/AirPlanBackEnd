@@ -1,17 +1,20 @@
 package org.example.controllers
 
+import kotlinx.datetime.LocalDateTime
 import org.example.models.Activitat
 import org.example.models.Localitzacio
 import java.sql.Timestamp
+import repositories.ActivitatRepository
+import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
-class ControladorActivitat {
+class ControladorActivitat (private val ActivitatRepository: ActivitatRepository) {
     private val activitats = mutableListOf<Activitat>()
 
     fun obtenirActivitats(): List<Activitat> {
         return activitats
     }
 
-    fun afegirActivitat(nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: Timestamp, dataFi: Timestamp, creador: String) {
+    fun afegirActivitat(nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime, creador: String) {
         val novaActivitat = Activitat(
             id = 0,
             nom = nom,
@@ -19,10 +22,9 @@ class ControladorActivitat {
             ubicacio = ubicacio,
             dataInici = dataInici,
             dataFi = dataFi,
-            creador = creador,
-            participants = mutableListOf(creador)
+            creador = creador
         )
-        novaActivitat.afegirActivitat()
+            ActivitatRepository.afegirActivitat(novaActivitat)
         activitats.add(novaActivitat) //solo si no hay problemas con la base de datos
         //TODO: canviar id despres de afegir a la base de dades
     }
@@ -34,5 +36,9 @@ class ControladorActivitat {
     fun eliminarActivitat(id: Int): Boolean {
         activitats.find{ it.id == id }?.eliminarActivitat()
         return activitats.removeIf { it.id == id } //solo si no hay problemas con la base de datos
+    }
+
+    fun obtenirActivitatPerId(id: Int): Activitat {
+        return activitats.find{ it.id == id }!!
     }
 }
