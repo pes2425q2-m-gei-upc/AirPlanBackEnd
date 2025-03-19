@@ -12,6 +12,7 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.routing.get
 import org.example.models.Localitzacio
 import org.example.controllers.ControladorActivitat
+import java.sql.Timestamp
 import java.time.LocalDateTime
 
 fun main() {
@@ -38,9 +39,9 @@ fun main() {
                 }
 
                 get("/activitats") {
-                    val activitats = listOf(
-                        ControladorActivitat().afegirActivitat("Futbol", "Partit de futbol", Localitzacio(41.3851, 2.1734), LocalDateTime.now(), LocalDateTime.now(), "Pepito"),
-                    )
+                    ControladorActivitat().afegirActivitat("Futbol", "Partit de futbol", Localitzacio(41.3851f, 2.1734f), Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now()), "Marwan123")
+                    ControladorActivitat().afegirActivitat("Basket", "Partit de basket", Localitzacio(41.3851f, 2.1734f), Timestamp.valueOf(LocalDateTime.now()), Timestamp.valueOf(LocalDateTime.now()), "Marwan123")
+                    val activitats = ControladorActivitat().obtenirActivitats()
                     call.respond(activitats)
                 }
 

@@ -1,9 +1,9 @@
 package org.example.models
-import java.time.LocalDateTime
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.PreparedStatement
 import kotlinx.serialization.Serializable
+import java.sql.Timestamp
 
 @Serializable
 class Activitat(
@@ -11,8 +11,8 @@ class Activitat(
     var nom: String,
     var descripcio: String,
     var ubicacio: Localitzacio,
-    var dataInici: LocalDateTime,
-    var dataFi: LocalDateTime,
+    var dataInici: Timestamp,
+    var dataFi: Timestamp,
     var creador: String,
     var participants: MutableList<String>
     //var imatge: String
@@ -24,26 +24,28 @@ class Activitat(
         val password = "airplan1234"
 
         val sql = """
-            INSERT INTO activitats (nom, descripcio, ubicacio, data_inici, data_fi, creador, participants)
+            INSERT INTO activitats (nom, latitud, longitud, datainici, datafi, descripcio, username_creador)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
 
         try {
             val conn: Connection = DriverManager.getConnection(url, user, password)
+            conn.autoCommit = false
             val pstmt: PreparedStatement = conn.prepareStatement(sql)
             pstmt.setString(1, nom)
-            pstmt.setString(2, descripcio)
-            pstmt.setString(3, ubicacio.toString())
-            pstmt.setObject(4, dataInici)
-            pstmt.setObject(5, dataFi)
-            pstmt.setString(6, creador)
-            pstmt.setArray(7, conn.createArrayOf("VARCHAR", participants.toTypedArray()))
+            pstmt.setFloat(2, ubicacio.latitud)
+            pstmt.setFloat(3, ubicacio.longitud)
+            pstmt.setTimestamp(4, dataInici)
+            pstmt.setTimestamp(5, dataFi)
+            pstmt.setString(6, descripcio)
+            pstmt.setString(7, creador)
 
             pstmt.executeUpdate()
             pstmt.close()
+            conn.commit()
             conn.close()
         } catch (e: Exception) {
-            e.printStackTrace()
+            println("Error al afegir l'activitat a la base de dades: ${e.message}")
         }
     }
 
@@ -51,8 +53,8 @@ class Activitat(
         nom: String,
         descripcio: String,
         ubicacio: Localitzacio,
-        dataInici: LocalDateTime,
-        dataFi: LocalDateTime
+        dataInici: Timestamp,
+        dataFi: Timestamp
     ) {
         //Modificar de la base de dades i si no hi ha problema:
         this.nom = nom

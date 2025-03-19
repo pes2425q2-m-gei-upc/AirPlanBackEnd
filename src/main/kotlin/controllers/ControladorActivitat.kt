@@ -2,7 +2,7 @@ package org.example.controllers
 
 import org.example.models.Activitat
 import org.example.models.Localitzacio
-import java.time.LocalDateTime
+import java.sql.Timestamp
 
 class ControladorActivitat {
     private val activitats = mutableListOf<Activitat>()
@@ -11,7 +11,7 @@ class ControladorActivitat {
         return activitats
     }
 
-    fun afegirActivitat(nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime, creador: String) {
+    fun afegirActivitat(nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: Timestamp, dataFi: Timestamp, creador: String) {
         val novaActivitat = Activitat(
             id = 0,
             nom = nom,
@@ -24,9 +24,10 @@ class ControladorActivitat {
         )
         novaActivitat.afegirActivitat()
         activitats.add(novaActivitat) //solo si no hay problemas con la base de datos
+        //TODO: canviar id despres de afegir a la base de dades
     }
 
-    fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime) {
+    fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: Timestamp, dataFi: Timestamp) {
         activitats.find{ it.id == id }?.modificarActivitat(nom, descripcio, ubicacio, dataInici, dataFi)
     }
 
