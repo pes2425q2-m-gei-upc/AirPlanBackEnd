@@ -45,6 +45,16 @@ fun Route.activitatRoutes() {
             }
         }
 
+        get {
+            try {
+                val activitats = activitatController.obtenirTotesActivitats()
+                call.respond(HttpStatusCode.OK, activitats)
+            } catch (e: Exception) {
+                println("Error: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error en processar la petició")
+            }
+        }
+
         get("/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
 

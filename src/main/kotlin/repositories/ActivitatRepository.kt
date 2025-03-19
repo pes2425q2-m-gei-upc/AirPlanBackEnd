@@ -27,15 +27,18 @@ class ActivitatRepository {
 
     fun obtenirActivitats(): List<Activitat> {
         return transaction {
-            ActivitatTable.selectAll().map {
+            ActivitatTable.selectAll().map { row ->
                 Activitat(
-                    id = it[ActivitatTable.id],
-                    nom = it[ActivitatTable.nom],
-                    descripcio = it[ActivitatTable.descripcio],
-                    ubicacio = Localitzacio(it[ActivitatTable.latitud], it[ActivitatTable.longitud]),
-                    dataInici  = it[ActivitatTable.dataInici],
-                    dataFi = it[ActivitatTable.dataFi],
-                    creador = it[ActivitatTable.username_creador],
+                    id = row[ActivitatTable.id_activitat],
+                    nom = row[ActivitatTable.nom],
+                    descripcio = row[ActivitatTable.descripcio],
+                    ubicacio = Localitzacio(
+                        latitud = row[ActivitatTable.latitud],
+                        longitud = row[ActivitatTable.longitud]
+                    ),
+                    dataInici = row[ActivitatTable.dataInici],
+                    dataFi = row[ActivitatTable.dataFi],
+                    creador = row[ActivitatTable.username_creador]
                 )
             }
         }

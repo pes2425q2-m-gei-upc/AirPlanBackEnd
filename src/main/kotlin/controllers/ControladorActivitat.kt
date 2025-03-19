@@ -41,4 +41,12 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
     fun obtenirActivitatPerId(id: Int): Activitat {
         return activitats.find{ it.id == id }!!
     }
+
+    fun obtenirTotesActivitats():  List<Activitat> {
+        var acti = ActivitatRepository.obtenirActivitats()
+        for (activitat in acti) {
+            println("${activitat.nom} - ${activitat.descripcio} - ${activitat.ubicacio.latitud} -${activitat.ubicacio.longitud}  - ${activitat.dataInici} - ${activitat.dataFi} - ${activitat.creador}")
+        }
+        return acti
+    }
 }
