@@ -43,5 +43,21 @@ fun Route.usuarioRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Error en processar la petició")
             }
         }
+        delete("/api/eliminar-usuario/{email}") {
+            val email = call.parameters["email"]
+
+            if (email == null) {
+                call.respond(HttpStatusCode.BadRequest, "El correo es requerido")
+                return@delete
+            }
+
+            val eliminado = usuarioController.eliminarUsuario(email)
+
+            if (eliminado) {
+                call.respond(HttpStatusCode.OK, "Usuario eliminado correctamente")
+            } else {
+                call.respond(HttpStatusCode.NotFound, "No se encontró un usuario con ese correo")
+            }
+        }
     }
 }

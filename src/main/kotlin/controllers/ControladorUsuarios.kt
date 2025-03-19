@@ -26,19 +26,9 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
     }
 
     // Método para borrar un usuario por nombre de usuario
-    fun borrarUsuario(username: String): Boolean {
-        val usuario = usuarios.find { it.username == username } // Busca al usuario
-        return if (usuario != null) {
-            usuario.eliminarUsuario()
-            usuarios.remove(usuario) // Elimina al usuario de la lista
-            println("El usuario con username '$username' ha sido eliminado.")
-            true
-        } else {
-            println("El usuario con username '$username' no existe.")
-            false
-        }
+    fun eliminarUsuario(email: String): Boolean {
+        return usuarioRepository.eliminarUsuario(email)
     }
-
 
 
     // Método para modificar un usuario existente
