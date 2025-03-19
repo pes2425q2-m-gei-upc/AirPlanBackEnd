@@ -23,24 +23,28 @@ class UsuarioRepository {
     }
     fun eliminarUsuario(email: String): Boolean {
         return transaction {
+            println("Eliminando usuario con email: $email")
             val filasEliminadas = UsuarioTable.deleteWhere { UsuarioTable.email eq email }
+            println("Filas eliminadas" + filasEliminadas)
             filasEliminadas > 0  // Retorna `true` si eliminó algún usuario
         }
     }
     fun obtenerUsuarioPorEmail(email: String): Usuario? {
-        return UsuarioTable
-            .select { UsuarioTable.email eq email }
-            .map {
-                Usuario(
-                    username = it[UsuarioTable.username],
-                    nom = it[UsuarioTable.nom],
-                    email = it[UsuarioTable.email],
-                    contrasenya = it[UsuarioTable.contrasenya],
-                    idioma = Idioma.valueOf(it[UsuarioTable.idioma]),  // Asumiendo que se ha mapeado adecuadamente
-                    sesionIniciada = it[UsuarioTable.sesionIniciada],
-                    isAdmin = it[UsuarioTable.isAdmin]
-                )
-            }.singleOrNull() // Devuelve el único usuario o null si no se encuentra
+        return transaction {
+            UsuarioTable
+                .select { UsuarioTable.email eq email }
+                .map {
+                    Usuario(
+                        username = it[UsuarioTable.username],
+                        nom = it[UsuarioTable.nom],
+                        email = it[UsuarioTable.email],
+                        contrasenya = it[UsuarioTable.contrasenya],
+                        idioma = Idioma.valueOf(it[UsuarioTable.idioma]),  // Asumiendo que se ha mapeado adecuadamente
+                        sesionIniciada = it[UsuarioTable.sesionIniciada],
+                        isAdmin = it[UsuarioTable.isAdmin]
+                    )
+                }.singleOrNull() // Devuelve el único usuario o null si no se encuentra
+        }
     }
 
     // Actualizar usuario

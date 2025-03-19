@@ -61,6 +61,7 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
     fun login(email: String?, contrasenya: String?): Usuario? {
         // Buscar el usuario por email y verificar la contraseña
         val usuario = usuarioRepository.obtenerUsuarioPorEmail(email ?: "")
+
         return if (usuario != null && usuario.contrasenya == contrasenya) {
             usuario
         } else {

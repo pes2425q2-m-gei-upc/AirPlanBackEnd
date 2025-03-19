@@ -48,6 +48,7 @@ fun main() {
                 anyHost() // Permet sol·licituds de qualsevol origen (restringeix-ho en producció)
                 allowMethod(HttpMethod.Get)
                 allowMethod(HttpMethod.Post)
+                allowMethod(HttpMethod.Delete)
                 allowHeader(HttpHeaders.ContentType)
                 allowCredentials = true
             }

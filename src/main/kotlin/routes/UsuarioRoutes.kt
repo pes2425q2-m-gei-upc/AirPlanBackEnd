@@ -8,6 +8,8 @@ import io.ktor.http.*
 import org.example.controllers.ControladorUsuarios
 import org.example.models.Usuario
 import org.example.repositories.UsuarioRepository
+import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.jetbrains.exposed.sql.transactions.transaction
 
 
 fun Route.usuarioRoutes() {
@@ -30,7 +32,7 @@ fun Route.usuarioRoutes() {
                     email = usuario.email,
                     contrasenya = usuario.contrasenya,
                     idioma = usuario.idioma,
-                    isAdmin = usuario.isAdmin
+                    isAdmin = usuario.isAdmin,
                 )
 
                 if (resultado != null) {
@@ -38,26 +40,34 @@ fun Route.usuarioRoutes() {
                 } else {
                     call.respond(HttpStatusCode.Conflict, "L'usuari ja existeix")
                 }
+            } catch (e: ExposedSQLException) {
+                // Capturar errores específicos de la base de datos
+                val errorMessage = when {
+                    e.message?.contains("username") == true -> "El nom d'usuari ja està en ús."
+                    e.message?.contains("email") == true -> "El correu electrònic ja està en ús."
+                    else -> "Error en la base de dades: ${e.message}"
+                }
+                call.respond(HttpStatusCode.Conflict, errorMessage)
             } catch (e: Exception) {
                 println("Error: ${e.message}")
                 call.respond(HttpStatusCode.BadRequest, "Error en processar la petició")
             }
         }
-        delete("/api/eliminar-usuario/{email}") {
+        delete("/eliminar/{email}") {
             val email = call.parameters["email"]
-
-            if (email == null) {
-                call.respond(HttpStatusCode.BadRequest, "El correo es requerido")
-                return@delete
-            }
-
-            val eliminado = usuarioController.eliminarUsuario(email)
-
-            if (eliminado) {
-                call.respond(HttpStatusCode.OK, "Usuario eliminado correctamente")
+            if (email != null) {
+                val resultado = usuarioController.eliminarUsuario(email)
+                if (resultado) {
+                    call.respond(HttpStatusCode.OK, "Usuari eliminat correctament")
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "Usuari no trobat")
+                }
             } else {
-                call.respond(HttpStatusCode.NotFound, "No se encontró un usuario con ese correo")
+                call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un email")
             }
+        }
+        delete("/e") {
+            println("no hago nada")
         }
         get("/usuarios/{email}") {
             val email = call.parameters["email"]
@@ -78,16 +88,15 @@ fun Route.usuarioRoutes() {
             val params = call.receive<Map<String, String>>()  // Recibe los datos como un mapa
             val email = params["email"]
             val contrasena = params["contrasena"]
-
             // Verificamos si el email y la contraseña son correctos
             val usuario = usuarioController.login(email, contrasena)
-
             if (usuario != null) {
                 // Actualizamos el atributo sesionIniciada
                 usuario.sesionIniciada = true
-
                 // Guardamos el usuario actualizado en la base de datos
+                transaction {
                 usuarioController.actualizarUsuario(usuario)
+                }
 
                 // Respondemos que el login fue exitoso
                 call.respond(HttpStatusCode.OK, "Login exitoso")
