@@ -69,5 +69,21 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
             }
         }
+
+        delete("/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull()
+
+            if (id != null) {
+                val resultado = activitatController.eliminarActividad(id)
+
+                if (resultado) {
+                    call.respond(HttpStatusCode.OK, "Actividad eliminada correctamente")
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "Actividad no encontrada")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "ID inválido")
+            }
+        }
     }
 }

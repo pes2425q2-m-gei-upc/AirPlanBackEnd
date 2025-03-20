@@ -9,6 +9,7 @@ import org.example.models.Activitat
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.sql.Timestamp
 class ActivitatRepository {
     fun afegirActivitat(Activitat: Activitat) : Boolean {
@@ -41,6 +42,16 @@ class ActivitatRepository {
                     creador = row[ActivitatTable.username_creador]
                 )
             }
+        }
+    }
+    fun eliminarActividad(id: Int): Boolean {
+        return try {
+            // Eliminar directamente y verificar filas afectadas
+            val filasEliminadas = ActivitatTable.deleteWhere{ ActivitatTable.id_activitat eq id }
+            filasEliminadas > 0
+        } catch (e: Exception) {
+            println("Error al eliminar actividad: ${e.message}")
+            false
         }
     }
 }

@@ -49,4 +49,8 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
         }
         return acti
     }
+
+    fun eliminarActividad(id: Int): Boolean {
+        return ActivitatRepository.eliminarActividad(id)
+    }
 }
