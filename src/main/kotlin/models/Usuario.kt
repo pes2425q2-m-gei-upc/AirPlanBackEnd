@@ -15,27 +15,6 @@ open class Usuario(
     val activitats: MutableList<Activitat> = mutableListOf()
 ) {
 
-    fun crear(
-        username: String,
-        nom: String,
-        email: String,
-        contrasenya: String,
-        idioma: Idioma,
-        isAdmin: Boolean = false
-    ): Usuario {
-        // Crear y retornar el objeto Usuario sin validaciones
-        return Usuario(
-            username = username,
-            nom = nom,
-            email = email,
-            contrasenya = contrasenya,
-            idioma = idioma,
-            sesionIniciada = false, // Inicialmente la sesión no está iniciada
-            isAdmin = isAdmin // Determinado por un parámetro
-        )
-    }
-
-
     fun modificarUsuario(
         nuevoNom: String? = null,    // Parámetros opcionales para actualizar
         nuevoEmail: String? = null,
