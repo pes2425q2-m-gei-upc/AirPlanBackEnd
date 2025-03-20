@@ -17,13 +17,11 @@ open class Usuario(
 
     fun modificarUsuario(
         nuevoNom: String? = null,    // Parámetros opcionales para actualizar
-        nuevoEmail: String? = null,
         nuevaContrasenya: String? = null,
         nuevoIdioma: Idioma? = null,
     ): Boolean {
         // Modificar los campos si se proporcionan valores nuevos
         nuevoNom?.let { this.nom = it }
-        nuevoEmail?.let { this.email = it }
         nuevaContrasenya?.let { this.contrasenya = it }
         nuevoIdioma?.let { this.idioma = it }
 

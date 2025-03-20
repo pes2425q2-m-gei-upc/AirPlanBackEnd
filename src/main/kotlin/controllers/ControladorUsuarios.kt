@@ -35,12 +35,11 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
     fun modificarUsuario(
         username: String,            // Identificador del usuario a buscar
         nuevoNom: String? = null,    // Parámetros opcionales para actualizar
-        nuevoEmail: String? = null,
         nuevaContrasenya: String? = null,
         nuevoIdioma: Idioma? = null,
     ): Boolean? {
         val usuario = usuarios.find { it.username == username }
-        return usuario?.modificarUsuario(nuevoNom, nuevoEmail, nuevaContrasenya, nuevoIdioma)
+        return usuario?.modificarUsuario(nuevoNom,  nuevaContrasenya, nuevoIdioma)
 
     }
 
@@ -73,4 +72,9 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
     fun actualizarUsuario(usuario: Usuario) {
         usuarioRepository.actualizar(usuario)
     }
+
+    fun cerrarSesion(email: String): Boolean {
+        return usuarioRepository.cerrarSesion(email)
+    }
+
 }

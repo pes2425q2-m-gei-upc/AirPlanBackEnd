@@ -102,5 +102,22 @@ fun Route.usuarioRoutes() {
                 call.respond(HttpStatusCode.Unauthorized, "Email o contraseña incorrectos")
             }
         }
+        post("/logout") {
+            // Recibir el email directamente como un String
+            val email = call.receive<String>()
+
+            if (email.isNotBlank()) {
+                val resultado = usuarioController.cerrarSesion(email)
+                if (resultado) {
+                    call.respond(HttpStatusCode.OK, "Sesión cerrada correctamente")
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "El usuario no existe o ya estaba desconectado")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "El campo 'email' está vacío o no es válido")
+            }
+        }
+
+
     }
 }

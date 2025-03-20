@@ -53,4 +53,13 @@ class UsuarioRepository {
             }
     }
 
+    fun cerrarSesion(email: String): Boolean {
+        return transaction {
+            val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq email }) {
+                it[UsuarioTable.sesionIniciada] = false
+            }
+            filasActualizadas > 0  // Retorna `true` si se modificó alguna fila
+        }
+    }
+
 }
