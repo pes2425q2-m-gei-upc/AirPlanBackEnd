@@ -66,9 +66,6 @@ fun Route.usuarioRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un email")
             }
         }
-        delete("/e") {
-            println("no hago nada")
-        }
         get("/usuarios/{email}") {
             val email = call.parameters["email"]
 

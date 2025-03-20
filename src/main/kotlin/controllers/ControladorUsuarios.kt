@@ -17,7 +17,7 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
         isAdmin: Boolean = false
     ): Usuario {
         // Aquí se instancia un objeto Usuario llamando a su método `crear`
-        val nuevoUsuario = Usuario(username, nom, email, contrasenya, idioma, false, isAdmin)
+        val nuevoUsuario = Usuario(username, nom, email, contrasenya, idioma, true, isAdmin)
 
         usuarioRepository.agregarUsuario(nuevoUsuario)
 

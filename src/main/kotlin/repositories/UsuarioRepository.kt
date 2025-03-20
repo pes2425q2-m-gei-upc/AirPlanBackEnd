@@ -23,9 +23,7 @@ class UsuarioRepository {
     }
     fun eliminarUsuario(email: String): Boolean {
         return transaction {
-            println("Eliminando usuario con email: $email")
             val filasEliminadas = UsuarioTable.deleteWhere { UsuarioTable.email eq email }
-            println("Filas eliminadas" + filasEliminadas)
             filasEliminadas > 0  // Retorna `true` si eliminó algún usuario
         }
     }
