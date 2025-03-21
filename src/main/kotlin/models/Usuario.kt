@@ -8,7 +8,6 @@ open class Usuario(
     var username: String,
     var nom: String,
     var email: String,
-    var contrasenya: String,
     var idioma: Idioma,
     var sesionIniciada: Boolean,
     var isAdmin: Boolean,
@@ -17,12 +16,10 @@ open class Usuario(
 
     fun modificarUsuario(
         nuevoNom: String? = null,    // Parámetros opcionales para actualizar
-        nuevaContrasenya: String? = null,
         nuevoIdioma: Idioma? = null,
     ): Boolean {
         // Modificar los campos si se proporcionan valores nuevos
         nuevoNom?.let { this.nom = it }
-        nuevaContrasenya?.let { this.contrasenya = it }
         nuevoIdioma?.let { this.idioma = it }
 
         println("El usuario ha sido modificado.")

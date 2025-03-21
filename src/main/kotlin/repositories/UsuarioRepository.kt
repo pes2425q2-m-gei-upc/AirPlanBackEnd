@@ -14,7 +14,6 @@ class UsuarioRepository {
                 it[username] = usuario.username
                 it[nom] = usuario.nom
                 it[email] = usuario.email
-                it[contrasenya] = usuario.contrasenya
                 it[idioma] = usuario.idioma.toString()
                 it[sesionIniciada] = usuario.sesionIniciada
                 it[isAdmin] = usuario.isAdmin
@@ -36,7 +35,6 @@ class UsuarioRepository {
                         username = it[UsuarioTable.username],
                         nom = it[UsuarioTable.nom],
                         email = it[UsuarioTable.email],
-                        contrasenya = it[UsuarioTable.contrasenya],
                         idioma = Idioma.valueOf(it[UsuarioTable.idioma]),  // Asumiendo que se ha mapeado adecuadamente
                         sesionIniciada = it[UsuarioTable.sesionIniciada],
                         isAdmin = it[UsuarioTable.isAdmin]
@@ -46,18 +44,19 @@ class UsuarioRepository {
     }
 
     // Actualizar usuario
-    fun actualizar(usuario: Usuario) {
+    fun actualizarSesion(email: String, sesion: Boolean) {
         UsuarioTable
-            .update({ UsuarioTable.email eq usuario.email }) {
-                it[sesionIniciada] = usuario.sesionIniciada
+            .update({ UsuarioTable.email eq email }) {
+                it[sesionIniciada] = sesion
             }
     }
 
     fun cerrarSesion(email: String): Boolean {
         return transaction {
             val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq email }) {
-                it[UsuarioTable.sesionIniciada] = false
+                it[sesionIniciada] = false
             }
+            println("Filas actualizadas: $filasActualizadas")
             filasActualizadas > 0  // Retorna `true` si se modificó alguna fila
         }
     }

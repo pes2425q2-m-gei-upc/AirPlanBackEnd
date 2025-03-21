@@ -5,7 +5,6 @@ class Administrador(
     username: String,
     nom: String,
     email: String,
-    contrasenya: String,
     idioma: Idioma,
     sesionIniciada: Boolean,
     isAdmin: Boolean
@@ -13,7 +12,6 @@ class Administrador(
     username = username,
     nom = nom,
     email = email,
-    contrasenya = contrasenya,
     idioma = idioma,
     sesionIniciada = false,
     isAdmin = true // Siempre true para administradores

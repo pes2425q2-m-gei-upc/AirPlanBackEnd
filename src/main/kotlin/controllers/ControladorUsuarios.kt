@@ -12,12 +12,11 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
         username: String,
         nom: String,
         email: String,
-        contrasenya: String,
         idioma: Idioma,
         isAdmin: Boolean = false
     ): Usuario {
         // Aquí se instancia un objeto Usuario llamando a su método `crear`
-        val nuevoUsuario = Usuario(username, nom, email, contrasenya, idioma, true, isAdmin)
+        val nuevoUsuario = Usuario(username, nom, email, idioma, true, isAdmin)
 
         usuarioRepository.agregarUsuario(nuevoUsuario)
 
@@ -39,7 +38,7 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
         nuevoIdioma: Idioma? = null,
     ): Boolean? {
         val usuario = usuarios.find { it.username == username }
-        return usuario?.modificarUsuario(nuevoNom,  nuevaContrasenya, nuevoIdioma)
+        return usuario?.modificarUsuario(nuevoNom, nuevoIdioma)
 
     }
 
@@ -61,20 +60,22 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
         // Buscar el usuario por email y verificar la contraseña
         val usuario = usuarioRepository.obtenerUsuarioPorEmail(email ?: "")
 
-        return if (usuario != null && usuario.contrasenya == contrasenya) {
-            usuario
-        } else {
-            null  // Si no existe o la contraseña no es correcta
-        }
+        return usuario
     }
 
     // Método para actualizar el usuario en la base de datos (para cambiar sesionIniciada)
-    fun actualizarUsuario(usuario: Usuario) {
-        usuarioRepository.actualizar(usuario)
+    fun actualizarSesion(email: String, sesionIniciada: Boolean) {
+        usuarioRepository.actualizarSesion(email, sesionIniciada)
     }
 
     fun cerrarSesion(email: String): Boolean {
+        println("Cerrando sesión para el usuario con email: $email")
         return usuarioRepository.cerrarSesion(email)
+    }
+
+    fun isUserAdmin(email: String): Boolean {
+        val usuario = usuarioRepository.obtenerUsuarioPorEmail(email)
+        return usuario?.isAdmin ?: false
     }
 
 }

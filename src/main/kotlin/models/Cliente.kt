@@ -6,7 +6,6 @@ class Cliente(
     username: String,
     nom: String,
     email: String,
-    contrasenya: String,
     idioma: Idioma,
     sesionIniciada: Boolean,
     isAdmin: Boolean,
@@ -15,7 +14,6 @@ class Cliente(
     username = username,
     nom = nom,
     email = email,
-    contrasenya = contrasenya,
     idioma = idioma,
     sesionIniciada = false,
     isAdmin = false // Siempre false para clientes

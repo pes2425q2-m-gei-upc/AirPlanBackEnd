@@ -114,7 +114,6 @@ fun main() {
                         username = "usuario123",
                         nom = "Carlos Gómez",
                         email = "carlos.gomez@example.com",
-                        contrasenya = "contraseñaSegura123",
                         idioma = Idioma.Castellano,
                         isAdmin = false
                     )
@@ -130,6 +129,15 @@ fun main() {
                         call.respond(HttpStatusCode.OK, "El nombre de usuario está disponible")
                     }
                 }
+                get("/isAdmin/{email}") {
+                    val email = call.parameters["email"] // Obtener el email de la URL
+                    if (email != null) {
+                        // Consultar si el usuario es administrador
+                        val isAdmin = controladorUsuario.isUserAdmin(email)
+                        call.respond(mapOf("isAdmin" to isAdmin))
+                    } else {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Email no proporcionado"))
+                    }                }
             }
         }
     }

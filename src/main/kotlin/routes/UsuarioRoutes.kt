@@ -14,13 +14,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Route.usuarioRoutes() {
     val usuarioController = ControladorUsuarios(UsuarioRepository())
-    println("Ha arribat a UsuarioRoutes")  // Depuració
     route("/api/usuaris") {
-        println("Ha arribat a /api/usuaris")  // Depuració
         post("/crear") {
             try {
                 val receivedText = call.receiveText()
-                println("Dades rebudes: $receivedText")
 
                 // Deserialitzar manualment el JSON
                 val usuario = kotlinx.serialization.json.Json.decodeFromString<Usuario>(receivedText)
@@ -30,7 +27,6 @@ fun Route.usuarioRoutes() {
                     username = usuario.username,
                     nom = usuario.nom,
                     email = usuario.email,
-                    contrasenya = usuario.contrasenya,
                     idioma = usuario.idioma,
                     isAdmin = usuario.isAdmin,
                 )
@@ -92,29 +88,34 @@ fun Route.usuarioRoutes() {
                 usuario.sesionIniciada = true
                 // Guardamos el usuario actualizado en la base de datos
                 transaction {
-                usuarioController.actualizarUsuario(usuario)
+                usuarioController.actualizarSesion(usuario.email, true)
                 }
 
+                var respuesta = mapOf("isAdmin" to usuario.isAdmin)
                 // Respondemos que el login fue exitoso
-                call.respond(HttpStatusCode.OK, "Login exitoso")
+                call.respond(HttpStatusCode.OK, respuesta)
             } else {
                 // Respondemos que el login falló
                 call.respond(HttpStatusCode.Unauthorized, "Email o contraseña incorrectos")
             }
         }
         post("/logout") {
-            // Recibir el email directamente como un String
-            val email = call.receive<String>()
+            try {
 
-            if (email.isNotBlank()) {
-                val resultado = usuarioController.cerrarSesion(email)
-                if (resultado) {
-                    call.respond(HttpStatusCode.OK, "Sesión cerrada correctamente")
+                // Recibir el JSON como un mapa (o JsonObject)
+                val requestBody = call.receive<Map<String, String>>()
+                val email = requestBody["email"] // Extraer el valor del campo "email"
+
+                if (!email.isNullOrBlank()) {
+
+                    transaction {
+                        usuarioController.actualizarSesion(email, false)
+                    }
                 } else {
-                    call.respond(HttpStatusCode.NotFound, "El usuario no existe o ya estaba desconectado")
+                    call.respond(HttpStatusCode.BadRequest, "El campo 'email' está vacío o no es válido")
                 }
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "El campo 'email' está vacío o no es válido")
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Error en el formato de la solicitud")
             }
         }
 
