@@ -29,8 +29,8 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
         //TODO: canviar id despres de afegir a la base de dades
     }
 
-    fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: Timestamp, dataFi: Timestamp) {
-        activitats.find{ it.id == id }?.modificarActivitat(nom, descripcio, ubicacio, dataInici, dataFi)
+    fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime): Boolean {
+        return ActivitatRepository.modificarActivitat(id,nom, descripcio, ubicacio, dataInici, dataFi)
     }
 
     fun eliminarActivitat(id: Int): Boolean {
@@ -39,7 +39,7 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
     }
 
     fun obtenirActivitatPerId(id: Int): Activitat {
-        return activitats.find{ it.id == id }!!
+        return ActivitatRepository.getActivitatPerId(id)
     }
 
     fun obtenirTotesActivitats():  List<Activitat> {

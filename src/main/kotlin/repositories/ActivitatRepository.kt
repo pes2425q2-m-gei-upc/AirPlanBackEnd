@@ -47,11 +47,52 @@ class ActivitatRepository {
     fun eliminarActividad(id: Int): Boolean {
         return try {
             // Eliminar directamente y verificar filas afectadas
-            val filasEliminadas = ActivitatTable.deleteWhere{ ActivitatTable.id_activitat eq id }
-            filasEliminadas > 0
+            transaction {
+                val filasEliminadas = ActivitatTable.deleteWhere { ActivitatTable.id_activitat eq id }
+                filasEliminadas > 0
+            }
         } catch (e: Exception) {
             println("Error al eliminar actividad: ${e.message}")
             false
         }
+    }
+
+    fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime): Boolean {
+        return try {
+            transaction {
+                // Actualizar directamente y verificar filas afectadas
+                val filasActualizadas = ActivitatTable.update({ ActivitatTable.id_activitat eq id }) {
+                    it[ActivitatTable.nom] = nom
+                    it[ActivitatTable.latitud] = ubicacio.latitud
+                    it[ActivitatTable.longitud] = ubicacio.longitud
+                    it[ActivitatTable.dataInici] = dataInici
+                    it[ActivitatTable.dataFi] = dataFi
+                    it[ActivitatTable.descripcio] = descripcio
+                }
+                filasActualizadas > 0
+            }
+        } catch (e: Exception) {
+            println("Error al modificar actividad: ${e.message}")
+            false
+        }
+    }
+
+    fun getActivitatPerId(id: Int): Activitat {
+        return transaction {
+            ActivitatTable.select { ActivitatTable.id_activitat eq id }.map { row ->
+                Activitat(
+                    id = row[ActivitatTable.id_activitat],
+                    nom = row[ActivitatTable.nom],
+                    descripcio = row[ActivitatTable.descripcio],
+                    ubicacio = Localitzacio(
+                        latitud = row[ActivitatTable.latitud],
+                        longitud = row[ActivitatTable.longitud]
+                    ),
+                    dataInici = row[ActivitatTable.dataInici],
+                    dataFi = row[ActivitatTable.dataFi],
+                    creador = row[ActivitatTable.username_creador]
+                )
+            }.firstOrNull()
+        } ?: throw Exception("Activitat no trobada")
     }
 }

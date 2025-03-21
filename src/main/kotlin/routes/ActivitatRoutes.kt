@@ -85,5 +85,33 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "ID inválido")
             }
         }
+        put ("/editar/{id}"){
+            val id = call.parameters["id"]?.toIntOrNull()
+            if (id != null) {
+                val receivedText = call.receiveText()
+                println("Dades rebudes: $receivedText")
+
+                // Deserialitzar manualment el JSON
+                val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
+                println("Activitat deserialitzada: $activitat")
+
+                val resultado = activitatController.modificarActivitat(
+                    id = id,
+                    nom = activitat.nom,
+                    descripcio = activitat.descripcio,
+                    ubicacio = activitat.ubicacio,
+                    dataInici = activitat.dataInici,
+                    dataFi = activitat.dataFi
+                )
+
+                if (resultado) {
+                    call.respond(HttpStatusCode.OK, "Activitat modificada correctament")
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "L'activitat no existeix")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
+            }
+        }
     }
 }

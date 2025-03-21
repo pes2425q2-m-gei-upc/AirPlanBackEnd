@@ -46,6 +46,8 @@ fun main() {
                 anyHost() // Allow requests from any origin (restrict in production)
                 allowMethod(HttpMethod.Get)
                 allowMethod(HttpMethod.Post)
+                allowMethod(HttpMethod.Delete)
+                allowMethod(HttpMethod.Put)
                 allowHeader(HttpHeaders.ContentType)
                 allowCredentials = true
             }
