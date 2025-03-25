@@ -13,6 +13,7 @@ object DatabaseFactory {
         Database.connect(url, driver = "org.postgresql.Driver", user = user, password = password)
 
         transaction {
+            SchemaUtils.create(ActivitatTable) // Crea la tabla si no existe
             SchemaUtils.create(UsuarioTable) // Crea la tabla si no existe
         }
     }

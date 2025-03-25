@@ -4,10 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 class Localitzacio (
-    var latitud: Double,
-    var longitud: Double
+    var latitud: Float,
+    var longitud: Float
 ) {
-    override fun toString(): String {
-        return "($latitud, $longitud)"
-    }
+
 }
