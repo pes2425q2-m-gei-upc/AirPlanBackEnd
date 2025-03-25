@@ -10,33 +10,17 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
-import java.io.File
-import java.security.KeyStore
 import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
 import org.example.routes.usuarioRoutes
 
 
 fun main() {
-    val keyStoreFile = File("keystore.jks")
-    val keyStorePassword = "airplan"
-    val privateKeyPassword = "airplan"
 
-    val keyStore = KeyStore.getInstance("JKS").apply {
-        load(keyStoreFile.inputStream(), keyStorePassword.toCharArray())
-    }
+
 
     // 🔹 Creem l'entorn del servidor amb SSL
     val environment = applicationEngineEnvironment {
-        /*sslConnector(
-            keyStore = keyStore,
-            keyAlias = "AirPlan",
-            keyStorePassword = { keyStorePassword.toCharArray() },
-            privateKeyPassword = { privateKeyPassword.toCharArray() }
-        ) {
-            port = 8080 // 🔹 Només escoltem en HTTPS al port 8080
-            keyStorePath = keyStoreFile
-        }*/
 
         connector {
             port = 8080 // 🔹 Escoltem en HTTP al port 8080
