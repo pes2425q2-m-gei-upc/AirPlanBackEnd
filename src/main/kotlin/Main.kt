@@ -34,6 +34,7 @@ fun main() {
                 allowMethod(HttpMethod.Get)
                 allowMethod(HttpMethod.Post)
                 allowMethod(HttpMethod.Delete)
+                allowMethod(HttpMethod.Put)
                 allowHeader(HttpHeaders.ContentType)
                 allowCredentials = true
             }
