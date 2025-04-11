@@ -15,6 +15,7 @@ object DatabaseFactory {
         transaction {
             SchemaUtils.create(ActivitatTable) // Crea la tabla si no existe
             SchemaUtils.create(UsuarioTable) // Crea la tabla si no existe
+            SchemaUtils.create(ActivitatFavoritaTable) //Crea la tabla si no existe
         }
     }
 }

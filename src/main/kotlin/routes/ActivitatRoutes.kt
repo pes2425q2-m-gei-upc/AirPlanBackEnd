@@ -7,11 +7,15 @@ import io.ktor.server.routing.*
 import io.ktor.http.*
 import org.example.controllers.ControladorActivitat
 import org.example.models.Activitat
+import repositories.ActivitatFavoritaRepository
 import repositories.ActivitatRepository
 import java.sql.Timestamp
 
 fun Route.activitatRoutes() {
-    val activitatController = ControladorActivitat(ActivitatRepository())
+    val activitatRepository = ActivitatRepository()
+    val activitatFavoritaRepository = ActivitatFavoritaRepository() // Create an instance of ActivitatFavoritaRepository
+    val activitatController = ControladorActivitat(activitatRepository, activitatFavoritaRepository) // Pass both repositories
+
     println("Ha arribat a ActivitatRoutes")  // Depuració
     route("/api/activitats") {
         println("Ha arribat a /api/activitats")  // Depuració
