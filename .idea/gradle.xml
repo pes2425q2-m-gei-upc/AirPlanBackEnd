@@ -8,7 +8,7 @@
         <option name="gradleJvm" value="corretto-20" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$" />
+            <option value="/mnt/Disco_duro/Windows/Documents/Trabajos del insti/Uni/6o cuatri/Projectes d'Enginyeria del Software/AirPlanBackEnd" />
           </set>
         </option>
       </GradleProjectSettings>
