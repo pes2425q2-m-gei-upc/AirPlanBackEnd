@@ -32,16 +32,14 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
 
     // Método para modificar un usuario existente
     fun modificarUsuario(
-        username: String,            // Identificador del usuario a buscar
-        nuevoNom: String? = null,    // Parámetros opcionales para actualizar
-        nuevaContrasenya: String? = null,
-        nuevoIdioma: Idioma? = null,
-    ): Boolean? {
-        val usuario = usuarios.find { it.username == username }
-        return usuario?.modificarUsuario(nuevoNom, nuevoIdioma)
-
+        currentEmail: String,
+        nuevoNom: String?,
+        nuevoUsername: String?,
+        nuevoIdioma: String?,
+        nuevoCorreo: String?
+    ): Boolean {
+        return usuarioRepository.actualizarUsuario(currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo)
     }
-
 
     // Método para listar usuarios
     fun listarUsuarios(): List<Usuario> {

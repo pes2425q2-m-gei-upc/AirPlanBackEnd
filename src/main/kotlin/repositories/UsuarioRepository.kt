@@ -61,4 +61,22 @@ class UsuarioRepository {
         }
     }
 
+    fun actualizarUsuario(
+        currentEmail: String,
+        nuevoNom: String?,
+        nuevoUsername: String?,
+        nuevoIdioma: String?,
+        nuevoCorreo: String?
+    ): Boolean {
+        return transaction {
+            val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq currentEmail }) {
+                if (nuevoNom != null) it[UsuarioTable.nom] = nuevoNom
+                if (nuevoUsername != null) it[UsuarioTable.username] = nuevoUsername
+                if (nuevoIdioma != null) it[UsuarioTable.idioma] = nuevoIdioma
+                if (nuevoCorreo != null) it[UsuarioTable.email] = nuevoCorreo
+            }
+            filasActualizadas > 0
+        }
+    }
+
 }

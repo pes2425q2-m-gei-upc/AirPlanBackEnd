@@ -10,7 +10,8 @@ import org.example.models.Usuario
 import org.example.repositories.UsuarioRepository
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.transactions.transaction
-
+import org.example.enums.Idioma
+import org.jetbrains.exposed.sql.update
 
 fun Route.usuarioRoutes() {
     val usuarioController = ControladorUsuarios(UsuarioRepository())
@@ -77,6 +78,7 @@ fun Route.usuarioRoutes() {
             }
         }
         post("/login") {
+            println("pepe")
             // Obtener los parámetros directamente desde la solicitud JSON
             val params = call.receive<Map<String, String>>()  // Recibe los datos como un mapa
             val email = params["email"]
@@ -118,7 +120,31 @@ fun Route.usuarioRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Error en el formato de la solicitud")
             }
         }
+        put("/editar/{email}") {
+            println("Ha llegado al backend")
+            val currentEmail = call.parameters["email"]
+            println("El correo actual es: $currentEmail")
+            if (currentEmail != null) {
+                try {
+                    val updatedData = call.receive<Map<String, String>>()
+                    val nuevoNom = updatedData["nom"]
+                    val nuevoUsername = updatedData["username"]
+                    val nuevoIdioma = updatedData["idioma"]
+                    val nuevoCorreo = updatedData["correo"]
 
+                    val resultado = usuarioController.modificarUsuario(currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo)
 
+                    if (resultado) {
+                        call.respond(HttpStatusCode.OK, "Usuario actualizado correctamente")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
+                    }
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud: ${e.message}")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Debe proporcionar un email válido")
+            }
+        }
     }
 }
