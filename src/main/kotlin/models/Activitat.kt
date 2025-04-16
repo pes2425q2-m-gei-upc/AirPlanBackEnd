@@ -19,6 +19,7 @@ class Activitat(
     var dataInici: LocalDateTime,
     var dataFi: LocalDateTime,
     var creador: String,
+    var participants: MutableList<String> = mutableListOf(creador),
 ) {
 
     fun modificarActivitat(
