@@ -12,6 +12,7 @@ import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.enums.Idioma
 import org.jetbrains.exposed.sql.update
+import org.example.database.UsuarioTable  // Corregida la importación
 
 fun Route.usuarioRoutes() {
     val usuarioController = ControladorUsuarios(UsuarioRepository())
@@ -69,7 +70,8 @@ fun Route.usuarioRoutes() {
             if (email != null) {
                 val usuario = usuarioController.obtenerUsuarioPorEmail(email)
                 if (usuario != null) {
-                    call.respond(HttpStatusCode.OK, "Usuario encontrado correctamente")
+                    // Devolver los datos del usuario en lugar de solo un mensaje
+                    call.respond(HttpStatusCode.OK, usuario)
                 } else {
                     call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
                 }
@@ -144,6 +146,159 @@ fun Route.usuarioRoutes() {
                 }
             } else {
                 call.respond(HttpStatusCode.BadRequest, "Debe proporcionar un email válido")
+            }
+        }
+        // Endpoint para guardar un correo pendiente de verificación
+        post("/pendingEmail") {
+            try {
+                val request = call.receive<Map<String, String>>()
+                val currentEmail = request["currentEmail"]
+                val pendingEmail = request["pendingEmail"]
+
+                if (currentEmail != null && pendingEmail != null) {
+                    val resultado = usuarioController.guardarCorreoPendiente(currentEmail, pendingEmail)
+                    if (resultado) {
+                        call.respond(HttpStatusCode.OK, "Correo pendiente guardado correctamente")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
+            }
+        }
+
+        // Endpoint para confirmar un cambio de correo
+        post("/confirmEmail") {
+            try {
+                val request = call.receive<Map<String, String>>()
+                val currentEmail = request["currentEmail"]
+                val oldEmail = request["oldEmail"]  // Nuevo: recibimos el parámetro oldEmail si está disponible
+
+                if (currentEmail != null) {
+                    val resultado = usuarioController.confirmarCambioCorreo(currentEmail, oldEmail)
+                    if (resultado) {
+                        call.respond(HttpStatusCode.OK, "Correo actualizado correctamente")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "No hay correo pendiente o usuario no encontrado")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
+            }
+        }
+
+        // Endpoint para cancelar un cambio de correo pendiente
+        post("/cancelEmail") {
+            try {
+                val request = call.receive<Map<String, String>>()
+                val currentEmail = request["currentEmail"]
+
+                if (currentEmail != null) {
+                    val resultado = usuarioController.cancelarCambioCorreo(currentEmail)
+                    if (resultado) {
+                        call.respond(HttpStatusCode.OK, "Cambio de correo cancelado correctamente")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "No hay correo pendiente o usuario no encontrado")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
+            }
+        }
+
+        // Añadir un nuevo endpoint para obtener usuario por username
+        get("/usuario-por-username/{username}") {
+            val username = call.parameters["username"]
+
+            if (username != null) {
+                val usuario = usuarioController.obtenerUsuarioPorUsername(username)
+                if (usuario != null) {
+                    // Devolver los datos del usuario en lugar de solo un mensaje
+                    call.respond(HttpStatusCode.OK, usuario)
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Debe proporcionar un username")
+            }
+        }
+        
+        // Endpoint para Firebase Cloud Functions
+        post("/firebaseEmailUpdate") {
+            try {
+                val request = call.receive<Map<String, String>>()
+                val newEmail = request["currentEmail"]
+                val oldEmail = request["oldEmail"]
+                
+                if (newEmail != null) {
+                    println("📱 Firebase notificó cambio de correo: ${oldEmail ?: "desconocido"} → $newEmail")
+                    
+                    // Primero, intentar el enfoque estándar (si el pendingEmail coincide con el nuevo email)
+                    var resultado = usuarioController.confirmarCambioCorreo(newEmail)
+                    
+                    // Si no funcionó y tenemos el email antiguo, intentar buscar directamente por el email antiguo
+                    if (!resultado && oldEmail != null) {
+                        // Buscar un usuario con el email antiguo y actualizar su email
+                        resultado = transaction {
+                            val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq oldEmail }) {
+                                it[UsuarioTable.email] = newEmail
+                                it[UsuarioTable.pendingEmail] = null
+                            }
+                            filasActualizadas > 0
+                        }
+                    }
+                    
+                    if (resultado) {
+                        call.respond(HttpStatusCode.OK, "Correo actualizado correctamente por Firebase")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "No se pudo actualizar el correo")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
+                }
+            } catch (e: Exception) {
+                println("Error en endpoint firebaseEmailUpdate: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
+            }
+        }
+
+        // Endpoint para actualización directa del correo electrónico
+        post("/directUpdateEmail") {
+            try {
+                val request = call.receive<Map<String, String>>()
+                val oldEmail = request["oldEmail"]
+                val newEmail = request["newEmail"]
+
+                if (oldEmail != null && newEmail != null) {
+                    println("📧 Actualización directa de correo: $oldEmail → $newEmail")
+                    
+                    // Actualizar el correo directamente en la base de datos
+                    val resultado = transaction {
+                        val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq oldEmail }) {
+                            it[UsuarioTable.email] = newEmail
+                            it[UsuarioTable.pendingEmail] = null  // Limpiar cualquier pendiente
+                        }
+                        filasActualizadas > 0
+                    }
+                    
+                    if (resultado) {
+                        call.respond(HttpStatusCode.OK, "Correo actualizado correctamente")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
+                }
+            } catch (e: Exception) {
+                println("Error en actualización directa de correo: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
             }
         }
     }

@@ -14,11 +14,11 @@ import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
 import org.example.routes.activitatRoutes
 import org.example.routes.usuarioRoutes
-
+import org.example.routes.uploadImageRoute
+import io.ktor.server.http.content.*
+import java.io.File
 
 fun main() {
-
-
 
     // 🔹 Creem l'entorn del servidor amb SSL
     val environment = applicationEngineEnvironment {
@@ -52,6 +52,12 @@ fun main() {
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                uploadImageRoute() // Añadida la ruta para subir imágenes
+                
+                // Configurar ruta estática para servir archivos de imagen
+                static("uploads") {
+                    files("uploads")
+                }
                 get("/") {
                     call.respond(
                         """

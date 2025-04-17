@@ -50,6 +50,11 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
         return usuarioRepository.obtenerUsuarioPorEmail(email)
     }
 
+    // Método para obtener un usuario por su username
+    fun obtenerUsuarioPorUsername(username: String): Usuario? {
+        return usuarioRepository.obtenerUsuarioPorUsername(username)
+    }
+
     fun comprobarNombreUsuario(username: String): Boolean {
         return usuarios.any { it.username == username }
     }
@@ -74,6 +79,21 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
     fun isUserAdmin(email: String): Boolean {
         val usuario = usuarioRepository.obtenerUsuarioPorEmail(email)
         return usuario?.isAdmin ?: false
+    }
+
+    // Método para guardar un correo pendiente de verificación
+    fun guardarCorreoPendiente(currentEmail: String, pendingEmail: String): Boolean {
+        return usuarioRepository.guardarCorreoPendiente(currentEmail, pendingEmail)
+    }
+
+    // Método para confirmar el cambio de correo (una vez verificado)
+    fun confirmarCambioCorreo(currentEmail: String, oldEmail: String? = null): Boolean {
+        return usuarioRepository.confirmarCambioCorreo(currentEmail, oldEmail)
+    }
+
+    // Método para cancelar el cambio de correo pendiente
+    fun cancelarCambioCorreo(currentEmail: String): Boolean {
+        return usuarioRepository.cancelarCambioCorreo(currentEmail)
     }
 
 }
