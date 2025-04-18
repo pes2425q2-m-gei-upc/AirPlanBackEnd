@@ -81,19 +81,8 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
         return usuario?.isAdmin ?: false
     }
 
-    // Método para guardar un correo pendiente de verificación
-    fun guardarCorreoPendiente(currentEmail: String, pendingEmail: String): Boolean {
-        return usuarioRepository.guardarCorreoPendiente(currentEmail, pendingEmail)
+    // Método para actualizar directamente el correo electrónico
+    fun actualizarCorreoDirecto(oldEmail: String, newEmail: String): Boolean {
+        return usuarioRepository.actualizarCorreoDirecto(oldEmail, newEmail)
     }
-
-    // Método para confirmar el cambio de correo (una vez verificado)
-    fun confirmarCambioCorreo(currentEmail: String, oldEmail: String? = null): Boolean {
-        return usuarioRepository.confirmarCambioCorreo(currentEmail, oldEmail)
-    }
-
-    // Método para cancelar el cambio de correo pendiente
-    fun cancelarCambioCorreo(currentEmail: String): Boolean {
-        return usuarioRepository.cancelarCambioCorreo(currentEmail)
-    }
-
 }

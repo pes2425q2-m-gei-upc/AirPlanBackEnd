@@ -9,7 +9,7 @@ object UsuarioTable : Table("usuaristemp") {
     val idioma = varchar("idioma", 20)
     val sesionIniciada = bool("sesion_iniciada").default(false)
     val isAdmin = bool("is_admin").default(false)
-    val pendingEmail = varchar("pending_email", 100).nullable() // Campo para almacenar el correo pendiente de verificación
+    // Se eliminó el campo pendingEmail
 
     override val primaryKey = PrimaryKey(username, name = "PK_username")
 }

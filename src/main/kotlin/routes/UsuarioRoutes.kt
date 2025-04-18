@@ -80,27 +80,65 @@ fun Route.usuarioRoutes() {
             }
         }
         post("/login") {
-            println("pepe")
-            // Obtener los parámetros directamente desde la solicitud JSON
-            val params = call.receive<Map<String, String>>()  // Recibe los datos como un mapa
-            val email = params["email"]
-            val contrasena = params["contrasena"]
-            // Verificamos si el email y la contraseña son correctos
-            val usuario = usuarioController.login(email, contrasena)
-            if (usuario != null) {
-                // Actualizamos el atributo sesionIniciada
-                usuario.sesionIniciada = true
-                // Guardamos el usuario actualizado en la base de datos
-                transaction {
-                usuarioController.actualizarSesion(usuario.email, true)
-                }
+            try {
+                // Recibir los datos del login
+                val params = call.receive<Map<String, String>>()
+                val email = params["email"]
+                val username = params["username"] // Nuevo parámetro: username
+                
+                if (email != null) {
+                    // Si tenemos un username, intentamos buscar primero por username
+                    val usuario = if (username != null) {
+                        println("🔍 Buscando usuario por username: $username")
+                        usuarioController.obtenerUsuarioPorUsername(username)
+                    } else {
+                        // Como fallback, buscar por email
+                        println("🔍 Buscando usuario por email: $email")
+                        usuarioController.obtenerUsuarioPorEmail(email)
+                    }
+                    
+                    if (usuario != null) {
+                        // Comprobar si el email de Firebase coincide con el de la base de datos
+                        val firebaseEmail = email // El email que llega desde Firebase
+                        val databaseEmail = usuario.email // Email en la base de datos
+                        
+                        if (firebaseEmail != databaseEmail) {
+                            println("⚠️ Correo en Firebase diferente al de la base de datos durante login")
+                            println("   - Firebase: $firebaseEmail")
+                            println("   - Base de datos: $databaseEmail")
+                            
+                            // Actualizar el correo en la base de datos
+                            val emailActualizado = usuarioController.actualizarCorreoDirecto(databaseEmail, firebaseEmail)
+                            if (emailActualizado) {
+                                println("✅ Correo actualizado correctamente durante el login")
+                                // Actualizar el objeto usuario con el nuevo email
+                                usuario.email = firebaseEmail
+                            } else {
+                                println("❌ Error actualizando correo durante el login")
+                            }
+                        }
+                        
+                        // Actualizar el atributo sesionIniciada a true
+                        usuario.sesionIniciada = true
+                        
+                        // Guardar el cambio en la base de datos
+                        transaction {
+                            usuarioController.actualizarSesion(usuario.email, true)
+                        }
 
-                var respuesta = mapOf("isAdmin" to usuario.isAdmin)
-                // Respondemos que el login fue exitoso
-                call.respond(HttpStatusCode.OK, respuesta)
-            } else {
-                // Respondemos que el login falló
-                call.respond(HttpStatusCode.Unauthorized, "Email o contraseña incorrectos")
+                        // Responder con éxito
+                        val respuesta = mapOf("isAdmin" to usuario.isAdmin)
+                        call.respond(HttpStatusCode.OK, respuesta)
+                    } else {
+                        // Responder que el login falló
+                        call.respond(HttpStatusCode.Unauthorized, "Usuario no encontrado")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Es necesario proporcionar un email")
+                }
+            } catch (e: Exception) {
+                println("Error en login: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error procesando el login: ${e.message}")
             }
         }
         post("/logout") {
@@ -148,70 +186,6 @@ fun Route.usuarioRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Debe proporcionar un email válido")
             }
         }
-        // Endpoint para guardar un correo pendiente de verificación
-        post("/pendingEmail") {
-            try {
-                val request = call.receive<Map<String, String>>()
-                val currentEmail = request["currentEmail"]
-                val pendingEmail = request["pendingEmail"]
-
-                if (currentEmail != null && pendingEmail != null) {
-                    val resultado = usuarioController.guardarCorreoPendiente(currentEmail, pendingEmail)
-                    if (resultado) {
-                        call.respond(HttpStatusCode.OK, "Correo pendiente guardado correctamente")
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
-                    }
-                } else {
-                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
-                }
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
-            }
-        }
-
-        // Endpoint para confirmar un cambio de correo
-        post("/confirmEmail") {
-            try {
-                val request = call.receive<Map<String, String>>()
-                val currentEmail = request["currentEmail"]
-                val oldEmail = request["oldEmail"]  // Nuevo: recibimos el parámetro oldEmail si está disponible
-
-                if (currentEmail != null) {
-                    val resultado = usuarioController.confirmarCambioCorreo(currentEmail, oldEmail)
-                    if (resultado) {
-                        call.respond(HttpStatusCode.OK, "Correo actualizado correctamente")
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "No hay correo pendiente o usuario no encontrado")
-                    }
-                } else {
-                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
-                }
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
-            }
-        }
-
-        // Endpoint para cancelar un cambio de correo pendiente
-        post("/cancelEmail") {
-            try {
-                val request = call.receive<Map<String, String>>()
-                val currentEmail = request["currentEmail"]
-
-                if (currentEmail != null) {
-                    val resultado = usuarioController.cancelarCambioCorreo(currentEmail)
-                    if (resultado) {
-                        call.respond(HttpStatusCode.OK, "Cambio de correo cancelado correctamente")
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "No hay correo pendiente o usuario no encontrado")
-                    }
-                } else {
-                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
-                }
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
-            }
-        }
 
         // Añadir un nuevo endpoint para obtener usuario por username
         get("/usuario-por-username/{username}") {
@@ -237,23 +211,11 @@ fun Route.usuarioRoutes() {
                 val newEmail = request["currentEmail"]
                 val oldEmail = request["oldEmail"]
                 
-                if (newEmail != null) {
-                    println("📱 Firebase notificó cambio de correo: ${oldEmail ?: "desconocido"} → $newEmail")
+                if (newEmail != null && oldEmail != null) {
+                    println("📱 Firebase notificó cambio de correo: $oldEmail → $newEmail")
                     
-                    // Primero, intentar el enfoque estándar (si el pendingEmail coincide con el nuevo email)
-                    var resultado = usuarioController.confirmarCambioCorreo(newEmail)
-                    
-                    // Si no funcionó y tenemos el email antiguo, intentar buscar directamente por el email antiguo
-                    if (!resultado && oldEmail != null) {
-                        // Buscar un usuario con el email antiguo y actualizar su email
-                        resultado = transaction {
-                            val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq oldEmail }) {
-                                it[UsuarioTable.email] = newEmail
-                                it[UsuarioTable.pendingEmail] = null
-                            }
-                            filasActualizadas > 0
-                        }
-                    }
+                    // Actualizar directamente el correo electrónico
+                    val resultado = usuarioController.actualizarCorreoDirecto(oldEmail, newEmail)
                     
                     if (resultado) {
                         call.respond(HttpStatusCode.OK, "Correo actualizado correctamente por Firebase")
@@ -275,29 +237,22 @@ fun Route.usuarioRoutes() {
                 val request = call.receive<Map<String, String>>()
                 val oldEmail = request["oldEmail"]
                 val newEmail = request["newEmail"]
-
+                
                 if (oldEmail != null && newEmail != null) {
-                    println("📧 Actualización directa de correo: $oldEmail → $newEmail")
+                    println("📱 Actualizando directamente el correo: $oldEmail → $newEmail")
                     
-                    // Actualizar el correo directamente en la base de datos
-                    val resultado = transaction {
-                        val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq oldEmail }) {
-                            it[UsuarioTable.email] = newEmail
-                            it[UsuarioTable.pendingEmail] = null  // Limpiar cualquier pendiente
-                        }
-                        filasActualizadas > 0
-                    }
+                    val resultado = usuarioController.actualizarCorreoDirecto(oldEmail, newEmail)
                     
                     if (resultado) {
-                        call.respond(HttpStatusCode.OK, "Correo actualizado correctamente")
+                        call.respond(HttpStatusCode.OK, "Correo actualizado correctamente en la base de datos")
                     } else {
-                        call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
+                        call.respond(HttpStatusCode.NotFound, "No se pudo actualizar el correo")
                     }
                 } else {
                     call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
                 }
             } catch (e: Exception) {
-                println("Error en actualización directa de correo: ${e.message}")
+                println("Error en endpoint directUpdateEmail: ${e.message}")
                 call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
             }
         }
