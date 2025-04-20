@@ -3,6 +3,7 @@ package repositories
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.database.ActivitatFavoritaTable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -34,6 +35,19 @@ class ActivitatFavoritaRepository {
             }
         } catch (e: Exception) {
             println("Error al eliminar activitat favorita: ${e.message}")
+            false
+        }
+    }
+
+    fun comprovarActivitatFavorita(idActivitat: Int, username: String): Boolean {
+        return try {
+            transaction {
+                ActivitatFavoritaTable.select {
+                    (ActivitatFavoritaTable.id_activitat eq idActivitat) and (ActivitatFavoritaTable.username eq username)
+                }.count() > 0
+            }
+        } catch (e: Exception) {
+            println("Error al obtenir activitats favorites: ${e.message}")
             false
         }
     }

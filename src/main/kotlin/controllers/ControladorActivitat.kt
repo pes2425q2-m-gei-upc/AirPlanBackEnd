@@ -72,4 +72,8 @@ class ControladorActivitat(
     fun eliminarActivitatFavorita(idActivitat: Int, username: String): Boolean {
         return ActivitatFavoritaRepository.eliminarActivitatFavorita(idActivitat, username)
     }
+
+    fun comprovarActivitatFavorita(idActivitat: Int, username: String): Boolean {
+        return ActivitatFavoritaRepository.comprovarActivitatFavorita(idActivitat, username)
+    }
 }
