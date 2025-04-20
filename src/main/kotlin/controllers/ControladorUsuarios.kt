@@ -1,36 +1,98 @@
 package org.example.controllers
 
-import org.example.enums.Idioma
-import org.example.models.Usuario
 import org.example.repositories.UsuarioRepository
+import org.example.models.*
+import org.example.enums.Idioma
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.example.websocket.WebSocketManager
+import kotlinx.coroutines.runBlocking
 
-class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
-    private val usuarios = mutableListOf<Usuario>()
+class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
 
-    // Función para crear un nuevo usuario
-    fun crearUsuario(
-        username: String,
-        nom: String,
-        email: String,
-        idioma: Idioma,
-        isAdmin: Boolean = false
-    ): Usuario {
-        // Aquí se instancia un objeto Usuario llamando a su método `crear`
-        val nuevoUsuario = Usuario(username, nom, email, idioma, true, isAdmin)
-
-        usuarioRepository.agregarUsuario(nuevoUsuario)
-
-        // Retorna el usuario creado
-        return nuevoUsuario
+    // Crear nuevo usuario
+    fun crearUsuario(username: String, nom: String, email: String, idioma: String, isAdmin: Boolean): Usuario? {
+        val idiomaEnum = try {
+            Idioma.valueOf(idioma)
+        } catch (e: IllegalArgumentException) {
+            Idioma.Castellano  // Valor por defecto si el idioma no es válido
+        }
+        
+        val usuario = Usuario(
+            username = username,
+            nom = nom,
+            email = email,
+            idioma = idiomaEnum,
+            sesionIniciada = false, // Por defecto, no tiene la sesión iniciada
+            isAdmin = isAdmin
+        )
+        
+        val success = usuarioRepository.agregarUsuario(usuario)
+        return if (success) usuario else null
     }
 
-    // Método para borrar un usuario por nombre de usuario
+    // Listar todos los usuarios
+    fun listarUsuarios(): List<Usuario> {
+        // Implementar lista de usuarios en el UsuarioRepository
+        return listOf() // Temporal hasta implementar el método en UsuarioRepository
+    }
+
+    // Eliminar usuario por email
     fun eliminarUsuario(email: String): Boolean {
         return usuarioRepository.eliminarUsuario(email)
     }
 
+    // Buscar usuario por nombre de usuario
+    fun comprobarNombreUsuario(username: String): Boolean {
+        return usuarioRepository.obtenerUsuarioPorUsername(username) != null
+    }
+    
+    // Comprobar si existe un usuario con el email proporcionado
+    fun comprobarEmailUsuario(email: String): Boolean {
+        return usuarioRepository.obtenerUsuarioPorEmail(email) != null
+    }
 
-    // Método para modificar un usuario existente
+    // Actualizar usuario
+    fun actualizarUsuario(
+        currentEmail: String,
+        nuevoNom: String?,
+        nuevoUsername: String?,
+        nuevoIdioma: String?,
+        nuevoCorreo: String?
+    ): Boolean {
+        val success = usuarioRepository.actualizarUsuario(
+            currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo
+        )
+        
+        // Si la actualización incluye cambio de correo, notificamos a todos los dispositivos
+        if (success && nuevoCorreo != null && nuevoCorreo != currentEmail) {
+            val usuario = usuarioRepository.obtenerUsuarioPorEmail(nuevoCorreo) 
+                ?: usuarioRepository.obtenerUsuarioPorEmail(currentEmail)
+            
+            if (usuario != null) {
+                // Notificar cambio de correo a través de WebSockets
+                runBlocking {
+                    WebSocketManager.instance.notifyProfileUpdate(
+                        username = usuario.username,
+                        email = currentEmail, // Usamos el correo anterior para encontrar sesiones
+                        updatedFields = listOf("email")
+                    )
+                    
+                    // También notificamos usando el nuevo correo por si ya hay sesiones registradas con él
+                    if (nuevoCorreo != currentEmail) {
+                        WebSocketManager.instance.notifyProfileUpdate(
+                            username = usuario.username,
+                            email = nuevoCorreo,
+                            updatedFields = listOf("email")
+                        )
+                    }
+                }
+            }
+        }
+        
+        return success
+    }
+    
+    // Alias para actualizarUsuario para mantener compatibilidad con código existente
     fun modificarUsuario(
         currentEmail: String,
         nuevoNom: String?,
@@ -38,32 +100,17 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
         nuevoIdioma: String?,
         nuevoCorreo: String?
     ): Boolean {
-        return usuarioRepository.actualizarUsuario(currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo)
+        return actualizarUsuario(currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo)
     }
 
-    // Método para listar usuarios
-    fun listarUsuarios(): List<Usuario> {
-        return usuarios
-    }
-
+    // Obtener usuario por email
     fun obtenerUsuarioPorEmail(email: String): Usuario? {
         return usuarioRepository.obtenerUsuarioPorEmail(email)
     }
 
-    // Método para obtener un usuario por su username
+    // Obtener usuario por username
     fun obtenerUsuarioPorUsername(username: String): Usuario? {
         return usuarioRepository.obtenerUsuarioPorUsername(username)
-    }
-
-    fun comprobarNombreUsuario(username: String): Boolean {
-        return usuarios.any { it.username == username }
-    }
-
-    fun login(email: String?, contrasenya: String?): Usuario? {
-        // Buscar el usuario por email y verificar la contraseña
-        val usuario = usuarioRepository.obtenerUsuarioPorEmail(email ?: "")
-
-        return usuario
     }
 
     // Método para actualizar el usuario en la base de datos (para cambiar sesionIniciada)
@@ -82,7 +129,33 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
     }
 
     // Método para actualizar directamente el correo electrónico
-    fun actualizarCorreoDirecto(oldEmail: String, newEmail: String): Boolean {
-        return usuarioRepository.actualizarCorreoDirecto(oldEmail, newEmail)
+    fun actualizarCorreoDirecto(oldEmail: String, newEmail: String, clientId: String? = null): Boolean {
+        val usuario = usuarioRepository.obtenerUsuarioPorEmail(oldEmail)
+        val success = usuarioRepository.actualizarCorreoDirecto(oldEmail, newEmail)
+        
+        // Si la actualización fue exitosa y tenemos los datos del usuario, enviamos notificación
+        if (success && usuario != null) {
+            println("📢 Notificando cambio de correo: $oldEmail → $newEmail")
+            
+            // Notificar a todos los dispositivos conectados con el mismo usuario/email
+            runBlocking {
+                WebSocketManager.instance.notifyProfileUpdate(
+                    username = usuario.username,
+                    email = oldEmail, // Usamos el correo anterior para encontrar sesiones
+                    updatedFields = listOf("email"),
+                    clientId = clientId // Pasar el clientId para evitar notificaciones a este dispositivo
+                )
+                
+                // También notificamos usando el nuevo correo por si ya hay sesiones registradas con él
+                WebSocketManager.instance.notifyProfileUpdate(
+                    username = usuario.username,
+                    email = newEmail,
+                    updatedFields = listOf("email"),
+                    clientId = clientId // Pasar el clientId también para las notificaciones al nuevo correo
+                )
+            }
+        }
+        
+        return success
     }
 }

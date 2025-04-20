@@ -19,6 +19,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8") // Serialización JSON
     implementation("io.ktor:ktor-server-status-pages:2.3.8") // Manejo de páginas de estado
     implementation("io.ktor:ktor-server-cors:2.3.8") // Dependencia CORS
+    implementation("io.ktor:ktor-server-websockets:2.3.8") // WebSockets support
     implementation("ch.qos.logback:logback-classic:1.4.14")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")

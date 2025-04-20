@@ -29,7 +29,7 @@ fun Route.usuarioRoutes() {
                     username = usuario.username,
                     nom = usuario.nom,
                     email = usuario.email,
-                    idioma = usuario.idioma,
+                    idioma = usuario.idioma.toString(), // Convertir Idioma a String
                     isAdmin = usuario.isAdmin,
                 )
 
@@ -81,10 +81,10 @@ fun Route.usuarioRoutes() {
         }
         post("/login") {
             try {
-                // Recibir los datos del login
                 val params = call.receive<Map<String, String>>()
                 val email = params["email"]
                 val username = params["username"] // Nuevo parámetro: username
+                val clientId = params["clientId"] // Añadir clientId para identificar el dispositivo
                 
                 if (email != null) {
                     // Si tenemos un username, intentamos buscar primero por username
@@ -106,11 +106,18 @@ fun Route.usuarioRoutes() {
                             println("⚠️ Correo en Firebase diferente al de la base de datos durante login")
                             println("   - Firebase: $firebaseEmail")
                             println("   - Base de datos: $databaseEmail")
+                            if (clientId != null) {
+                                println("🆔 Cliente ID: $clientId (este dispositivo no recibirá la notificación)")
+                            }
                             
-                            // Actualizar el correo en la base de datos
-                            val emailActualizado = usuarioController.actualizarCorreoDirecto(databaseEmail, firebaseEmail)
+                            // Actualizar el correo en la base de datos pasando el clientId
+                            val emailActualizado = usuarioController.actualizarCorreoDirecto(databaseEmail, firebaseEmail, clientId)
                             if (emailActualizado) {
                                 println("✅ Correo actualizado correctamente durante el login")
+                                
+                                // Enviar notificación a otros dispositivos - no es necesario hacerlo explícitamente aquí
+                                // ya que actualizarCorreoDirecto ya incluye el envío de notificaciones WebSocket
+                                
                                 // Actualizar el objeto usuario con el nuevo email
                                 usuario.email = firebaseEmail
                             } else {
@@ -134,11 +141,12 @@ fun Route.usuarioRoutes() {
                         call.respond(HttpStatusCode.Unauthorized, "Usuario no encontrado")
                     }
                 } else {
-                    call.respond(HttpStatusCode.BadRequest, "Es necesario proporcionar un email")
+                    // Responder que falta el parámetro email
+                    call.respond(HttpStatusCode.BadRequest, "Falta el parámetro email")
                 }
             } catch (e: Exception) {
-                println("Error en login: ${e.message}")
-                call.respond(HttpStatusCode.InternalServerError, "Error procesando el login: ${e.message}")
+                println("Error en el login: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error procesando el login")
             }
         }
         post("/logout") {
@@ -237,11 +245,15 @@ fun Route.usuarioRoutes() {
                 val request = call.receive<Map<String, String>>()
                 val oldEmail = request["oldEmail"]
                 val newEmail = request["newEmail"]
+                val clientId = request["clientId"] // Capturar el clientId enviado desde el frontend
                 
                 if (oldEmail != null && newEmail != null) {
                     println("📱 Actualizando directamente el correo: $oldEmail → $newEmail")
+                    if (clientId != null) {
+                        println("🆔 Cliente ID: $clientId (este dispositivo no recibirá la notificación)")
+                    }
                     
-                    val resultado = usuarioController.actualizarCorreoDirecto(oldEmail, newEmail)
+                    val resultado = usuarioController.actualizarCorreoDirecto(oldEmail, newEmail, clientId)
                     
                     if (resultado) {
                         call.respond(HttpStatusCode.OK, "Correo actualizado correctamente en la base de datos")
@@ -252,7 +264,7 @@ fun Route.usuarioRoutes() {
                     call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
                 }
             } catch (e: Exception) {
-                println("Error en endpoint directUpdateEmail: ${e.message}")
+                println("Error actualizando correo directamente: ${e.message}")
                 call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
             }
         }

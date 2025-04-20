@@ -15,6 +15,8 @@ import org.example.repositories.UsuarioRepository
 import org.example.routes.activitatRoutes
 import org.example.routes.usuarioRoutes
 import org.example.routes.uploadImageRoute
+import org.example.routes.configureWebSockets
+import org.example.routes.webSocketRoutes
 import io.ktor.server.http.content.*
 import java.io.File
 
@@ -36,6 +38,7 @@ fun main() {
                 allowMethod(HttpMethod.Delete)
                 allowMethod(HttpMethod.Put)
                 allowHeader(HttpHeaders.ContentType)
+                allowNonSimpleContentTypes = true  // Allow WebSocket connections
                 allowCredentials = true
             }
 
@@ -43,6 +46,9 @@ fun main() {
             install(ContentNegotiation) {
                 json()
             }
+
+            // Configurar WebSockets
+            configureWebSockets()
 
             DatabaseFactory.init()
             val usuarioRepository = UsuarioRepository()
@@ -53,6 +59,7 @@ fun main() {
                 usuarioRoutes()
                 activitatRoutes()
                 uploadImageRoute() // Añadida la ruta para subir imágenes
+                webSocketRoutes() // Registrar rutas WebSocket
                 
                 // Configurar ruta estática para servir archivos de imagen
                 static("uploads") {
@@ -107,7 +114,7 @@ fun main() {
                         username = "usuario123",
                         nom = "Carlos Gómez",
                         email = "carlos.gomez@example.com",
-                        idioma = Idioma.Castellano,
+                        idioma = Idioma.Castellano.toString(),
                         isAdmin = false
                     )
 
