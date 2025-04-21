@@ -6,6 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
 import kotlinx.datetime.toKotlinLocalDateTime
+import kotlinx.datetime.toLocalDateTime
 import org.example.controllers.ControladorActivitat
 import org.example.models.Activitat
 import repositories.ActivitatFavoritaRepository
@@ -90,7 +91,7 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "ID inválido")
             }
         }
-        put ("/editar/{id}"){
+        put("/editar/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
             if (id != null) {
                 val receivedText = call.receiveText()
@@ -118,10 +119,8 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
             }
         }
-    }
-    route("/favoritas") {
         // Check if an activity is a favorite
-        get("/{id}/{username}") {
+        get("/favorita/{id}/{username}") {
             val id = call.parameters["id"]?.toIntOrNull()
             val username = call.parameters["username"]
 
@@ -134,15 +133,14 @@ fun Route.activitatRoutes() {
         }
 
         // Add an activity as a favorite
-        post("/añadir") {
+        post("/favorita/añadir/{id}/{username}") {
             try {
-                val params = call.receive<Map<String, String>>()
-                val id = params["id"]?.toIntOrNull()
-                val username = params["username"]
-                val dataAfegida = params["dataAfegida"]?.let { Timestamp.valueOf(it).toLocalDateTime() }
+                val id = call.parameters["id"]?.toIntOrNull()
+                val username = call.parameters["username"]
+                val dataAfegida = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
 
-                if (id != null && !username.isNullOrBlank() && dataAfegida != null) {
-                    val resultado = activitatController.afegirActivitatFavorita(id, username, dataAfegida.toKotlinLocalDateTime())
+                if (id != null && !username.isNullOrBlank()) {
+                    val resultado = activitatController.afegirActivitatFavorita(id, username, dataAfegida)
                     if (resultado) {
                         call.respond(HttpStatusCode.Created, "Activity added to favorites")
                     } else {
@@ -157,11 +155,10 @@ fun Route.activitatRoutes() {
         }
 
         // Remove an activity from favorites
-        delete("/eliminar") {
+        delete("/favorita/eliminar/{id}/{username}") {
             try {
-                val params = call.receive<Map<String, String>>()
-                val id = params["id"]?.toIntOrNull()
-                val username = params["username"]
+                val id = call.parameters["id"]?.toIntOrNull()
+                val username = call.parameters["username"]
 
                 if (id != null && !username.isNullOrBlank()) {
                     val resultado = activitatController.eliminarActivitatFavorita(id, username)
