@@ -25,6 +25,15 @@ data class ConnectionEstablishedMessage(
     val message: String
 )
 
+@Serializable
+data class AccountDeletedNotification(
+    val type: String,
+    val username: String,
+    val email: String,
+    val timestamp: Long,
+    val clientId: String
+)
+
 /**
  * WebSocketManager handles connections from multiple clients and manages notifications.
  * It maintains a map of connections organized by username/email to target specific users.
@@ -166,6 +175,72 @@ class WebSocketManager {
         }
     }
     
+    /**
+     * Notifica a todos los dispositivos conectados que la cuenta ha sido eliminada
+     */
+    suspend fun notifyAccountDeleted(username: String, email: String, clientId: String? = null) {
+        println("🗑️ Notificando eliminación de cuenta: $username ($email)")
+        
+        // Obtener todas las sesiones para este usuario/email
+        val usernameSessions = userSessions[username] ?: emptySet()
+        val emailSessions = emailSessions[email] ?: emptySet()
+        
+        // Combinar ambos conjuntos de sesiones
+        val allSessions = (usernameSessions + emailSessions).toSet()
+        
+        // Filtrar las sesiones para excluir la que tiene el mismo clientId que el solicitante
+        val filteredSessions = if (clientId != null && clientId.isNotEmpty()) {
+            allSessions.filter { session ->
+                val sessionClientId = sessionClientIds[session]
+                // Si la sesión tiene un clientId, comparamos; si no, la incluimos por defecto
+                sessionClientId == null || sessionClientId != clientId
+            }
+        } else {
+            allSessions
+        }
+        
+        println("📤 Enviando notificaciones de eliminación a ${filteredSessions.size} de ${allSessions.size} sesiones")
+        if (clientId != null) {
+            println("🔍 Excluyendo dispositivo con clientId: $clientId")
+        }
+        
+        // Solo continuamos si hay sesiones después del filtrado
+        if (filteredSessions.isEmpty()) {
+            println("⚠️ No hay sesiones activas después del filtrado. No se enviarán notificaciones.")
+            return
+        }
+        
+        // Contador para depuración
+        var notificationCount = 0
+        
+        // Preparar el mensaje una sola vez fuera del bucle
+        val deletionMessage = Json.encodeToString(
+            AccountDeletedNotification(
+                type = "ACCOUNT_DELETED",
+                username = username,
+                email = email,
+                timestamp = System.currentTimeMillis(),
+                clientId = clientId ?: ""
+            )
+        )
+        
+        // Enviar la notificación a las sesiones filtradas
+        filteredSessions.forEachIndexed { index, session ->
+            try {
+                session.send(Frame.Text(deletionMessage))
+                notificationCount++
+                println("✅ Notificación #${index + 1} enviada correctamente")
+            } catch (e: ClosedSendChannelException) {
+                println("❌ Error enviando notificación (canal cerrado) a la sesión #${index + 1}: ${e.message}")
+                unregisterSession(session)
+            } catch (e: Exception) {
+                println("❌ Error enviando notificación a la sesión #${index + 1}: ${e.message}")
+            }
+        }
+        
+        println("📤 Total de notificaciones de eliminación enviadas: $notificationCount")
+    }
+
     /**
      * Get the number of active connections
      */

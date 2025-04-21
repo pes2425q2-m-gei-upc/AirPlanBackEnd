@@ -1,8 +1,10 @@
 package org.example.repositories
 
 import org.example.database.UsuarioTable
+import org.example.database.ClienteTable
 import org.example.enums.Idioma
 import org.example.models.Usuario
+import org.example.models.UserTypeInfo // Added import for UserTypeInfo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -109,6 +111,52 @@ class UsuarioRepository {
                 it[UsuarioTable.email] = newEmail
             }
             filasActualizadas > 0
+        }
+    }
+
+    // Obtener el tipo de usuario y su nivel (si es cliente)
+    fun obtenerTipoYNivelUsuario(username: String): UserTypeInfo {
+        return transaction {
+            // Primero verificamos si el usuario existe y si es admin
+            val usuario = UsuarioTable
+                .select { UsuarioTable.username eq username }
+                .map {
+                    Pair(
+                        it[UsuarioTable.username],
+                        it[UsuarioTable.isAdmin]
+                    )
+                }.singleOrNull()
+
+            if (usuario == null) {
+                UserTypeInfo(
+                    tipo = "error",
+                    username = username,
+                    error = "Usuario no encontrado"
+                )
+            } else {
+                val isAdmin = usuario.second
+                
+                if (isAdmin) {
+                    // Si es admin, devolvemos tipo "admin" sin nivel
+                    UserTypeInfo(
+                        tipo = "admin",
+                        username = usuario.first
+                    )
+                } else {
+                    // Si no es admin, es cliente, buscamos su nivel
+                    val clientInfo = ClienteTable
+                        .select { ClienteTable.username eq username }
+                        .map {
+                            it[ClienteTable.nivell]
+                        }.singleOrNull()
+                    
+                    UserTypeInfo(
+                        tipo = "cliente",
+                        username = usuario.first,
+                        nivell = clientInfo ?: 0
+                    )
+                }
+            }
         }
     }
 }

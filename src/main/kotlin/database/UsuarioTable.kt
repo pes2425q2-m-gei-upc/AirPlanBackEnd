@@ -2,7 +2,7 @@ package org.example.database
 
 import org.jetbrains.exposed.sql.Table
 
-object UsuarioTable : Table("usuaristemp") {
+object UsuarioTable : Table("usuaris") {
     val username = varchar("username", 100)
     val nom = varchar("nom", 100)
     val email = varchar("email", 100).uniqueIndex()

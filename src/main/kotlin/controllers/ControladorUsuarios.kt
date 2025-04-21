@@ -2,6 +2,7 @@ package org.example.controllers
 
 import org.example.repositories.UsuarioRepository
 import org.example.models.*
+import org.example.models.UserTypeInfo  // Add import for UserTypeInfo
 import org.example.enums.Idioma
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.websocket.WebSocketManager
@@ -37,7 +38,23 @@ class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
     }
 
     // Eliminar usuario por email
-    fun eliminarUsuario(email: String): Boolean {
+    fun eliminarUsuario(email: String, clientId: String? = null): Boolean {
+        // Obtener el usuario antes de eliminarlo para tener su username
+        val usuario = usuarioRepository.obtenerUsuarioPorEmail(email)
+        
+        // Si encontramos el usuario, notificamos antes de eliminarlo
+        if (usuario != null) {
+            // Notificar a otros dispositivos que la cuenta ha sido eliminada
+            runBlocking {
+                WebSocketManager.instance.notifyAccountDeleted(
+                    username = usuario.username,
+                    email = email,
+                    clientId = clientId // Pasamos el clientId para evitar notificar al mismo dispositivo
+                )
+            }
+        }
+        
+        // Procedemos con la eliminación
         return usuarioRepository.eliminarUsuario(email)
     }
 
@@ -157,5 +174,10 @@ class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
         }
         
         return success
+    }
+
+    // Obtener tipo de usuario (admin o cliente) y nivel del cliente
+    fun obtenerTipoYNivelUsuario(username: String): UserTypeInfo {
+        return usuarioRepository.obtenerTipoYNivelUsuario(username)
     }
 }
