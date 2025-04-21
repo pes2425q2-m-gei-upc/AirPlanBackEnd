@@ -17,6 +17,8 @@ import org.example.routes.usuarioRoutes
 import org.example.routes.uploadImageRoute
 import org.example.routes.configureWebSockets
 import org.example.routes.webSocketRoutes
+// Eliminada la importación de authRoutes
+import org.example.services.FirebaseAdminService
 import io.ktor.server.http.content.*
 import java.io.File
 
@@ -54,12 +56,17 @@ fun main() {
             val usuarioRepository = UsuarioRepository()
             val controladorUsuario = ControladorUsuarios(usuarioRepository)
 
+            // Inicializar Firebase Admin SDK al inicio
+            FirebaseAdminService.initialize()
+
             // Configuració de rutes
             routing {
                 usuarioRoutes()
                 activitatRoutes()
                 uploadImageRoute() // Añadida la ruta para subir imágenes
                 webSocketRoutes() // Registrar rutas WebSocket
+                
+                // Eliminada la llamada a authRoutes()
                 
                 // Configurar ruta estática para servir archivos de imagen
                 static("uploads") {

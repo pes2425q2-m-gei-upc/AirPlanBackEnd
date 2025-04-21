@@ -24,6 +24,9 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
+    // HikariCP para pooling de conexiones
+    implementation("com.zaxxer:HikariCP:5.0.1")
+
     // Exposed (ORM para Kotlin)
     implementation("org.jetbrains.exposed:exposed-core:0.45.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.45.0")
@@ -33,6 +36,11 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.45.0")
     implementation("org.jetbrains.exposed:exposed-java-time:0.45.0")
 
+    // Firebase Admin SDK para manejar la autenticación desde el backend
+    implementation("com.google.firebase:firebase-admin:9.2.0")
+    
+    // JavaMail para enviar correos electrónicos personalizados
+    implementation("com.sun.mail:javax.mail:1.6.2")
 
     // Driver de base de datos (elige uno)
     implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL

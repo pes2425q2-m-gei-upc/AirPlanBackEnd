@@ -7,7 +7,8 @@ import io.ktor.server.routing.*
 import io.ktor.http.*
 import org.example.controllers.ControladorUsuarios
 import org.example.models.Usuario
-import org.example.models.UserTypeInfo // Added import for UserTypeInfo
+import org.example.models.UserTypeInfo
+import org.example.models.EmailUpdateResponse // Añadir importación
 import org.example.repositories.UsuarioRepository
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -16,6 +17,9 @@ import org.jetbrains.exposed.sql.update
 import org.example.database.UsuarioTable
 import kotlinx.coroutines.runBlocking
 import org.example.websocket.WebSocketManager
+import org.example.services.FirebaseAdminService // Importación añadida
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 fun Route.usuarioRoutes() {
     val usuarioController = ControladorUsuarios(UsuarioRepository())
@@ -105,33 +109,6 @@ fun Route.usuarioRoutes() {
                     }
                     
                     if (usuario != null) {
-                        // Comprobar si el email de Firebase coincide con el de la base de datos
-                        val firebaseEmail = email // El email que llega desde Firebase
-                        val databaseEmail = usuario.email // Email en la base de datos
-                        
-                        if (firebaseEmail != databaseEmail) {
-                            println("⚠️ Correo en Firebase diferente al de la base de datos durante login")
-                            println("   - Firebase: $firebaseEmail")
-                            println("   - Base de datos: $databaseEmail")
-                            if (clientId != null) {
-                                println("🆔 Cliente ID: $clientId (este dispositivo no recibirá la notificación)")
-                            }
-                            
-                            // Actualizar el correo en la base de datos pasando el clientId
-                            val emailActualizado = usuarioController.actualizarCorreoDirecto(databaseEmail, firebaseEmail, clientId)
-                            if (emailActualizado) {
-                                println("✅ Correo actualizado correctamente durante el login")
-                                
-                                // Enviar notificación a otros dispositivos - no es necesario hacerlo explícitamente aquí
-                                // ya que actualizarCorreoDirecto ya incluye el envío de notificaciones WebSocket
-                                
-                                // Actualizar el objeto usuario con el nuevo email
-                                usuario.email = firebaseEmail
-                            } else {
-                                println("❌ Error actualizando correo durante el login")
-                            }
-                        }
-                        
                         // Actualizar el atributo sesionIniciada a true
                         usuario.sesionIniciada = true
                         
@@ -260,19 +237,56 @@ fun Route.usuarioRoutes() {
                         println("🆔 Cliente ID: $clientId (este dispositivo no recibirá la notificación)")
                     }
                     
-                    val resultado = usuarioController.actualizarCorreoDirecto(oldEmail, newEmail, clientId)
+                    // Actualizar el correo en la base de datos
+                    val dbResult = usuarioController.actualizarCorreoDirecto(oldEmail, newEmail, clientId)
                     
-                    if (resultado) {
-                        call.respond(HttpStatusCode.OK, "Correo actualizado correctamente en la base de datos")
+                    if (dbResult) {
+                        // Actualizar también en Firebase usando el nuevo método que genera token personalizado
+                        if (FirebaseAdminService.isInitialized()) {
+                            val firebaseResult = FirebaseAdminService.updateEmailAndCreateCustomToken(oldEmail, newEmail)
+                            
+                            if (firebaseResult["success"] == true) {
+                                // Devolver el token personalizado al frontend usando EmailUpdateResponse
+                                call.respond(HttpStatusCode.OK, EmailUpdateResponse(
+                                    success = true,
+                                    message = "Correo actualizado correctamente",
+                                    customToken = firebaseResult["customToken"]?.toString()
+                                ))
+                            } else {
+                                // Si falla la actualización en Firebase, pero funcionó en DB
+                                call.respond(HttpStatusCode.OK, EmailUpdateResponse(
+                                    success = true,
+                                    message = "Correo actualizado en base de datos pero no en Firebase",
+                                    error = firebaseResult["error"]?.toString()
+                                ))
+                            }
+                        } else {
+                            println("⚠️ Firebase Admin SDK no inicializado, no se puede actualizar email")
+                            call.respond(HttpStatusCode.OK, EmailUpdateResponse(
+                                success = true,
+                                message = "Correo actualizado en base de datos",
+                                error = "Firebase Admin SDK no inicializado"
+                            ))
+                        }
                     } else {
-                        call.respond(HttpStatusCode.NotFound, "No se pudo actualizar el correo")
+                        call.respond(HttpStatusCode.NotFound, EmailUpdateResponse(
+                            success = false,
+                            error = "No se pudo actualizar el correo en la base de datos"
+                        ))
                     }
                 } else {
-                    call.respond(HttpStatusCode.BadRequest, "Datos incompletos")
+                    call.respond(HttpStatusCode.BadRequest, EmailUpdateResponse(
+                        success = false,
+                        error = "Datos incompletos"
+                    ))
                 }
             } catch (e: Exception) {
-                println("Error actualizando correo directamente: ${e.message}")
-                call.respond(HttpStatusCode.InternalServerError, "Error: ${e.message}")
+                println("❌ Error actualizando correo directamente: ${e.message}")
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, EmailUpdateResponse(
+                    success = false,
+                    error = "Error: ${e.message}"
+                ))
             }
         }
 
@@ -327,6 +341,202 @@ fun Route.usuarioRoutes() {
                         error = "Debe proporcionar un nombre de usuario"
                     )
                 )
+            }
+        }
+
+        // Endpoint unificado para actualizar todo el perfil incluyendo correo electrónico
+        post("/updateFullProfile") {
+            try {
+                val request = call.receive<Map<String, String>>()
+                val currentEmail = request["currentEmail"]
+                val newEmail = request["newEmail"]
+                val password = request["password"] // Para reautenticación
+                val clientId = request["clientId"] // Para notificaciones
+                val username = request["username"]
+                val oldUsername = request["oldUsername"]
+                val nom = request["nom"]
+                val idioma = request["idioma"]
+                val photoURL = request["photoURL"]
+                
+                if (currentEmail == null) {
+                    call.respond(HttpStatusCode.BadRequest, EmailUpdateResponse(
+                        success = false,
+                        error = "El correo electrónico actual es obligatorio"
+                    ))
+                    return@post
+                }
+                
+                // Preparamos un mapa con los datos actualizados (excluyendo los campos de control)
+                val updatedData = mutableMapOf<String, String>()
+                if (username != null) updatedData["username"] = username
+                if (nom != null) updatedData["nom"] = nom
+                if (idioma != null) updatedData["idioma"] = idioma
+                if (photoURL != null) updatedData["photoURL"] = photoURL
+                
+                var emailChanged = false
+                var customToken: String? = null
+                
+                // Si hay un cambio de correo, generamos primero el token y luego actualizamos el correo
+                if (newEmail != null && currentEmail != newEmail) {
+                    emailChanged = true
+                    println("📱 Actualizando correo en perfil completo: $currentEmail → $newEmail")
+                    
+                    // Generar token personalizado y actualizar correo usando FirebaseAdminService
+                    if (FirebaseAdminService.isInitialized()) {
+                        val firebaseResult = FirebaseAdminService.updateEmailAndCreateCustomToken(currentEmail, newEmail)
+                        customToken = firebaseResult["customToken"]?.toString()
+                        
+                        if (firebaseResult["success"] == true) {
+                            println("✅ Correo actualizado en Firebase Auth y token personalizado generado")
+                        } else {
+                            println("❌ Error al actualizar correo en Firebase Auth: ${firebaseResult["error"]}")
+                        }
+                    } else {
+                        println("⚠️ Firebase Admin SDK no inicializado, no se puede actualizar email en Firebase Auth")
+                    }
+                    
+                    // Actualizar el correo en la base de datos
+                    val dbResult = usuarioController.actualizarCorreoDirecto(currentEmail, newEmail, clientId)
+                    
+                    if (!dbResult) {
+                        call.respond(HttpStatusCode.InternalServerError, EmailUpdateResponse(
+                            success = false,
+                            error = "No se pudo actualizar el correo en la base de datos"
+                        ))
+                        return@post
+                    }
+                }
+                
+                // Actualizamos el resto del perfil
+                val profileEmail = if (emailChanged) newEmail!! else currentEmail
+                val profileResult = usuarioController.modificarUsuario(
+                    currentEmail = profileEmail,
+                    nuevoNom = nom,
+                    nuevoUsername = username, 
+                    nuevoIdioma = idioma,
+                    nuevoCorreo = null // El correo ya fue actualizado si era necesario
+                )
+                
+                if (profileResult) {
+                    // Notificar a otros dispositivos sobre la actualización del perfil (opcional)
+                    if (clientId != null && oldUsername != null) {
+                        try {
+                            if (emailChanged) {
+                                println("✅ Notificación de cambio de correo ya enviada previamente")
+                            } else {
+                                runBlocking {
+                                    WebSocketManager.instance.notifyProfileUpdate(
+                                        oldUsername,
+                                        profileEmail,
+                                        updatedData.keys.toList(),
+                                        clientId
+                                    )
+                                }
+                            }
+                        } catch (e: Exception) {
+                            println("⚠️ Error enviando notificación de actualización de perfil: ${e.message}")
+                        }
+                    }
+                    
+                    // Respuesta exitosa con token si se cambió el correo
+                    call.respond(HttpStatusCode.OK, EmailUpdateResponse(
+                        success = true,
+                        message = if (emailChanged) "Perfil actualizado y correo modificado correctamente" else "Perfil actualizado correctamente",
+                        customToken = customToken
+                    ))
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, EmailUpdateResponse(
+                        success = false,
+                        error = "Error al actualizar el perfil",
+                        customToken = customToken // Devolvemos el token aunque haya fallado la actualización del perfil
+                    ))
+                }
+            } catch (e: Exception) {
+                println("❌ Error en actualización completa de perfil: ${e.message}")
+                e.printStackTrace()
+                call.respond(HttpStatusCode.InternalServerError, EmailUpdateResponse(
+                    success = false,
+                    error = "Error: ${e.message}"
+                ))
+            }
+        }
+    }
+    
+    // Nuevo endpoint para verificar el cambio de correo electrónico con parámetros en la URL
+    route("/api/usuaris") {
+        // Endpoint con parámetros de consulta (mantener para retrocompatibilidad)
+        get("/verify-email") {
+            try {
+                // Obtener los parámetros del enlace
+                val oldEmail = call.request.queryParameters["oldEmail"]
+                val newEmail = call.request.queryParameters["newEmail"]
+                val oobCode = call.request.queryParameters["oobCode"] // Código de verificación de Firebase
+                
+                if (oldEmail != null && newEmail != null) {
+                    println("📧 Verificación de correo recibida (query): $oldEmail → $newEmail")
+                    
+                    // 1. Actualizar el correo en la base de datos
+                    val dbUpdateResult = usuarioController.actualizarCorreoDirecto(oldEmail, newEmail)
+                    
+                    if (dbUpdateResult) {
+                        // 2. Construir la URL para redirigir al usuario a una página de éxito en el frontend
+                        // Esta URL debe ser una página en tu aplicación frontend que maneje la finalización del proceso
+                        val redirectUrl = "http://localhost:8000/#/email-verification-success?email=$newEmail"
+                        call.respondRedirect(redirectUrl)
+                    } else {
+                        // Si falla la actualización en la base de datos, redirigir a una página de error
+                        val errorUrl = "http://localhost:8000/#/email-verification-error?reason=database"
+                        call.respondRedirect(errorUrl)
+                    }
+                } else {
+                    // Parámetros incompletos
+                    val errorUrl = "http://localhost:8000/#/email-verification-error?reason=missing-params"
+                    call.respondRedirect(errorUrl)
+                }
+            } catch (e: Exception) {
+                println("❌ Error en la verificación del correo: ${e.message}")
+                // Redirigir a una página de error con detalles
+                val errorUrl = "http://localhost:8000/#/email-verification-error?reason=server-error"
+                call.respondRedirect(errorUrl)
+            }
+        }
+        
+        // Nuevo endpoint que usa segmentos de ruta en lugar de parámetros de consulta
+        get("/verify-email/{oldEmail}/{newEmail}") {
+            try {
+                // Obtener los parámetros de la ruta y decodificarlos correctamente
+                val oldEmail = call.parameters["oldEmail"]?.let { 
+                    java.net.URLDecoder.decode(it, "UTF-8")
+                }
+                val newEmail = call.parameters["newEmail"]?.let { 
+                    java.net.URLDecoder.decode(it, "UTF-8")
+                }
+                
+                if (oldEmail != null && newEmail != null) {
+                    println("📧 Verificación de correo recibida (path): $oldEmail → $newEmail")
+                    
+                    // 1. Actualizar el correo en la base de datos
+                    val dbUpdateResult = usuarioController.actualizarCorreoDirecto(oldEmail, newEmail)
+                    
+                    if (dbUpdateResult) {
+                        // 2. Construir la URL para redirigir al usuario a una página de éxito en el frontend
+                        val redirectUrl = "http://localhost:8000/#/email-verification-success?email=$newEmail"
+                        call.respondRedirect(redirectUrl)
+                    } else {
+                        // Si falla la actualización en la base de datos, redirigir a una página de error
+                        val errorUrl = "http://localhost:8000/#/email-verification-error?reason=database"
+                        call.respondRedirect(errorUrl)
+                    }
+                } else {
+                    // Parámetros incompletos (no debería ocurrir con segmentos de ruta)
+                    val errorUrl = "http://localhost:8000/#/email-verification-error?reason=missing-params"
+                    call.respondRedirect(errorUrl)
+                }
+            } catch (e: Exception) {
+                println("❌ Error en la verificación del correo: ${e.message}")
+                // Redirigir a una página de error con detalles
+                val errorUrl = "http://localhost:8000/#/email-verification-error?reason=server-error"
+                call.respondRedirect(errorUrl)
             }
         }
     }
