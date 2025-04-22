@@ -121,7 +121,7 @@ fun Route.activitatRoutes() {
         }
         // Check if an activity is a favorite
         get("/favorita/{id}/{username}") {
-            val id = call.parameters["id"]?.toIntOrNull()
+            val id = call.parameters["id"]?.toInt()
             val username = call.parameters["username"]
 
             if (id != null && !username.isNullOrBlank()) {
@@ -133,9 +133,9 @@ fun Route.activitatRoutes() {
         }
 
         // Add an activity as a favorite
-        post("/favorita/añadir/{id}/{username}") {
+        post("/favorita/anadir/{id}/{username}") {
             try {
-                val id = call.parameters["id"]?.toIntOrNull()
+                val id = call.parameters["id"]?.toInt()
                 val username = call.parameters["username"]
                 val dataAfegida = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
 
@@ -157,7 +157,7 @@ fun Route.activitatRoutes() {
         // Remove an activity from favorites
         delete("/favorita/eliminar/{id}/{username}") {
             try {
-                val id = call.parameters["id"]?.toIntOrNull()
+                val id = call.parameters["id"]?.toInt()
                 val username = call.parameters["username"]
 
                 if (id != null && !username.isNullOrBlank()) {
