@@ -2,12 +2,14 @@ package org.example.controllers
 
 import kotlinx.datetime.LocalDateTime
 import org.example.models.Activitat
+import org.example.models.ParticipantsActivitats
+import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Localitzacio
 import java.sql.Timestamp
 import repositories.ActivitatRepository
 import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
-class ControladorActivitat (private val ActivitatRepository: ActivitatRepository) {
+class ControladorActivitat (private val ActivitatRepository: ActivitatRepository, private val ParticipantsActivitatsRepository: ParticipantsActivitatsRepository) {
     private val activitats = mutableListOf<Activitat>()
 
     fun obtenirActivitats(): List<Activitat> {
@@ -24,9 +26,26 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
             dataFi = dataFi,
             creador = creador
         )
-            ActivitatRepository.afegirActivitat(novaActivitat)
-        activitats.add(novaActivitat) //solo si no hay problemas con la base de datos
-        //TODO: canviar id despres de afegir a la base de dades
+
+        val activitatId = ActivitatRepository.afegirActivitat(novaActivitat)
+
+        if (activitatId != -1) {
+            novaActivitat.id = activitatId // Actualizar el ID de la actividad
+            activitats.add(novaActivitat) //solo si no hay problemas con la base de datos
+            // Añadir el creador como primer participante
+            val participant = ParticipantsActivitats(
+                id_act = activitatId,
+                us_participant = creador
+            )
+            val afegit = ParticipantsActivitatsRepository.afegirParticipant(participant)
+            if (afegit) {
+                println("El creador ${creador} ha sido añadido como participante.")
+            } else {
+                println("Error al añadir el creador como participante.")
+            }
+        } else {
+            throw Exception("Error al crear la actividad")
+        }
     }
 
     fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime): Boolean {

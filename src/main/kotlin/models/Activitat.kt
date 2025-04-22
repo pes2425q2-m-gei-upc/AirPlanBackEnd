@@ -12,14 +12,13 @@ import java.sql.Timestamp
 
 @Serializable
 class Activitat(
-    val id: Int,
+    var id: Int,
     var nom: String,
     var descripcio: String,
     @Contextual var ubicacio: Localitzacio,
     var dataInici: LocalDateTime,
     var dataFi: LocalDateTime,
     var creador: String,
-    var participants: MutableList<String> = mutableListOf(creador),
 ) {
 
     fun modificarActivitat(

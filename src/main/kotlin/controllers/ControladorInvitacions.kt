@@ -1,29 +1,33 @@
 package org.example.controllers
 
-import org.example.models.Activitat
-import org.example.models.Cliente
 import org.example.models.Invitacio
+import org.example.models.ParticipantsActivitats
+import org.example.repositories.InvitacioRepository
+import org.example.repositories.ParticipantsActivitatsRepository
 
-class ControladorInvitacions {
-    private val invitacions = mutableListOf<Invitacio>()
-
+class ControladorInvitacions(
+    private val participantsActivitatsRepository: ParticipantsActivitatsRepository,
+    private val invitacionsRepository: InvitacioRepository
+) {
     // Crear una nueva invitación
-    fun crearInvitacio(activitat: Activitat, anfitrio: Cliente, destinatario: Cliente): Boolean {
-        if (anfitrio.username != activitat.creador) {
+    fun crearInvitacio(idAct: Int, usAnfitrio: String, usDestinatari: String): Boolean {
+        // Verificar que el anfitrión sea el creador de la actividad
+        if (!participantsActivitatsRepository.esCreador(idAct, usAnfitrio)) {
             println("Solo el creador de la actividad puede enviar invitaciones.")
             return false
         }
-        val invitacio = Invitacio(activitat, anfitrio, destinatario)
-        invitacions.add(invitacio)
-        println("Invitación creada para ${destinatario.username}.")
+        val invitacio = Invitacio(id_act = idAct, us_anfitrio = usAnfitrio, us_destinatari = usDestinatari)
+        invitacionsRepository.afegirInvitacio(invitacio)
+        println("Invitación creada para $usDestinatari.")
         return true
     }
 
     // Aceptar una invitación
     fun acceptarInvitacio(invitacio: Invitacio): Boolean {
-        if (invitacions.remove(invitacio)) {
-            invitacio.activitat.participants.add(invitacio.destinatario.username)
-            println("${invitacio.destinatario.username} ha sido añadido a la actividad.")
+        if (invitacionsRepository.eliminarInvitacio(invitacio)) {
+            val participant = ParticipantsActivitats(id_act = invitacio.id_act, us_participant = invitacio.us_destinatari)
+            participantsActivitatsRepository.afegirParticipant(participant)
+            println("${invitacio.us_destinatari} ha sido añadido a la actividad.")
             return true
         }
         println("La invitación no existe.")
@@ -32,8 +36,8 @@ class ControladorInvitacions {
 
     // Rechazar una invitación
     fun rebutjarInvitacio(invitacio: Invitacio): Boolean {
-        if (invitacions.remove(invitacio)) {
-            println("La invitación para ${invitacio.destinatario.username} ha sido rechazada.")
+        if (invitacionsRepository.eliminarInvitacio(invitacio)) {
+            println("La invitación para ${invitacio.us_destinatari} ha sido rechazada.")
             return true
         }
         println("La invitación no existe.")
@@ -42,6 +46,6 @@ class ControladorInvitacions {
 
     // Listar todas las invitaciones
     fun listarInvitacions(): List<Invitacio> {
-        return invitacions
+        return invitacionsRepository.obtenirTotesInvitacions()
     }
 }

@@ -3,8 +3,7 @@ package org.example.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-class Invitacio(
+class ParticipantsActivitats(
     val id_act: Int,
-    val us_anfitrio: String,
-    val us_destinatari: String,
+    val us_participant: String
 )
