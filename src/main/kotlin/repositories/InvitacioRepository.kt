@@ -1,6 +1,7 @@
 package org.example.repositories
 
 import org.example.database.InvitacioTable
+import org.example.database.ActivitatTable
 import org.example.models.Invitacio
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -36,6 +37,14 @@ class InvitacioRepository {
                     us_destinatari = row[InvitacioTable.ussername_convidat]
                 )
             }
+        }
+    }
+
+    fun obtenirNomsActivitatsAmbInvitacionsPerUsuari(username: String): List<String> {
+        return transaction {
+            (InvitacioTable innerJoin ActivitatTable)
+                .select { InvitacioTable.ussername_convidat eq username }
+                .map { row -> row[ActivitatTable.nom] }
         }
     }
 }

@@ -61,4 +61,11 @@ class UsuarioRepository {
         }
     }
 
+    fun existeUsuario(username: String): Boolean {
+        return transaction {
+            UsuarioTable
+                .select { UsuarioTable.username eq username }
+                .count() > 0
+        }
+    }
 }

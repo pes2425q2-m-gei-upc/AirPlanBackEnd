@@ -4,18 +4,26 @@ import org.example.models.Invitacio
 import org.example.models.ParticipantsActivitats
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
+import org.example.repositories.UsuarioRepository
 
 class ControladorInvitacions(
     private val participantsActivitatsRepository: ParticipantsActivitatsRepository,
-    private val invitacionsRepository: InvitacioRepository
+    private val invitacionsRepository: InvitacioRepository,
+    private val usuarioRepository: UsuarioRepository
 ) {
     // Crear una nueva invitación
     fun crearInvitacio(idAct: Int, usAnfitrio: String, usDestinatari: String): Boolean {
-        // Verificar que el anfitrión sea el creador de la actividad
+        if (!usuarioRepository.existeUsuario(usDestinatari)) {
+            println("El usuario destinatario no existe.")
+            return false
+        }
+
+        // Verify that the host is the creator of the activity
         if (!participantsActivitatsRepository.esCreador(idAct, usAnfitrio)) {
             println("Solo el creador de la actividad puede enviar invitaciones.")
             return false
         }
+
         val invitacio = Invitacio(id_act = idAct, us_anfitrio = usAnfitrio, us_destinatari = usDestinatari)
         invitacionsRepository.afegirInvitacio(invitacio)
         println("Invitación creada para $usDestinatari.")
@@ -47,5 +55,9 @@ class ControladorInvitacions(
     // Listar todas las invitaciones
     fun listarInvitacions(): List<Invitacio> {
         return invitacionsRepository.obtenirTotesInvitacions()
+    }
+
+    fun obtenirNomsActivitatsAmbInvitacionsPerUsuari(username: String): List<String> {
+        return invitacionsRepository.obtenirNomsActivitatsAmbInvitacionsPerUsuari(username)
     }
 }
