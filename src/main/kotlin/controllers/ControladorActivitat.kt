@@ -60,13 +60,8 @@ class ControladorActivitat(
     }
 
     fun afegirActivitatFavorita(idActivitat: Int, username: String, dataAfegida: LocalDateTime): Boolean {
-        val activitat = activitats.find { it.id == idActivitat }
-        return if (activitat != null) {
-            ActivitatFavoritaRepository.afegirActivitatFavorita(idActivitat, username, dataAfegida)
-            true
-        } else {
-            false // Activity not found
-        }
+        return ActivitatFavoritaRepository.afegirActivitatFavorita(idActivitat, username, dataAfegida)
+
     }
 
     fun eliminarActivitatFavorita(idActivitat: Int, username: String): Boolean {
