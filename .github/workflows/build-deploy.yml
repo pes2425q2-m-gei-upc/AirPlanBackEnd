@@ -18,7 +18,7 @@ jobs:
           mkdir -p src/main/resources
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > src/main/resources/firebase-service-account.json
       - run: ./gradlew build
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: backend-jar
           path: build/libs/*.jar
@@ -27,7 +27,7 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: backend-jar
           path: build/libs/
