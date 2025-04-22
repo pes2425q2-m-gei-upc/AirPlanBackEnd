@@ -9,9 +9,10 @@ import org.example.controllers.ControladorInvitacions
 import org.example.models.Invitacio
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
+import org.example.repositories.UsuarioRepository
 
 fun Route.invitacioRoutes() {
-    val controladorInvitacions = ControladorInvitacions(ParticipantsActivitatsRepository(), InvitacioRepository())
+    val controladorInvitacions = ControladorInvitacions(ParticipantsActivitatsRepository(), InvitacioRepository(), UsuarioRepository())
 
     route("/api/invitacions") {
 
