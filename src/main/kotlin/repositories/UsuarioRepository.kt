@@ -65,10 +65,12 @@ class UsuarioRepository {
 
     // Actualizar usuario
     fun actualizarSesion(email: String, sesion: Boolean) {
-        UsuarioTable
-            .update({ UsuarioTable.email eq email }) {
-                it[sesionIniciada] = sesion
-            }
+        transaction {
+            UsuarioTable
+                .update({ UsuarioTable.email eq email }) {
+                    it[sesionIniciada] = sesion
+                }
+        }
     }
 
     fun cerrarSesion(email: String): Boolean {

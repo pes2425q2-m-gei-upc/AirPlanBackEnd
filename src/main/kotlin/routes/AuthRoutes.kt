@@ -1,1 +1,0 @@
-// Este archivo se ha eliminado porque causaba errores de compilación y no se utilizaba en el frontend.

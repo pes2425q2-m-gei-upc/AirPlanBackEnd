@@ -144,12 +144,4 @@ fun Route.webSocketRoutes() {
             ))
         }
     }
-    
-    // Endpoint to check WebSocket server status
-    get("/api/websocket-status") {
-        call.respond(ApiResponse(
-            success = true,
-            connections = webSocketManager.getActiveConnectionsCount()
-        ))
-    }
 }

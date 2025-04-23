@@ -44,6 +44,15 @@ dependencies {
 
     // Driver de base de datos (elige uno)
     implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL
+    
+    // Dependencias para testing
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+    testImplementation("org.mockito:mockito-core:5.10.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("com.h2database:h2:2.2.224") // H2 Database para tests
+    testImplementation("io.ktor:ktor-server-test-host:2.3.8") // Para tests de endpoints
 }
 
 tasks.test {
