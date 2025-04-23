@@ -71,4 +71,8 @@ class ControladorActivitat(
     fun comprovarActivitatFavorita(idActivitat: Int, username: String): Boolean {
         return ActivitatFavoritaRepository.comprovarActivitatFavorita(idActivitat, username)
     }
+
+    fun obtenirActivitatsFavoritesPerUsuari(username: String): List<Activitat> {
+        return ActivitatFavoritaRepository.obtenirActivitatsFavoritesPerUsuari(username)
+    }
 }

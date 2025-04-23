@@ -174,5 +174,17 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Error processing the request")
             }
         }
+
+        // Get all favorite activities for a user
+        get("/favoritas/{username}") {
+            val username = call.parameters["username"]
+
+            if (!username.isNullOrBlank()) {
+                val activitatsFavorites = activitatController.obtenirActivitatsFavoritesPerUsuari(username)
+                call.respond(HttpStatusCode.OK, activitatsFavorites)
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Username is invalid")
+            }
+        }
     }
 }
