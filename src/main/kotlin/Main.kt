@@ -14,6 +14,7 @@ import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
 import org.example.routes.activitatRoutes
 import org.example.routes.usuarioRoutes
+import org.example.routes.solicitudRoutes
 
 
 fun main() {
@@ -52,6 +53,8 @@ fun main() {
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                solicitudRoutes()
+
                 get("/") {
                     call.respond(
                         """
