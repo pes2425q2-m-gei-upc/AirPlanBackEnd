@@ -1,10 +1,9 @@
 package org.example.enums
 
 enum class TipusVehicle {
-    Coche,
+    Cotxe,
     Moto,
-    Metro,
-    Autobus,
     Bicicleta,
-    Cap
+    TransportPublic,
+    Cap;
 }

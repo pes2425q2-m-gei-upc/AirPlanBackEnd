@@ -22,6 +22,10 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.14")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    implementation("io.ktor:ktor-client-core:2.3.2")
+    implementation("io.ktor:ktor-client-cio:2.3.2") // or another engine like okhttp
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.2")
 
     // Exposed (ORM para Kotlin)
     implementation("org.jetbrains.exposed:exposed-core:0.45.0")
@@ -57,4 +61,19 @@ tasks.jar {
         exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA")
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register("generateConfig") {
+    doLast {
+        val configFile = file("build/generated/kotlin/Config.kt")
+        configFile.parentFile.mkdirs()
+        configFile.writeText("""
+            package org.example.config
+
+            object Config {
+                val HERE_API_KEY = System.getenv("HERE_API_KEY") ?: ""
+                val ORS_API_KEY = System.getenv("ORS_API_KEY") ?: ""
+            }
+        """.trimIndent())
+    }
 }

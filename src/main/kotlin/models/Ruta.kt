@@ -1,9 +1,9 @@
 package org.example.models
-import ch.qos.logback.core.net.server.Client
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 import org.example.enums.TipusVehicle
 
+@Serializable
 class Ruta (
     var origen: Localitzacio,
     var desti: Localitzacio,
@@ -14,6 +14,4 @@ class Ruta (
     var duracioMax: Int,
     var tipusVehicle: TipusVehicle
 ) {
-
-
 }

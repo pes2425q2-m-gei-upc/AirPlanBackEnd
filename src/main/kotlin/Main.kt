@@ -13,6 +13,7 @@ import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
 import org.example.routes.activitatRoutes
+import org.example.routes.rutaRoutes
 import org.example.routes.usuarioRoutes
 
 
@@ -52,6 +53,7 @@ fun main() {
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                rutaRoutes()
                 get("/") {
                     call.respond(
                         """
