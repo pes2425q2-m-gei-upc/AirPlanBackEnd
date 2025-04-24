@@ -22,7 +22,7 @@ dependencies {
     implementation("io.ktor:ktor-server-websockets:2.3.8") // WebSockets support
     implementation("ch.qos.logback:logback-classic:1.4.14")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // HikariCP para pooling de conexiones
     implementation("com.zaxxer:HikariCP:5.0.1")

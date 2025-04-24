@@ -12,15 +12,10 @@ import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
-import org.example.routes.activitatRoutes
-import org.example.routes.missatgeRoutes
-import org.example.routes.usuarioRoutes
-import org.example.routes.uploadImageRoute
-import org.example.routes.configureWebSockets
-import org.example.routes.webSocketRoutes
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
 import io.ktor.server.http.content.*
+import org.example.routes.*
 import java.io.File
 
 fun main() {
@@ -65,6 +60,7 @@ fun main() {
                 usuarioRoutes()
                 activitatRoutes()
                 missatgeRoutes()
+                websocketChatRoutes()
                 uploadImageRoute() // Añadida la ruta para subir imágenes
                 webSocketRoutes() // Registrar rutas WebSocket
                 
