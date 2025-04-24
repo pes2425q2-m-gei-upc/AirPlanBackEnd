@@ -21,8 +21,10 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:2.3.8") // Dependencia CORS
     implementation("io.ktor:ktor-server-websockets:2.3.8") // WebSockets support
     implementation("ch.qos.logback:logback-classic:1.4.14")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+
+    // Ktor Client Content Negotiation (Added)
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
 
     // HikariCP para pooling de conexiones
     implementation("com.zaxxer:HikariCP:5.0.1")
@@ -53,10 +55,18 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.10")
     testImplementation("com.h2database:h2:2.2.224") // H2 Database para tests
     testImplementation("io.ktor:ktor-server-test-host:2.3.8") // Para tests de endpoints
+    // Ktor Client Core for testing (Added) - Needed for createClient
+    testImplementation("io.ktor:ktor-client-core:2.3.8")
+    // Ktor Client Engine (e.g., CIO) for testing (Added) - Needed for createClient
+    testImplementation("io.ktor:ktor-client-cio:2.3.8")
 }
 
 tasks.test {
     useJUnitPlatform()
+    reports {
+        junitXml.required.set(true) // Habilitar informe en formato XML
+        html.required.set(true) // Habilitar informe en formato HTML
+    }
 }
 
 application {

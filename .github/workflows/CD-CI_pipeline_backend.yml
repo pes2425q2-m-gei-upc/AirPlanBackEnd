@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - feature/32_editar_perfil
+      - release
   pull_request:
     branches:
       - main
@@ -26,7 +26,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Create Firebase Credentials (only on feature branch)
-        if: github.ref == 'refs/heads/feature/32_editar_perfil'
+        if: github.ref == 'refs/heads/release'
         run: |
           mkdir -p src/main/resources
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > src/main/resources/firebase-service-account.json
@@ -52,14 +52,14 @@ jobs:
         run: ./gradlew test
 
       - name: Upload artifact (only on feature branch)
-        if: github.ref == 'refs/heads/feature/32_editar_perfil'
+        if: github.ref == 'refs/heads/release'
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
           path: build/libs/*.jar
 
   deploy:
-    if: github.ref == 'refs/heads/feature/32_editar_perfil'
+    if: github.ref == 'refs/heads/release'
     needs: build
     runs-on: self-hosted
     steps:

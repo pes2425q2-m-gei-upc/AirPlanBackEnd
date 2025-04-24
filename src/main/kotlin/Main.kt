@@ -19,7 +19,7 @@ import org.example.routes.configureWebSockets
 import org.example.routes.webSocketRoutes
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
-import io.ktor.server.http.content.*
+import io.ktor.server.http.content.* // Keep this import for staticFiles/staticResources
 import java.io.File
 
 fun main() {
@@ -68,10 +68,15 @@ fun main() {
                 
                 // Eliminada la llamada a authRoutes()
                 
-                // Configurar ruta estática para servir archivos de imagen
-                static("uploads") {
-                    files("uploads")
+                // Configurar ruta estática para servir archivos de imagen (Updated)
+                val uploadsDir = File("uploads").apply { 
+                    if (!exists()) mkdirs() 
                 }
+                staticFiles("/uploads", uploadsDir) {
+                    // Configure default response headers if needed
+                    default("index.html")
+                }
+                
                 get("/") {
                     call.respond(
                         """

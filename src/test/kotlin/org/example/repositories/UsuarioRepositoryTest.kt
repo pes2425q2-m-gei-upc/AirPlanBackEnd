@@ -10,27 +10,40 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import java.sql.Connection
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UsuarioRepositoryTest {
 
     private lateinit var usuarioRepository: UsuarioRepository
     private val testEmail = "test@example.com"
     private val testUsername = "testuser"
+    private lateinit var database: Database
 
-    @BeforeEach
-    fun setUp() {
-        // Configurar base de datos H2 en memoria para tests
-        Database.connect("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
+    @BeforeAll
+    fun setupDatabase() {
+        // Configurar base de datos H2 en memoria para tests con opciones de compatibilidad PostgreSQL
+        database = Database.connect(
+            "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=FALSE",
+            driver = "org.h2.Driver",
+            user = "test",
+            password = ""
+        )
         
         // Establecer el nivel de aislamiento de la transacción
         TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ
-        
-        // Crear las tablas en la base de datos
-        transaction {
+    }
+    
+    @BeforeEach
+    fun setUp() {
+        // Crear las tablas en la base de datos antes de cada test
+        transaction(database) {
+            SchemaUtils.drop(UsuarioTable, ClienteTable)
             SchemaUtils.create(UsuarioTable, ClienteTable)
         }
         
@@ -39,9 +52,11 @@ class UsuarioRepositoryTest {
     
     @AfterEach
     fun tearDown() {
-        // Eliminar las tablas después de cada test
-        transaction {
+        // Limpiar datos después de cada test usando drop y create en lugar de deleteWhere
+        transaction(database) {
+            // En lugar de usar deleteWhere, recreamos las tablas para limpiarlas
             SchemaUtils.drop(UsuarioTable, ClienteTable)
+            SchemaUtils.create(UsuarioTable, ClienteTable)
         }
     }
     
@@ -58,14 +73,18 @@ class UsuarioRepositoryTest {
             isAdmin = false
         )
         
-        // Agregar usuario a la base de datos
-        val resultado = usuarioRepository.agregarUsuario(usuario)
+        // Agregar usuario a la base de datos usando la conexión específica
+        val resultado = transaction(database) {
+            usuarioRepository.agregarUsuario(usuario)
+        }
         
         // Verificar que la operación fue exitosa
         assertTrue(resultado)
         
         // Obtener el usuario recién agregado
-        val usuarioRecuperado = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioRecuperado = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         
         // Verificar que se recuperó correctamente
         assertNotNull(usuarioRecuperado)
@@ -89,15 +108,22 @@ class UsuarioRepositoryTest {
             sesionIniciada = false,
             isAdmin = false
         )
-        usuarioRepository.agregarUsuario(usuario)
+        
+        transaction(database) {
+            usuarioRepository.agregarUsuario(usuario)
+        }
         
         // Obtener usuario existente
-        val usuarioExistente = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioExistente = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         assertNotNull(usuarioExistente)
         assertEquals(testEmail, usuarioExistente?.email)
         
         // Intentar obtener usuario inexistente
-        val usuarioInexistente = usuarioRepository.obtenerUsuarioPorEmail("noexiste@example.com")
+        val usuarioInexistente = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail("noexiste@example.com")
+        }
         assertNull(usuarioInexistente)
     }
     
@@ -113,15 +139,22 @@ class UsuarioRepositoryTest {
             sesionIniciada = false,
             isAdmin = false
         )
-        usuarioRepository.agregarUsuario(usuario)
+        
+        transaction(database) {
+            usuarioRepository.agregarUsuario(usuario)
+        }
         
         // Obtener usuario existente por username
-        val usuarioExistente = usuarioRepository.obtenerUsuarioPorUsername(testUsername)
+        val usuarioExistente = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorUsername(testUsername)
+        }
         assertNotNull(usuarioExistente)
         assertEquals(testUsername, usuarioExistente?.username)
         
         // Intentar obtener usuario inexistente
-        val usuarioInexistente = usuarioRepository.obtenerUsuarioPorUsername("noexiste")
+        val usuarioInexistente = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorUsername("noexiste")
+        }
         assertNull(usuarioInexistente)
     }
     
@@ -137,17 +170,26 @@ class UsuarioRepositoryTest {
             sesionIniciada = false,
             isAdmin = false
         )
-        usuarioRepository.agregarUsuario(usuario)
+        
+        transaction(database) {
+            usuarioRepository.agregarUsuario(usuario)
+        }
         
         // Verificar estado inicial
-        val usuarioInicial = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioInicial = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         assertFalse(usuarioInicial?.sesionIniciada ?: true)
         
         // Actualizar sesión a true
-        usuarioRepository.actualizarSesion(testEmail, true)
+        transaction(database) {
+            usuarioRepository.actualizarSesion(testEmail, true)
+        }
         
         // Verificar que se actualizó
-        val usuarioActualizado = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioActualizado = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         assertTrue(usuarioActualizado?.sesionIniciada ?: false)
     }
     
@@ -163,20 +205,29 @@ class UsuarioRepositoryTest {
             sesionIniciada = true,
             isAdmin = false
         )
-        usuarioRepository.agregarUsuario(usuario)
+        
+        transaction(database) {
+            usuarioRepository.agregarUsuario(usuario)
+        }
         
         // Verificar estado inicial
-        val usuarioInicial = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioInicial = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         assertTrue(usuarioInicial?.sesionIniciada ?: false)
         
         // Cerrar sesión
-        val resultado = usuarioRepository.cerrarSesion(testEmail)
+        val resultado = transaction(database) {
+            usuarioRepository.cerrarSesion(testEmail)
+        }
         
         // Verificar que la operación fue exitosa
         assertTrue(resultado)
         
         // Verificar que la sesión se cerró
-        val usuarioActualizado = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioActualizado = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         assertFalse(usuarioActualizado?.sesionIniciada ?: true)
     }
     
@@ -192,28 +243,35 @@ class UsuarioRepositoryTest {
             sesionIniciada = false,
             isAdmin = false
         )
-        usuarioRepository.agregarUsuario(usuario)
+        
+        transaction(database) {
+            usuarioRepository.agregarUsuario(usuario)
+        }
         
         // Actualizar varios campos del usuario
-        val resultado = usuarioRepository.actualizarUsuario(
-            currentEmail = testEmail,
-            nuevoNom = "Updated Name",
-            nuevoUsername = "updateduser",
-            nuevoIdioma = Idioma.Castellano.toString(),
-            nuevoCorreo = "updated@example.com"
-        )
+        val resultado = transaction(database) {
+            usuarioRepository.actualizarUsuario(
+                currentEmail = testEmail,
+                nuevoNom = "Updated Name",
+                nuevoUsername = "updateduser",
+                nuevoIdioma = Idioma.Castellano.name,
+                nuevoCorreo = "updated@example.com"
+            )
+        }
         
         // Verificar que la operación fue exitosa
         assertTrue(resultado)
         
         // Obtener el usuario con el nuevo email
-        val usuarioActualizado = usuarioRepository.obtenerUsuarioPorEmail("updated@example.com")
+        val usuarioActualizado = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail("updated@example.com")
+        }
         
         // Verificar los campos actualizados
         assertNotNull(usuarioActualizado)
         assertEquals("Updated Name", usuarioActualizado?.nom)
         assertEquals("updateduser", usuarioActualizado?.username)
-        assertEquals(Idioma.Castellano.toString(), usuarioActualizado?.idioma.toString())
+        assertEquals(Idioma.Castellano.name, usuarioActualizado?.idioma.toString())
         assertEquals("updated@example.com", usuarioActualizado?.email)
     }
     
@@ -229,21 +287,30 @@ class UsuarioRepositoryTest {
             sesionIniciada = false,
             isAdmin = false
         )
-        usuarioRepository.agregarUsuario(usuario)
+        
+        transaction(database) {
+            usuarioRepository.agregarUsuario(usuario)
+        }
         
         // Actualizar solo el correo
         val nuevoEmail = "nuevo@example.com"
-        val resultado = usuarioRepository.actualizarCorreoDirecto(testEmail, nuevoEmail)
+        val resultado = transaction(database) {
+            usuarioRepository.actualizarCorreoDirecto(testEmail, nuevoEmail)
+        }
         
         // Verificar que la operación fue exitosa
         assertTrue(resultado)
         
         // Verificar que el usuario ya no existe con el email anterior
-        val usuarioViejo = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioViejo = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         assertNull(usuarioViejo)
         
         // Verificar que el usuario existe con el nuevo email
-        val usuarioNuevo = usuarioRepository.obtenerUsuarioPorEmail(nuevoEmail)
+        val usuarioNuevo = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(nuevoEmail)
+        }
         assertNotNull(usuarioNuevo)
         assertEquals(nuevoEmail, usuarioNuevo?.email)
     }
@@ -260,20 +327,29 @@ class UsuarioRepositoryTest {
             sesionIniciada = false,
             isAdmin = false
         )
-        usuarioRepository.agregarUsuario(usuario)
+        
+        transaction(database) {
+            usuarioRepository.agregarUsuario(usuario)
+        }
         
         // Verificar que existe
-        val usuarioExistente = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioExistente = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         assertNotNull(usuarioExistente)
         
         // Eliminar el usuario
-        val resultado = usuarioRepository.eliminarUsuario(testEmail)
+        val resultado = transaction(database) {
+            usuarioRepository.eliminarUsuario(testEmail)
+        }
         
         // Verificar que la operación fue exitosa
         assertTrue(resultado)
         
         // Verificar que el usuario ya no existe
-        val usuarioEliminado = usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        val usuarioEliminado = transaction(database) {
+            usuarioRepository.obtenerUsuarioPorEmail(testEmail)
+        }
         assertNull(usuarioEliminado)
     }
 }

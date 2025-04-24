@@ -9,38 +9,48 @@ import io.ktor.http.content.*
 import java.io.File
 import java.util.UUID
 
-fun Route.uploadImageRoute() {
+// Add optional parameter for upload directory path, defaulting to "uploads"
+fun Route.uploadImageRoute(uploadDirPath: String = "uploads") {
+    // Ensure the uploads directory exists
+    val uploadsDir = File(uploadDirPath).apply {
+        if (!exists()) mkdirs()
+    }
+    
     post("/api/uploadImage") {
         try {
             val multipart = call.receiveMultipart()
-            var imageUrl: String? = null
+            var savedFileName: String? = null // Store the saved filename
 
             multipart.forEachPart { part ->
-                if (part is PartData.FileItem) {
-                    val fileName = "${UUID.randomUUID()}_${part.originalFileName ?: "unnamed"}"
-                    val file = File("uploads/$fileName")
-
-                    // Asegurar que el directorio existe
-                    file.parentFile.mkdirs()
+                if (part is PartData.FileItem && part.name == "image") { // Check part name
+                    val originalFileName = part.originalFileName ?: "unnamed"
+                    // Sanitize filename to prevent directory traversal
+                    val sanitizedFileName = originalFileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                    val uniqueFileName = "${UUID.randomUUID()}_$sanitizedFileName"
+                    val file = File(uploadsDir, uniqueFileName)
 
                     part.streamProvider().use { inputStream ->
                         file.outputStream().buffered().use { outputStream ->
                             inputStream.copyTo(outputStream)
                         }
                     }
-
-                    imageUrl = "http://localhost:8080/uploads/$fileName"
+                    savedFileName = uniqueFileName // Store the actual saved name
+                    call.application.log.info("File saved successfully: ${file.absolutePath}")
                 }
                 part.dispose()
             }
 
-            if (imageUrl != null) {
-                call.respond(HttpStatusCode.OK, imageUrl!!)
+            if (savedFileName != null) {
+                // Construct URL relative to the server base
+                val relativeImageUrl = "/uploads/$savedFileName"
+                // Respond with JSON containing the URL
+                call.respond(HttpStatusCode.OK, mapOf("imageUrl" to relativeImageUrl))
             } else {
-                call.respond(HttpStatusCode.BadRequest, "No file uploaded")
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "No image file found in 'image' part"))
             }
         } catch (e: Exception) {
-            call.respond(HttpStatusCode.InternalServerError, "Error uploading file: ${e.message}")
+            call.application.log.error("Error uploading file", e) // Log the error
+            call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Error uploading file: ${e.message}"))
         }
     }
 }
