@@ -9,57 +9,57 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.example.models.Missatge
 import org.example.repositories.MissatgeRepository
-import java.util.*
+import java.util.Collections
 
-val connectedUsers = Collections.synchronizedMap(mutableMapOf<String, DefaultWebSocketServerSession>()) // Mapa de usuario -> sesión
+// Definir la colección de sesiones WebSocket de los usuarios conectados
+val connectedUsers = Collections.synchronizedSet(mutableSetOf<WebSocketSession>())
 
 fun Route.websocketChatRoutes() {
     val repo = MissatgeRepository()
 
-    webSocket("/ws/chat") {
-        println("Nuevo cliente conectado.")
-        var username: String? = null
+    webSocket("/ws/chat/{user1}/{user2}") {
+        val user1 = call.parameters["user1"] ?: return@webSocket
+        val user2 = call.parameters["user2"] ?: return@webSocket
+
+        println("Nuevo cliente conectado: $user1 - $user2")
+        connectedUsers += this  // Agregar la sesión WebSocket actual a la lista de usuarios conectados
+
+        // Enviar el historial de mensajes cuando se conecta
+        val messages = repo.getMessagesBetweenUsers(user1, user2)
+        messages.forEach { message ->
+            send("De ${message.usernameSender} a ${message.usernameReceiver}: ${message.missatge}")
+        }
 
         try {
-            // Esperamos a recibir el nombre de usuario del cliente cuando se conecta
+            // Escuchar los mensajes entrantes
             incoming.consumeEach { frame ->
                 if (frame is Frame.Text) {
                     val text = frame.readText()
-                    if (username == null) {
-                        // Asumimos que el primer mensaje es el nombre de usuario
-                        username = text
-                        connectedUsers[username!!] = this // Guardamos la sesión con el nombre de usuario
-                        println("Usuario $username conectado.")
-                    } else {
-                        // Procesamos los mensajes después de haber recibido el nombre de usuario
-                        try {
-                            val missatge = Json.decodeFromString<Missatge>(text)
+                    println("Texto recibido: $text")
 
-                            // Guarda el mensaje en la base de datos
-                            repo.sendMessage(missatge)
+                    try {
+                        val missatge = Json.decodeFromString<Missatge>(text)
 
-                            // Enviar el mensaje solo al receptor
-                            val receiverSession = connectedUsers[missatge.usernameReceiver]
-                            if (receiverSession != null) {
-                                receiverSession.send("De ${missatge.usernameSender}: ${missatge.missatge}")
-                            } else {
-                                println("Usuario ${missatge.usernameReceiver} no está conectado.")
-                                send("El usuario ${missatge.usernameReceiver} no está conectado.")
+                        // Guarda el mensaje en la base de datos
+                        repo.sendMessage(missatge)
+
+                        // Enviar el mensaje a los dos usuarios en este chat
+                        connectedUsers.forEach { session ->
+                            if (session != this) {
+                                session.send("De ${missatge.usernameSender} a ${missatge.usernameReceiver}: ${missatge.missatge}")
                             }
-                        } catch (e: Exception) {
-                            println("Error al deserializar o guardar: ${e.message}")
-                            send("Error al procesar el mensaje.")
                         }
+                    } catch (e: Exception) {
+                        println("Error al deserializar o guardar: ${e.message}")
+                        send("Error al procesar el mensaje")
                     }
                 }
             }
         } catch (e: Exception) {
             println("Error al consumir WebSocket: ${e.message}")
         } finally {
-            if (username != null) {
-                connectedUsers -= username // Eliminamos la sesión del mapa al desconectarse
-                println("Cliente $username desconectado.")
-            }
+            connectedUsers -= this  // Eliminar la sesión WebSocket cuando se desconecta
+            println("Cliente desconectado.")
         }
     }
 }
