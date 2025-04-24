@@ -9,7 +9,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.example.models.Missatge
 import org.example.repositories.MissatgeRepository
-import java.util.Collections
+import java.util.Collectionsx
 
 // Definir la colección de sesiones WebSocket de los usuarios conectados
 val connectedUsers = Collections.synchronizedSet(mutableSetOf<WebSocketSession>())
