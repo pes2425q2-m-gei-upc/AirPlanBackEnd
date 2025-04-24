@@ -1,6 +1,7 @@
 package org.example.controllers
 
 import org.example.models.Invitacio
+import org.example.models.Activitat
 import org.example.models.ParticipantsActivitats
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
@@ -57,7 +58,7 @@ class ControladorInvitacions(
         return invitacionsRepository.obtenirTotesInvitacions()
     }
 
-    fun obtenirNomsActivitatsAmbInvitacionsPerUsuari(username: String): List<String> {
-        return invitacionsRepository.obtenirNomsActivitatsAmbInvitacionsPerUsuari(username)
+    fun obtenirActivitatsAmbInvitacionsPerUsuari(username: String): List<Activitat> {
+        return invitacionsRepository.obtenirActivitatsAmbInvitacionsPerUsuari(username)
     }
 }

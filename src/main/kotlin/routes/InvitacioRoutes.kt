@@ -6,7 +6,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
 import org.example.controllers.ControladorInvitacions
-import org.example.models.Invitacio
+import org.example.models.Activitat
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.repositories.UsuarioRepository
@@ -25,7 +25,7 @@ fun Route.invitacioRoutes() {
             }
 
             try {
-                val invitacions = controladorInvitacions.obtenirNomsActivitatsAmbInvitacionsPerUsuari(username)
+                val invitacions = controladorInvitacions.obtenirActivitatsAmbInvitacionsPerUsuari(username)
                 call.respond(HttpStatusCode.OK, invitacions)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, "Error al obtener las invitaciones")
@@ -55,6 +55,88 @@ fun Route.invitacioRoutes() {
                     call.respond(HttpStatusCode.Conflict, "No se pudo crear la invitación")
                 }
             } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud")
+            }
+        }
+
+        //Ruta para aceptar una invitación
+        post("/acceptar") {
+            try {
+                // Recibir el cuerpo de la solicitud como un mapa
+                val request = call.receive<Map<String, String>>()
+                println("Datos recibidos: $request")
+
+                // Extraer los valores del mapa
+                val activityId = request["activityId"]?.toIntOrNull()
+                val username = request["username"]
+
+                if (activityId == null) {
+                    println("Error: Falta activityId")
+                    call.respond(HttpStatusCode.BadRequest, "Se requiere un id de actividad")
+                    return@post
+                }
+
+                if (username == null) {
+                    println("Error: Falta usDestinatari")
+                    call.respond(HttpStatusCode.BadRequest, "Se requiere un usuario")
+                    return@post
+                }
+
+                val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari.equals(username)) }
+                println("Invitación encontrada: $invitacio")
+                if (invitacio == null) {
+                    call.respond(HttpStatusCode.NotFound, "No se encontró la invitación")
+                    return@post
+                }
+                val resultado = controladorInvitacions.acceptarInvitacio(invitacio)
+                if (resultado) {
+                    call.respond(HttpStatusCode.OK, "Invitación aceptada")
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "No se encontró la invitación")
+                }
+            } catch (e: Exception) {
+                println("Error al procesar la solicitud: ${e.message}")
+                call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud")
+            }
+        }
+
+        // Ruta para rechazar una invitación
+        post("/rebutjar") {
+            try {
+                // Recibir el cuerpo de la solicitud como un mapa
+                val request = call.receive<Map<String, String>>()
+                println("Datos recibidos: $request")
+
+                // Extraer los valores del mapa
+                val activityId = request["activityId"]?.toIntOrNull()
+                val username = request["username"]
+
+                if (activityId == null) {
+                    println("Error: Falta activityId")
+                    call.respond(HttpStatusCode.BadRequest, "Se requiere un id de actividad")
+                    return@post
+                }
+
+                if (username == null) {
+                    println("Error: Falta usDestinatari")
+                    call.respond(HttpStatusCode.BadRequest, "Se requiere un usuario")
+                    return@post
+                }
+
+                val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari.equals(username)) }
+                println("Invitación encontrada: $invitacio")
+                if (invitacio == null) {
+                    call.respond(HttpStatusCode.NotFound, "No se encontró la invitación")
+                    return@post
+                }
+                val resultado = controladorInvitacions.rebutjarInvitacio(invitacio)
+                if (resultado) {
+                    call.respond(HttpStatusCode.OK, "Invitación rechazada")
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "No se encontró la invitación")
+                }
+            } catch (e: Exception) {
+                println("Error al procesar la solicitud: ${e.message}")
                 call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud")
             }
         }
