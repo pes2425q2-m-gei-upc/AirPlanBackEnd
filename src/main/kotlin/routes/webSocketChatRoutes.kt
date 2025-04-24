@@ -9,46 +9,57 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.example.models.Missatge
 import org.example.repositories.MissatgeRepository
-import java.util.Collections
+import java.util.*
 
-val connectedUsers = Collections.synchronizedSet(mutableSetOf<DefaultWebSocketServerSession>())
+val connectedUsers = Collections.synchronizedMap(mutableMapOf<String, DefaultWebSocketServerSession>()) // Mapa de usuario -> sesión
 
 fun Route.websocketChatRoutes() {
     val repo = MissatgeRepository()
 
     webSocket("/ws/chat") {
-        println("Nou client connectat.")
-        connectedUsers += this
+        println("Nuevo cliente conectado.")
+        var username: String? = null
 
         try {
+            // Esperamos a recibir el nombre de usuario del cliente cuando se conecta
             incoming.consumeEach { frame ->
                 if (frame is Frame.Text) {
                     val text = frame.readText()
-                    println("Text rebut: $text")
+                    if (username == null) {
+                        // Asumimos que el primer mensaje es el nombre de usuario
+                        username = text
+                        connectedUsers[username!!] = this // Guardamos la sesión con el nombre de usuario
+                        println("Usuario $username conectado.")
+                    } else {
+                        // Procesamos los mensajes después de haber recibido el nombre de usuario
+                        try {
+                            val missatge = Json.decodeFromString<Missatge>(text)
 
-                    try {
-                        val missatge = Json.decodeFromString<Missatge>(text)
+                            // Guarda el mensaje en la base de datos
+                            repo.sendMessage(missatge)
 
-                        // Guarda a la base de dades
-                        repo.sendMessage(missatge)
-
-                        // Envia a tots els altres usuaris connectats
-                        connectedUsers.forEach { session ->
-                            if (session != this) {
-                                session.send("De ${missatge.usernameSender} a ${missatge.usernameReceiver}: ${missatge.missatge}")
+                            // Enviar el mensaje solo al receptor
+                            val receiverSession = connectedUsers[missatge.usernameReceiver]
+                            if (receiverSession != null) {
+                                receiverSession.send("De ${missatge.usernameSender}: ${missatge.missatge}")
+                            } else {
+                                println("Usuario ${missatge.usernameReceiver} no está conectado.")
+                                send("El usuario ${missatge.usernameReceiver} no está conectado.")
                             }
+                        } catch (e: Exception) {
+                            println("Error al deserializar o guardar: ${e.message}")
+                            send("Error al procesar el mensaje.")
                         }
-                    } catch (e: Exception) {
-                        println("Error en deserialitzar o guardar: ${e.message}")
-                        send("Error al processar el missatge")
                     }
                 }
             }
         } catch (e: Exception) {
             println("Error al consumir WebSocket: ${e.message}")
         } finally {
-            connectedUsers -= this
-            println("Client desconnectat.")
+            if (username != null) {
+                connectedUsers -= username // Eliminamos la sesión del mapa al desconectarse
+                println("Cliente $username desconectado.")
+            }
         }
     }
 }
