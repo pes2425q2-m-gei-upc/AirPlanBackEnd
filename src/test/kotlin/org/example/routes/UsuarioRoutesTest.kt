@@ -20,35 +20,29 @@ import org.example.enums.Idioma
 import org.jetbrains.exposed.sql.Database
 import org.example.routes.usuarioRoutes
 import kotlinx.coroutines.runBlocking
+import org.example.database.TestDatabaseFactory
 
 // Helper function to run tests with H2 database
-// Reimplementación usando un enfoque diferente para evitar problemas con el tipo de retorno
 fun testWithH2(testBlock: suspend ApplicationTestBuilder.() -> Unit) {
-    // Configurar la base de datos para las pruebas
-    val driverClassName = "org.h2.Driver"
-    val jdbcURL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=FALSE"
-    val user = "test"
-    val password = ""
-    val database = Database.connect(jdbcURL, driverClassName, user, password)
+    // Use our TestDatabaseFactory to initialize a unique test database
+    val database = TestDatabaseFactory.init()
     
-    // Inicializar el esquema en la transacción
-    transaction(database) {
-        SchemaUtils.drop(UsuarioTable)
-        SchemaUtils.create(UsuarioTable)
-    }
-    
-    // Ejecutar el bloque de prueba en una aplicación Ktor de prueba
+    // Execute test with our isolated database
     testApplication {
         application {
+            // Configure content negotiation for JSON
             install(ContentNegotiation) {
                 json()
             }
+            // Set up the usuario routes
             routing {
                 usuarioRoutes()
             }
         }
-        runBlocking { 
-            testBlock() 
+        
+        // Run the test block
+        runBlocking {
+            testBlock()
         }
     }
 }
