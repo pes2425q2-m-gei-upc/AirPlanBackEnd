@@ -13,6 +13,7 @@ import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
 import org.example.routes.activitatRoutes
+import org.example.routes.missatgeRoutes
 import org.example.routes.usuarioRoutes
 import org.example.routes.uploadImageRoute
 import org.example.routes.configureWebSockets
@@ -63,6 +64,7 @@ fun main() {
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                missatgeRoutes()
                 uploadImageRoute() // Añadida la ruta para subir imágenes
                 webSocketRoutes() // Registrar rutas WebSocket
                 
