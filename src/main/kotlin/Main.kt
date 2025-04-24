@@ -127,7 +127,8 @@ fun main() {
                         call.respond(mapOf("isAdmin" to isAdmin))
                     } else {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Email no proporcionado"))
-                    }                }
+                    }
+                }
             }
         }
     }
