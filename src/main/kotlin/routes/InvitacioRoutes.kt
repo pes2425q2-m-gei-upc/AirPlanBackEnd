@@ -123,7 +123,7 @@ fun Route.invitacioRoutes() {
                     return@post
                 }
 
-                // Buscar la invitación
+                // Buscar la invitación en la lista
                 val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari.equals(username)) }
                 println("Invitación encontrada: $invitacio")
                 if (invitacio == null) {
