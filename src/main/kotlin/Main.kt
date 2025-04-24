@@ -14,11 +14,15 @@ import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
 import org.example.routes.activitatRoutes
 import org.example.routes.usuarioRoutes
-
+import org.example.routes.uploadImageRoute
+import org.example.routes.configureWebSockets
+import org.example.routes.webSocketRoutes
+// Eliminada la importación de authRoutes
+import org.example.services.FirebaseAdminService
+import io.ktor.server.http.content.*
+import java.io.File
 
 fun main() {
-
-
 
     // 🔹 Creem l'entorn del servidor amb SSL
     val environment = applicationEngineEnvironment {
@@ -36,6 +40,7 @@ fun main() {
                 allowMethod(HttpMethod.Delete)
                 allowMethod(HttpMethod.Put)
                 allowHeader(HttpHeaders.ContentType)
+                allowNonSimpleContentTypes = true  // Allow WebSocket connections
                 allowCredentials = true
             }
 
@@ -44,14 +49,29 @@ fun main() {
                 json()
             }
 
+            // Configurar WebSockets
+            configureWebSockets()
+
             DatabaseFactory.init()
             val usuarioRepository = UsuarioRepository()
             val controladorUsuario = ControladorUsuarios(usuarioRepository)
+
+            // Inicializar Firebase Admin SDK al inicio
+            FirebaseAdminService.initialize()
 
             // Configuració de rutes
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                uploadImageRoute() // Añadida la ruta para subir imágenes
+                webSocketRoutes() // Registrar rutas WebSocket
+                
+                // Eliminada la llamada a authRoutes()
+                
+                // Configurar ruta estática para servir archivos de imagen
+                static("uploads") {
+                    files("uploads")
+                }
                 get("/") {
                     call.respond(
                         """
@@ -101,7 +121,7 @@ fun main() {
                         username = "usuario123",
                         nom = "Carlos Gómez",
                         email = "carlos.gomez@example.com",
-                        idioma = Idioma.Castellano,
+                        idioma = Idioma.Castellano.toString(),
                         isAdmin = false
                     )
 
