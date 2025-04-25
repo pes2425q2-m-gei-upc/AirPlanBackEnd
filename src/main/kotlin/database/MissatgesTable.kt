@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 object MissatgesTable : Table("missatges") {
     val usernameSender = varchar("username_sender", 100)
-    val usernameReceiver = varchar("username_reciever", 100)
+    val usernameReceiver = varchar("username_receiver", 100) // Corregido de "username_reciever" a "username_receiver"
     val dataEnviament = datetime("data_enviament")
     val missatge = text("missatge")
 
