@@ -24,4 +24,15 @@ class ControladorMissatges (private val repo: MissatgeRepository) {
         val messages = repo.getMessagesBetweenUsers(user1, user2)
         call.respond(messages)
     }
+
+    suspend fun getLatestChatsForUser(call: ApplicationCall) {
+        val username = call.parameters["username"]
+        if (username == null) {
+            call.respond(HttpStatusCode.BadRequest, "Falta el nom d'usuari")
+            return
+        }
+
+        val chats = repo.getLatestChatsForUser(username)
+        call.respond(HttpStatusCode.OK, chats)
+    }
 }

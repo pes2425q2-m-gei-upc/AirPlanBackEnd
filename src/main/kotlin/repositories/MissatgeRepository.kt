@@ -4,7 +4,6 @@ import org.example.models.Missatge
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.database.MissatgesTable
-import java.time.Instant
 
 class MissatgeRepository {
     suspend fun sendMessage(message: Missatge): Boolean {
@@ -37,6 +36,45 @@ class MissatgeRepository {
                         missatge = it[MissatgesTable.missatge]
                     )
                 }
+        }
+    }
+
+    suspend fun getLatestChatsForUser(currentUsername: String): List<Missatge> {
+        return transaction {
+            // Subquery: obtener la lista de usuarios con los que ha hablado
+            val subquery = MissatgesTable
+                .select {
+                    (MissatgesTable.usernameSender eq currentUsername) or
+                            (MissatgesTable.usernameReceiver eq currentUsername)
+                }
+                .map {
+                    val otherUser = if (it[MissatgesTable.usernameSender] == currentUsername)
+                        it[MissatgesTable.usernameReceiver]
+                    else
+                        it[MissatgesTable.usernameSender]
+                    otherUser
+                }
+                .distinct()
+
+            // Para cada usuario con quien ha hablado, buscamos el último mensaje
+            subquery.mapNotNull { otherUser ->
+                MissatgesTable
+                    .select {
+                        ((MissatgesTable.usernameSender eq currentUsername) and (MissatgesTable.usernameReceiver eq otherUser)) or
+                                ((MissatgesTable.usernameSender eq otherUser) and (MissatgesTable.usernameReceiver eq currentUsername))
+                    }
+                    .orderBy(MissatgesTable.dataEnviament to SortOrder.DESC)
+                    .limit(1)
+                    .map {
+                        Missatge(
+                            usernameSender = it[MissatgesTable.usernameSender],
+                            usernameReceiver = it[MissatgesTable.usernameReceiver],
+                            dataEnviament = it[MissatgesTable.dataEnviament],
+                            missatge = it[MissatgesTable.missatge]
+                        )
+                    }
+                    .firstOrNull()
+            }.sortedByDescending { it.dataEnviament }
         }
     }
 }

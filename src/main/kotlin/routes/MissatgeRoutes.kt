@@ -21,5 +21,9 @@ fun Route.missatgeRoutes() {
         get("/{user1}/{user2}") {
             missatgeController.getConversation(call)
         }
+
+        get("/conversaciones/{username}") {
+            missatgeController.getLatestChatsForUser(call)
+        }
     }
 }
