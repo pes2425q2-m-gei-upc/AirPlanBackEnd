@@ -37,12 +37,10 @@ class ControladorRuta (private val RutaRepository: RutaRepository) {
 
     fun eliminarRuta(id: Int): Boolean {
         val ruta = rutas.find { it.id == id }
-        return if (ruta != null) {
+        if (ruta != null) {
             rutas.remove(ruta)
-            true
-        } else {
-            false
         }
+        return RutaRepository.eliminarRuta(id)
     }
 
     fun obtenirTotesRutesClient(clientUsername: String): List<Ruta> {

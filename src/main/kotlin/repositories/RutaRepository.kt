@@ -5,6 +5,7 @@ import org.example.database.RutaTable
 import org.example.enums.TipusVehicle
 import org.example.models.Localitzacio
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class RutaRepository {
@@ -109,6 +110,13 @@ class RutaRepository {
                     tipusVehicle = TipusVehicle.valueOf(row[RutaTable.tipusVehicle])
                 )
             }
+        }
+    }
+
+    fun eliminarRuta(id: Int): Boolean {
+        return transaction {
+            val filasEliminades = RutaTable.deleteWhere { RutaTable.id eq id }
+            filasEliminades > 0  // Retorna `true` si eliminó alguna ruta
         }
     }
 }

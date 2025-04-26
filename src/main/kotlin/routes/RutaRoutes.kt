@@ -49,7 +49,7 @@ fun Route.rutaRoutes() {
                 val createdRuta = rutaController.crearRuta(rutaJson) // Pass it to the controller
                 call.respond(HttpStatusCode.Created, createdRuta.id) // Respond with the created Ruta
             } catch (e: Exception) {
-                call.respond(HttpStatusCode.BadRequest, "Error processing the request: ${e.message}")
+                call.respond(HttpStatusCode.BadRequest, "Error al crear la ruta: ${e.message}")
             }
         }
 
@@ -68,9 +68,14 @@ fun Route.rutaRoutes() {
         }
 
         get {
-            val clientUsername = call.request.queryParameters["username"]
-            val rutas = rutaController.obtenirTotesRutesClient(clientUsername.toString())
-            call.respond(HttpStatusCode.OK, rutas)
+            try {
+                val clientUsername = call.request.queryParameters["username"]
+                val rutas = rutaController.obtenirTotesRutesClient(clientUsername.toString())
+                call.respond(HttpStatusCode.OK, rutas)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, "Error al obtenir les rutes: ${e.message}")
+            }
+
         }
 
         get ("/calculate/publictransport") {
