@@ -11,8 +11,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.json.Json
 import org.example.models.Valoracio
 import org.example.models.ValoracioInput
-import org.example.routes.valoracioRoutes
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
