@@ -6,7 +6,8 @@ import org.jetbrains.exposed.sql.SchemaUtils
 
 object DatabaseFactory {
     fun init() {
-        val url = "jdbc:postgresql://nattech.fib.upc.edu:40351/midb"
+        //val url = "jdbc:postgresql://nattech.fib.upc.edu:40351/midb"
+        val url = "jdbc:postgresql://172.16.4.35:8081/midb"
         val user = "airplan"
         val password = "airplan1234"
 

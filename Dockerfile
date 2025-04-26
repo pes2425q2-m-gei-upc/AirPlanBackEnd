@@ -7,5 +7,7 @@ WORKDIR /app
 # Copia l'arxiu JAR generat al contenidor
 COPY build/libs/*.jar app.jar
 
+COPY secrets.properties /app/secrets.properties
+
 # Comanda per executar l'aplicació
 CMD ["java", "-jar", "app.jar"]

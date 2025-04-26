@@ -1,3 +1,13 @@
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17)) // Or another LTS version like 11
+    }
+}
+
+kotlin {
+    jvmToolchain(17) // Match this with the Java version above
+}
+
 plugins {
     kotlin("jvm") version "2.0.0" // Usa una versión válida de Kotlin
     id("application") // Aplicar el plugin application correctamente
