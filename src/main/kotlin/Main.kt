@@ -67,9 +67,14 @@ fun main() {
                 // Eliminada la llamada a authRoutes()
                 
                 // Configurar ruta estática para servir archivos de imagen
-                static("uploads") {
-                    files("uploads")
+                val uploadsDir = File("uploads").apply {
+                    if (!exists()) mkdirs()
                 }
+                staticFiles("/uploads", uploadsDir) {
+                    // Configure default response headers if needed
+                    default("index.html")
+                }
+                
                 get("/") {
                     call.respond(
                         """
