@@ -63,6 +63,6 @@ object DatabaseFactory {
         } catch (e: Exception) {
             println("❌ Error al conectar a la base de datos: ${e.message}")
             e.printStackTrace()
-            }
+        }
     }
 }
