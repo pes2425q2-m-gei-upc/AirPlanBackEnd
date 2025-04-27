@@ -12,14 +12,10 @@ import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
-import org.example.routes.activitatRoutes
-import org.example.routes.usuarioRoutes
-import org.example.routes.uploadImageRoute
-import org.example.routes.configureWebSockets
-import org.example.routes.webSocketRoutes
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
-import io.ktor.server.http.content.* // Keep this import for staticFiles/staticResources
+import io.ktor.server.http.content.*
+import org.example.routes.*
 import java.io.File
 import org.example.routes.valoracioRoutes
 import org.example.routes.generalRoutes
@@ -66,14 +62,16 @@ fun main() {
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                missatgeRoutes()
+                websocketChatRoutes()
                 valoracioRoutes()
                 uploadImageRoute() // Añadida la ruta para subir imágenes
                 webSocketRoutes() // Registrar rutas WebSocket
                 generalRoutes()
 
                 // Eliminada la llamada a authRoutes()
-
-                // Configurar ruta estática para servir archivos de imagen (Updated)
+                
+                // Configurar ruta estática para servir archivos de imagen
                 val uploadsDir = File("uploads").apply {
                     if (!exists()) mkdirs()
                 }

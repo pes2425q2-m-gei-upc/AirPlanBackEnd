@@ -21,7 +21,8 @@ dependencies {
     implementation("io.ktor:ktor-server-cors:2.3.8") // Dependencia CORS
     implementation("io.ktor:ktor-server-websockets:2.3.8") // WebSockets support
     implementation("ch.qos.logback:logback-classic:1.4.14")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // Ktor Client Content Negotiation (Added)
     implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
@@ -40,7 +41,7 @@ dependencies {
 
     // Firebase Admin SDK para manejar la autenticación desde el backend
     implementation("com.google.firebase:firebase-admin:9.2.0")
-
+    
     // JavaMail para enviar correos electrónicos personalizados
     implementation("com.sun.mail:javax.mail:1.6.2")
 
