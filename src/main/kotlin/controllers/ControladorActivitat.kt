@@ -1,13 +1,18 @@
 package org.example.controllers
 
 import kotlinx.datetime.LocalDateTime
+import org.example.database.ActivitatFavoritaTable
 import org.example.models.Activitat
 import org.example.models.Localitzacio
 import java.sql.Timestamp
 import repositories.ActivitatRepository
+import repositories.ActivitatFavoritaRepository
 import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
-class ControladorActivitat (private val ActivitatRepository: ActivitatRepository) {
+class ControladorActivitat(
+    private val ActivitatRepository: ActivitatRepository,
+    private val ActivitatFavoritaRepository: ActivitatFavoritaRepository
+) {
     private val activitats = mutableListOf<Activitat>()
 
     fun obtenirActivitats(): List<Activitat> {
@@ -24,7 +29,7 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
             dataFi = dataFi,
             creador = creador
         )
-            ActivitatRepository.afegirActivitat(novaActivitat)
+        ActivitatRepository.afegirActivitat(novaActivitat)
         activitats.add(novaActivitat) //solo si no hay problemas con la base de datos
         //TODO: canviar id despres de afegir a la base de dades
     }
@@ -52,5 +57,22 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
 
     fun eliminarActividad(id: Int): Boolean {
         return ActivitatRepository.eliminarActividad(id)
+    }
+
+    fun afegirActivitatFavorita(idActivitat: Int, username: String, dataAfegida: LocalDateTime): Boolean {
+        return ActivitatFavoritaRepository.afegirActivitatFavorita(idActivitat, username, dataAfegida)
+
+    }
+
+    fun eliminarActivitatFavorita(idActivitat: Int, username: String): Boolean {
+        return ActivitatFavoritaRepository.eliminarActivitatFavorita(idActivitat, username)
+    }
+
+    fun comprovarActivitatFavorita(idActivitat: Int, username: String): Boolean {
+        return ActivitatFavoritaRepository.comprovarActivitatFavorita(idActivitat, username)
+    }
+
+    fun obtenirActivitatsFavoritesPerUsuari(username: String): List<Activitat> {
+        return ActivitatFavoritaRepository.obtenirActivitatsFavoritesPerUsuari(username)
     }
 }
