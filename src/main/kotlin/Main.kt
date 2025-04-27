@@ -12,14 +12,17 @@ import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
-import org.example.routes.activitatRoutes
-import org.example.routes.usuarioRoutes
-import org.example.routes.solicitudRoutes
+
+// Eliminada la importación de authRoutes
+import org.example.services.FirebaseAdminService
+import io.ktor.server.http.content.*
+import org.example.routes.*
+import java.io.File
+import org.example.routes.valoracioRoutes
+import org.example.routes.generalRoutes
 
 
 fun main() {
-
-
 
     // 🔹 Creem l'entorn del servidor amb SSL
     val environment = applicationEngineEnvironment {
@@ -37,6 +40,7 @@ fun main() {
                 allowMethod(HttpMethod.Delete)
                 allowMethod(HttpMethod.Put)
                 allowHeader(HttpHeaders.ContentType)
+                allowNonSimpleContentTypes = true  // Allow WebSocket connections
                 allowCredentials = true
             }
 
@@ -45,15 +49,39 @@ fun main() {
                 json()
             }
 
+            // Configurar WebSockets
+            configureWebSockets()
+
             DatabaseFactory.init()
             val usuarioRepository = UsuarioRepository()
             val controladorUsuario = ControladorUsuarios(usuarioRepository)
+
+            // Inicializar Firebase Admin SDK al inicio
+            FirebaseAdminService.initialize()
 
             // Configuració de rutes
             routing {
                 usuarioRoutes()
                 activitatRoutes()
                 solicitudRoutes()
+
+                missatgeRoutes()
+                websocketChatRoutes()
+                valoracioRoutes()
+                uploadImageRoute() // Añadida la ruta para subir imágenes
+                webSocketRoutes() // Registrar rutas WebSocket
+                generalRoutes()
+
+                // Eliminada la llamada a authRoutes()
+
+                // Configurar ruta estática para servir archivos de imagen
+                val uploadsDir = File("uploads").apply {
+                    if (!exists()) mkdirs()
+                }
+                staticFiles("/uploads", uploadsDir) {
+                    // Configure default response headers if needed
+                    default("index.html")
+                }
 
                 get("/") {
                     call.respond(
@@ -104,7 +132,7 @@ fun main() {
                         username = "usuario123",
                         nom = "Carlos Gómez",
                         email = "carlos.gomez@example.com",
-                        idioma = Idioma.Castellano,
+                        idioma = Idioma.Castellano.toString(),
                         isAdmin = false
                     )
 
