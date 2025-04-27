@@ -22,6 +22,7 @@ import org.example.services.FirebaseAdminService
 import io.ktor.server.http.content.* // Keep this import for staticFiles/staticResources
 import java.io.File
 import org.example.routes.valoracioRoutes
+import org.example.routes.generalRoutes
 
 
 fun main() {
@@ -68,6 +69,7 @@ fun main() {
                 valoracioRoutes()
                 uploadImageRoute() // Añadida la ruta para subir imágenes
                 webSocketRoutes() // Registrar rutas WebSocket
+                generalRoutes()
 
                 // Eliminada la llamada a authRoutes()
 
