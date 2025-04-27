@@ -40,13 +40,23 @@ dependencies {
 
     // Firebase Admin SDK para manejar la autenticación desde el backend
     implementation("com.google.firebase:firebase-admin:9.2.0")
-    
+
     // JavaMail para enviar correos electrónicos personalizados
     implementation("com.sun.mail:javax.mail:1.6.2")
 
     // Driver de base de datos (elige uno)
     implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL
-    
+
+    // Pruebas
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    testImplementation("io.ktor:ktor-server-test-host:2.3.3") // o el que estés usando
+    implementation("io.ktor:ktor-server-test-host:2.0.0")  // Para las pruebas de Ktor
+    implementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21") // Para usar JUnit
+    testImplementation("io.ktor:ktor-server-test-host:2.0.0")  // Para las pruebas de Ktor
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21") // Para usar JUnit
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
+
     // Dependencias para testing
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
