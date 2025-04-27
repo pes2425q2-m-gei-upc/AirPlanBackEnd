@@ -12,6 +12,7 @@ import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
+
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
 import io.ktor.server.http.content.*
@@ -62,6 +63,8 @@ fun main() {
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                solicitudRoutes()
+
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()
@@ -70,7 +73,7 @@ fun main() {
                 generalRoutes()
 
                 // Eliminada la llamada a authRoutes()
-                
+
                 // Configurar ruta estática para servir archivos de imagen
                 val uploadsDir = File("uploads").apply {
                     if (!exists()) mkdirs()
@@ -152,7 +155,8 @@ fun main() {
                         call.respond(mapOf("isAdmin" to isAdmin))
                     } else {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Email no proporcionado"))
-                    }                }
+                    }
+                }
             }
         }
     }
