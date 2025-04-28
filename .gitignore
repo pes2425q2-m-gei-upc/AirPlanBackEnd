@@ -44,3 +44,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 /secrets.properties
+
+
+### Firebase Credentials ###
+src/main/resources/firebase-service-account.json
