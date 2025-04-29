@@ -49,6 +49,19 @@ dependencies {
 
     // Driver de base de datos (elige uno)
     implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL
+
+    // Ktor server test dependencies
+    testImplementation("io.ktor:ktor-server-test-host:2.3.7")
+    testImplementation("io.ktor:ktor-server-tests:2.3.7")
+    testImplementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+    testImplementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+
+// MockK for mocking
+    testImplementation("io.mockk:mockk:1.13.8")
+
+// Kotlin test
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.23")
+    testImplementation("com.h2database:h2:2.2.224")  // Use the latest version
 }
 
 tasks.test {

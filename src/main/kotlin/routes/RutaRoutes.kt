@@ -38,11 +38,10 @@ val properties = Properties().apply {
 val hereApiKey = properties.getProperty("HERE_API_KEY")
 val orsApiKey = properties.getProperty("ORS_API_KEY")
 
-fun Route.rutaRoutes() {
-    val rutaController = ControladorRuta(RutaRepository())
+fun Route.rutaRoutes(rutaController: ControladorRuta) {
 
     route("/api/rutas") {
-        post("/crear") {
+        post {
             try {
                 val jsonString = call.receiveText() // Get raw JSON string
                 val rutaJson = Json.parseToJsonElement(jsonString).jsonObject
