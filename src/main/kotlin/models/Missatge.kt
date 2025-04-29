@@ -10,5 +10,6 @@ data class Missatge (
     val usernameSender: String,
     val usernameReceiver: String,
     val dataEnviament: LocalDateTime,
-    val missatge: String
+    val missatge: String,
+    val isEdited: Boolean = false,
 )
