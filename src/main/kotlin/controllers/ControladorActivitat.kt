@@ -77,4 +77,21 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
     fun eliminarActividad(id: Int): Boolean {
         return ActivitatRepository.eliminarActividad(id)
     }
+
+    fun eliminarParticipant(idActivitat: Int, username: String): Boolean {
+        return ParticipantsActivitatsRepository.eliminarParticipant(idActivitat, username)
+    }
+
+    fun eliminarParticipantsPerActivitat(idActivitat: Int): Boolean {
+        return ParticipantsActivitatsRepository.eliminarParticipantsPerActivitat(idActivitat)
+    }
+
+    fun esCreador(idActivitat: Int, username: String): Boolean {
+        return ParticipantsActivitatsRepository.esCreador(idActivitat, username)
+    }
+
+    fun obtenirParticipantsDeActivitat(idActivitat: Int): List<String> {
+        return ParticipantsActivitatsRepository.obtenirParticipantsPerActivitat(idActivitat)
+    }
+
 }

@@ -114,5 +114,36 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
             }
         }
+
+        //Obtenir participants de una activitat
+        get("/{activityId}/participants") {
+            val activityId = call.parameters["activityId"]?.toIntOrNull()
+            if (activityId == null) {
+                call.respond(HttpStatusCode.BadRequest, "ID d'activitat invàlid")
+                return@get
+            }
+
+            val participants = activitatController.obtenirParticipantsDeActivitat(activityId)
+            call.respond(participants)
+        }
+
+        //Borra usuario de actividad
+        delete("{id}/participants/{username}") {
+            val idActivitat = call.parameters["id"]?.toIntOrNull()
+            val usernameAEliminar = call.parameters["username"]
+
+            if (idActivitat == null || usernameAEliminar.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Paràmetres invàlids.")
+                return@delete
+            }
+
+            val eliminat = activitatController.eliminarParticipant(idActivitat, usernameAEliminar)
+            if (eliminat) {
+                call.respond(HttpStatusCode.OK, "Participant eliminat correctament.")
+            } else {
+                call.respond(HttpStatusCode.NotFound, "No s'ha trobat el participant.")
+            }
+        }
+
     }
 }
