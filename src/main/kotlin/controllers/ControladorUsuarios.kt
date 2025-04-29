@@ -42,10 +42,9 @@ class ControladorUsuarios (private val usuarioRepository: UsuarioRepository) {
 
     }
 
-
     // Método para listar usuarios
-    fun listarUsuarios(): List<Usuario> {
-        return usuarios
+    fun listarUsuarios(): List<String> {
+        return usuarioRepository.listarUsuarios()
     }
 
     fun obtenerUsuarioPorEmail(email: String): Usuario? {

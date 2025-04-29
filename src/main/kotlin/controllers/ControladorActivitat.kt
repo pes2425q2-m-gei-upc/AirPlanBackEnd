@@ -29,6 +29,8 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
 
         val activitatId = ActivitatRepository.afegirActivitat(novaActivitat)
 
+        println("Activitat afegida amb ID: $activitatId") // Depuració
+
         if (activitatId != -1) {
             novaActivitat.id = activitatId // Actualizar el ID de la actividad
             activitats.add(novaActivitat) //solo si no hay problemas con la base de datos
@@ -38,6 +40,9 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
                 us_participant = creador
             )
             val afegit = ParticipantsActivitatsRepository.afegirParticipant(participant)
+
+            println(afegit)
+
             if (afegit) {
                 println("El creador ${creador} ha sido añadido como participante.")
             } else {

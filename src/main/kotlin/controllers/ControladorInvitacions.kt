@@ -20,14 +20,14 @@ class ControladorInvitacions(
         }
 
         // Verify that the host is the creator of the activity
-        if (!participantsActivitatsRepository.esCreador(idAct, usAnfitrio)) {
+        /*if (!participantsActivitatsRepository.esCreador(idAct, usAnfitrio)) {
             println("Solo el creador de la actividad puede enviar invitaciones.")
             return false
-        }
+        }*/
 
         val invitacio = Invitacio(id_act = idAct, us_anfitrio = usAnfitrio, us_destinatari = usDestinatari)
         invitacionsRepository.afegirInvitacio(invitacio)
-        println("Invitación creada para $usDestinatari.")
+        println("Invitación creada para $usDestinatari con anfitrion $usAnfitrio.")
         return true
     }
 

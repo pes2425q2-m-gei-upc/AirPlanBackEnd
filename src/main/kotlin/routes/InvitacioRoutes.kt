@@ -6,13 +6,14 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
 import org.example.controllers.ControladorInvitacions
-import org.example.models.Activitat
+import org.example.controllers.ControladorUsuarios
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.repositories.UsuarioRepository
 
 fun Route.invitacioRoutes() {
     val controladorInvitacions = ControladorInvitacions(ParticipantsActivitatsRepository(), InvitacioRepository(), UsuarioRepository())
+    val controladorUsuarios = ControladorUsuarios(UsuarioRepository())
 
     route("/api/invitacions") {
 
@@ -29,33 +30,6 @@ fun Route.invitacioRoutes() {
                 call.respond(HttpStatusCode.OK, invitacions)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.InternalServerError, "Error al obtener las invitaciones")
-            }
-        }
-
-        // Ruta para invitar a un usuario a una actividad
-        post("/invitar") {
-            try {
-                // Recibir los datos necesarios desde el frontend
-                val request = call.receive<Map<String, String>>()
-                val idAct = request["idAct"]?.toIntOrNull()
-                val usAnfitrio = request["usAnfitrio"]
-                val usDestinatari = request["usDestinatari"]
-
-                // Validar que todos los datos estén presentes
-                if (idAct == null || usAnfitrio.isNullOrBlank() || usDestinatari.isNullOrBlank()) {
-                    call.respond(HttpStatusCode.BadRequest, "Faltan datos requeridos")
-                    return@post
-                }
-
-                // Llamar al controlador para crear la invitación
-                val resultado = controladorInvitacions.crearInvitacio(idAct, usAnfitrio, usDestinatari)
-                if (resultado) {
-                    call.respond(HttpStatusCode.Created, "Invitación creada correctamente")
-                } else {
-                    call.respond(HttpStatusCode.Conflict, "No se pudo crear la invitación")
-                }
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud")
             }
         }
 
@@ -139,6 +113,79 @@ fun Route.invitacioRoutes() {
             } catch (e: Exception) {
                 println("Error al procesar la solicitud: ${e.message}")
                 call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud")
+            }
+        }
+
+        // Ruta para invitar a un usuario a una actividad
+        post("/invitar") {
+            try {
+                // Recibir los datos necesarios desde el frontend
+                val request = call.receive<Map<String, String>>()
+                val idAct = request["activityId"]?.toIntOrNull()
+                val usAnfitrio = request["creator"]
+                val usDestinatari = request["username"]
+
+                // Validar que todos los datos estén presentes
+                if (idAct == null || usAnfitrio.isNullOrBlank() || usDestinatari.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "Faltan datos requeridos")
+                    return@post
+                }
+
+                // Llamar al controlador para crear la invitación
+                val resultado = controladorInvitacions.crearInvitacio(idAct, usAnfitrio, usDestinatari)
+                if (resultado) {
+                    call.respond(HttpStatusCode.Created, "Invitación creada correctamente")
+                } else {
+                    call.respond(HttpStatusCode.Conflict, "No se pudo crear la invitación")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud")
+            }
+        }
+
+        //Ruta para comprobar si un usuario ha sido invitado a una actividad
+        get("/check/{activityId}/{username}") {
+            val activityId = call.parameters["activityId"]?.toIntOrNull()
+            val username = call.parameters["username"]
+
+            if (activityId == null || username == null) {
+                call.respond(HttpStatusCode.BadRequest, "Faltan datos requeridos")
+                return@get
+            }
+
+            // Comprobar si el usuario ha sido invitado a la actividad
+            val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari.equals(username)) }
+            val response = mapOf("hasInvitation" to (invitacio != null))
+            call.respond(HttpStatusCode.OK, response)
+        }
+
+        //Ruta para buscar usuarios
+        get("/search") {
+            val query = call.request.queryParameters["query"]
+
+            if (query.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Query parameter is required")
+                return@get
+            }
+
+            try {
+                // Obtener todos los usuarios
+                val allUsers = controladorUsuarios.listarUsuarios()
+
+                // Filtrar usuarios que coincidan con la query
+                val matchingUsers = allUsers.filter { username ->
+                    username.startsWith(query, ignoreCase = true)
+                }
+
+                // Mapear los resultados
+                val result = matchingUsers.map { username ->
+                    mapOf("username" to username)
+                }
+
+                call.respond(HttpStatusCode.OK, result)
+            } catch (e: Exception) {
+                println("Error en /search: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error fetching users")
             }
         }
     }

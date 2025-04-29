@@ -68,4 +68,13 @@ class UsuarioRepository {
                 .count() > 0
         }
     }
+
+    //Lista todos los usuarios con su username
+    fun listarUsuarios(): List<String> {
+        return transaction {
+            UsuarioTable
+                .selectAll()
+                .map { it[UsuarioTable.username] }
+        }
+    }
 }
