@@ -9,11 +9,13 @@ import kotlinx.serialization.Serializable
  * @param message mensaje de éxito (opcional)
  * @param error mensaje de error (opcional)
  * @param customToken token personalizado para mantener la sesión (opcional)
+ * @param imageUrl URL de la imagen de perfil actualizada (opcional)
  */
 @Serializable
 data class EmailUpdateResponse(
     val success: Boolean,
     val message: String? = null,
     val error: String? = null,
-    val customToken: String? = null
+    val customToken: String? = null,
+    val imageUrl: String? = null
 )

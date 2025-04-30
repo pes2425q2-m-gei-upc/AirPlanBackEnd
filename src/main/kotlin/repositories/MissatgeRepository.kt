@@ -4,6 +4,7 @@ import org.example.models.Missatge
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.database.MissatgesTable
+import org.example.database.UsuarioTable
 
 class MissatgeRepository {
     suspend fun sendMessage(message: Missatge): Boolean {
@@ -58,6 +59,12 @@ class MissatgeRepository {
 
             // Para cada usuario con quien ha hablado, buscamos el último mensaje
             subquery.mapNotNull { otherUser ->
+                // Obtener la URL de la imagen de perfil del otro usuario
+                val photoURL = UsuarioTable
+                    .select { UsuarioTable.username eq otherUser }
+                    .map { it[UsuarioTable.photourl] }
+                    .firstOrNull()
+                
                 MissatgesTable
                     .select {
                         ((MissatgesTable.usernameSender eq currentUsername) and (MissatgesTable.usernameReceiver eq otherUser)) or
@@ -70,7 +77,8 @@ class MissatgeRepository {
                             usernameSender = it[MissatgesTable.usernameSender],
                             usernameReceiver = it[MissatgesTable.usernameReceiver],
                             dataEnviament = it[MissatgesTable.dataEnviament],
-                            missatge = it[MissatgesTable.missatge]
+                            missatge = it[MissatgesTable.missatge],
+                            photoURL = photoURL // Incluir la URL de la foto de perfil
                         )
                     }
                     .firstOrNull()

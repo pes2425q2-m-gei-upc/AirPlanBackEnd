@@ -20,6 +20,8 @@ import org.example.websocket.WebSocketManager
 import org.example.services.FirebaseAdminService // Importación añadida
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import java.io.File
+import java.util.UUID
 
 fun Route.usuarioRoutes() {
     val usuarioController = ControladorUsuarios(UsuarioRepository())
@@ -249,7 +251,11 @@ fun Route.usuarioRoutes() {
                 val oldUsername = request["oldUsername"]
                 val nom = request["nom"]
                 val idioma = request["idioma"]
-                val photoURL = request["photoURL"]
+                
+                // Procesar imagen si viene incluida en la petición
+                val imageData = request["imageData"]
+                val fileName = request["fileName"]
+                var photoURL: String? = request["photoURL"]
                 
                 if (currentEmail == null) {
                     call.respond(HttpStatusCode.BadRequest, EmailUpdateResponse(
@@ -257,6 +263,54 @@ fun Route.usuarioRoutes() {
                         error = "El correo electrónico actual es obligatorio"
                     ))
                     return@post
+                }
+                
+                // Procesar y guardar la imagen si viene incluida en la petición
+                if (imageData != null && fileName != null) {
+                    try {
+                        // Obtener la URL de la foto actual para eliminarla después si existe
+                        val antiguaPhotoUrl = usuarioController.obtenerPhotoUrlPorEmail(currentEmail)
+                        
+                        val uploadsDir = File("uploads").apply {
+                            if (!exists()) mkdirs()
+                        }
+                        
+                        val uniqueFileName = "${UUID.randomUUID()}_$fileName"
+                        val file = File(uploadsDir, uniqueFileName)
+                        
+                        // Decodificar la imagen en base64 y guardarla
+                        val imageBytes = java.util.Base64.getDecoder().decode(imageData)
+                        file.writeBytes(imageBytes)
+                        
+                        // Construir la URL relativa de la imagen (sin barra inicial para evitar la doble barra)
+                        photoURL = "uploads/$uniqueFileName"
+                        println("✅ Imagen guardada correctamente: ${file.absolutePath}")
+                        
+                        // Eliminar la imagen antigua si existe
+                        if (antiguaPhotoUrl != null && antiguaPhotoUrl.isNotEmpty()) {
+                            try {
+                                val antiguaImagen = File(antiguaPhotoUrl)
+                                if (antiguaImagen.exists() && antiguaImagen.isFile) {
+                                    val eliminado = antiguaImagen.delete()
+                                    if (eliminado) {
+                                        println("✅ Imagen antigua eliminada correctamente: $antiguaPhotoUrl")
+                                    } else {
+                                        println("⚠️ No se pudo eliminar la imagen antigua: $antiguaPhotoUrl")
+                                    }
+                                } else {
+                                    println("⚠️ La imagen antigua no existe o no es un archivo: $antiguaPhotoUrl")
+                                }
+                            } catch (e: Exception) {
+                                println("❌ Error al eliminar la imagen antigua: ${e.message}")
+                                // No interrumpir el flujo si hay un error al eliminar la imagen antigua
+                            }
+                        }
+                    } catch (e: Exception) {
+                        println("❌ Error al guardar la nueva imagen: ${e.message}")
+                        e.printStackTrace()
+                        // No devolvemos error aquí para no interrumpir la actualización del perfil
+                        // Solo registramos el error y continuamos sin imagen
+                    }
                 }
                 
                 // Preparamos un mapa con los datos actualizados (excluyendo los campos de control)
@@ -307,7 +361,8 @@ fun Route.usuarioRoutes() {
                     nuevoNom = nom,
                     nuevoUsername = username, 
                     nuevoIdioma = idioma,
-                    nuevoCorreo = null // El correo ya fue actualizado si era necesario
+                    nuevoCorreo = null, // El correo ya fue actualizado si era necesario
+                    nuevaPhotoUrl = photoURL // Pasar la URL de la foto para actualizar el perfil
                 )
                 
                 if (profileResult) {
@@ -331,12 +386,15 @@ fun Route.usuarioRoutes() {
                         }
                     }
                     
-                    // Respuesta exitosa con token si se cambió el correo
-                    call.respond(HttpStatusCode.OK, EmailUpdateResponse(
+                    // Respuesta exitosa con token si se cambió el correo y la URL de la imagen si se subió
+                    val respuesta = EmailUpdateResponse(
                         success = true,
                         message = if (emailChanged) "Perfil actualizado y correo modificado correctamente" else "Perfil actualizado correctamente",
-                        customToken = customToken
-                    ))
+                        customToken = customToken,
+                        imageUrl = photoURL
+                    )
+                    
+                    call.respond(HttpStatusCode.OK, respuesta)
                 } else {
                     call.respond(HttpStatusCode.InternalServerError, EmailUpdateResponse(
                         success = false,
