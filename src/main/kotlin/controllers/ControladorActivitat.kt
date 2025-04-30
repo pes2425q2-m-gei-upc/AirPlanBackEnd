@@ -5,9 +5,7 @@ import org.example.models.Activitat
 import org.example.models.ParticipantsActivitats
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Localitzacio
-import java.sql.Timestamp
 import repositories.ActivitatRepository
-import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
 class ControladorActivitat (private val ActivitatRepository: ActivitatRepository, private val ParticipantsActivitatsRepository: ParticipantsActivitatsRepository) {
     private val activitats = mutableListOf<Activitat>()
@@ -29,27 +27,28 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
 
         val activitatId = ActivitatRepository.afegirActivitat(novaActivitat)
 
-        println("Activitat afegida amb ID: $activitatId") // Depuració
+        if (activitatId == null) {
+            throw IllegalStateException("Error al afegir l'activitat a la base de dades.")
+        }
 
-        if (activitatId != -1) {
-            novaActivitat.id = activitatId // Actualizar el ID de la actividad
-            activitats.add(novaActivitat) //solo si no hay problemas con la base de datos
-            // Añadir el creador como primer participante
-            val participant = ParticipantsActivitats(
-                id_act = activitatId,
-                us_participant = creador
-            )
-            val afegit = ParticipantsActivitatsRepository.afegirParticipant(participant)
+        print("Activitat afegida amb ID: $activitatId") // Depuració
 
-            println(afegit)
+        novaActivitat.id = activitatId
+        activitats.add(novaActivitat)
 
-            if (afegit) {
-                println("El creador ${creador} ha sido añadido como participante.")
-            } else {
-                println("Error al añadir el creador como participante.")
-            }
+        // Añadir el creador como primer participante
+        val participant = ParticipantsActivitats(
+            id_act = activitatId,
+            us_participant = creador
+        )
+        val afegit = ParticipantsActivitatsRepository.afegirParticipant(participant)
+
+        println(afegit)
+
+        if (afegit) {
+            println("El creador ${creador} ha sido añadido como participante.")
         } else {
-            throw Exception("Error al crear la actividad")
+            println("Error al añadir el creador como participante.")
         }
     }
 

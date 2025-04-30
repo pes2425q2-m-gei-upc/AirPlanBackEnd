@@ -12,10 +12,11 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.sql.Timestamp
 class ActivitatRepository {
-    fun afegirActivitat(activitat: Activitat): Int {
+    fun afegirActivitat(activitat: Activitat): Int? {
         return try {
             transaction {
-                ActivitatTable.insert {
+                // Perform the insert operation and return the generated ID
+                val generatedId = ActivitatTable.insert {
                     it[nom] = activitat.nom
                     it[latitud] = activitat.ubicacio.latitud
                     it[longitud] = activitat.ubicacio.longitud
@@ -23,11 +24,14 @@ class ActivitatRepository {
                     it[dataFi] = activitat.dataFi
                     it[descripcio] = activitat.descripcio
                     it[username_creador] = activitat.creador
-                }[ActivitatTable.id_activitat] // Retrieve the generated ID
+                } get ActivitatTable.id_activitat // Use `get` to retrieve the generated ID
+
+                println("Generated activity ID: $generatedId") // Debugging
+                generatedId
             }
         } catch (e: Exception) {
             println("Error while adding activity: ${e.message}")
-            -1 // Return -1 in case of an error
+            null // Return null in case of an error
         }
     }
 
