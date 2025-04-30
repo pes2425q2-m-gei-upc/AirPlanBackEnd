@@ -64,10 +64,10 @@ fun main() {
                 usuarioRoutes()
                 activitatRoutes()
                 solicitudRoutes()
-
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()
+                userBlockRoutes() // Añadir rutas de bloqueo de usuarios
                 uploadImageRoute() // Añadida la ruta para subir imágenes
                 webSocketRoutes() // Registrar rutas WebSocket
                 generalRoutes()
