@@ -24,6 +24,9 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
+    // Cloudinary para almacenamiento de imágenes en la nube
+    implementation("com.cloudinary:cloudinary-http44:1.35.0")
+
     // Ktor Client Content Negotiation (Added)
     implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
 

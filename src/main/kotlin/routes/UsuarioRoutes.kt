@@ -17,14 +17,17 @@ import org.jetbrains.exposed.sql.update
 import org.example.database.UsuarioTable
 import kotlinx.coroutines.runBlocking
 import org.example.websocket.WebSocketManager
+import org.example.services.CloudinaryService // Importación añadida para Cloudinary
 import org.example.services.FirebaseAdminService // Importación añadida
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import java.io.File
 import java.util.UUID
 
 fun Route.usuarioRoutes() {
     val usuarioController = ControladorUsuarios(UsuarioRepository())
+    // Instancia del servicio Cloudinary
+    val cloudinaryService = CloudinaryService.getInstance()
+    
     route("/api/usuaris") {
         post("/crear") {
             try {
@@ -265,48 +268,32 @@ fun Route.usuarioRoutes() {
                     return@post
                 }
                 
-                // Procesar y guardar la imagen si viene incluida en la petición
+                // Procesar y guardar la imagen en Cloudinary si viene incluida en la petición
                 if (imageData != null && fileName != null) {
                     try {
                         // Obtener la URL de la foto actual para eliminarla después si existe
                         val antiguaPhotoUrl = usuarioController.obtenerPhotoUrlPorEmail(currentEmail)
                         
-                        val uploadsDir = File("uploads").apply {
-                            if (!exists()) mkdirs()
-                        }
+                        // Subir la nueva imagen a Cloudinary
+                        photoURL = cloudinaryService.uploadImage(imageData)
+                        println("✅ Imagen subida a Cloudinary: $photoURL")
                         
-                        val uniqueFileName = "${UUID.randomUUID()}_$fileName"
-                        val file = File(uploadsDir, uniqueFileName)
-                        
-                        // Decodificar la imagen en base64 y guardarla
-                        val imageBytes = java.util.Base64.getDecoder().decode(imageData)
-                        file.writeBytes(imageBytes)
-                        
-                        // Construir la URL relativa de la imagen (sin barra inicial para evitar la doble barra)
-                        photoURL = "uploads/$uniqueFileName"
-                        println("✅ Imagen guardada correctamente: ${file.absolutePath}")
-                        
-                        // Eliminar la imagen antigua si existe
-                        if (antiguaPhotoUrl != null && antiguaPhotoUrl.isNotEmpty()) {
+                        // Eliminar la imagen antigua de Cloudinary si existe
+                        if (antiguaPhotoUrl != null && antiguaPhotoUrl.isNotEmpty() && antiguaPhotoUrl.contains("cloudinary.com")) {
                             try {
-                                val antiguaImagen = File(antiguaPhotoUrl)
-                                if (antiguaImagen.exists() && antiguaImagen.isFile) {
-                                    val eliminado = antiguaImagen.delete()
-                                    if (eliminado) {
-                                        println("✅ Imagen antigua eliminada correctamente: $antiguaPhotoUrl")
-                                    } else {
-                                        println("⚠️ No se pudo eliminar la imagen antigua: $antiguaPhotoUrl")
-                                    }
+                                val eliminado = cloudinaryService.deleteImage(antiguaPhotoUrl)
+                                if (eliminado) {
+                                    println("✅ Imagen antigua eliminada de Cloudinary: $antiguaPhotoUrl")
                                 } else {
-                                    println("⚠️ La imagen antigua no existe o no es un archivo: $antiguaPhotoUrl")
+                                    println("⚠️ No se pudo eliminar la imagen antigua de Cloudinary: $antiguaPhotoUrl")
                                 }
                             } catch (e: Exception) {
-                                println("❌ Error al eliminar la imagen antigua: ${e.message}")
+                                println("❌ Error al eliminar la imagen antigua de Cloudinary: ${e.message}")
                                 // No interrumpir el flujo si hay un error al eliminar la imagen antigua
                             }
                         }
                     } catch (e: Exception) {
-                        println("❌ Error al guardar la nueva imagen: ${e.message}")
+                        println("❌ Error al subir la nueva imagen a Cloudinary: ${e.message}")
                         e.printStackTrace()
                         // No devolvemos error aquí para no interrumpir la actualización del perfil
                         // Solo registramos el error y continuamos sin imagen
