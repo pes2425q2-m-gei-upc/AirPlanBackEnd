@@ -30,4 +30,23 @@ class ParticipantsActivitatsRepository {
             }.count() > 0
         }
     }
+
+    fun eliminarParticipant(idAct: Int, username: String): Boolean {
+        return transaction {
+            ParticipantsActivitatsTable.deleteWhere {
+                (ParticipantsActivitatsTable.id_activitat eq idAct) and
+                        (ParticipantsActivitatsTable.username_participant eq username)
+            } > 0
+        }
+    }
+
+    fun obtenirParticipantsPerActivitat(idAct: Int): List<String> {
+        return transaction {
+            ParticipantsActivitatsTable
+                .select { ParticipantsActivitatsTable.id_activitat eq idAct }
+                .map { it[ParticipantsActivitatsTable.username_participant] }
+        }
+    }
+
+
 }
