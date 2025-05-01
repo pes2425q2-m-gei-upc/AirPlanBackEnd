@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "2.0.0" // Usa una versión válida de Kotlin
     id("application") // Aplicar el plugin application correctamente
     kotlin("plugin.serialization") version "1.8.10"
+    id("jvm-test-suite") // Add this plugin for test suites support
 }
 
 group = "org.example"
@@ -73,13 +74,18 @@ dependencies {
     testImplementation("io.ktor:ktor-client-core:2.3.8")
     // Ktor Client Engine (e.g., CIO) for testing (Added) - Needed for createClient
     testImplementation("io.ktor:ktor-client-cio:2.3.8")
+
+    // Explicitly declare the test framework dependencies for Gradle 8.10+ compatibility
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
 }
 
-tasks.test {
-    useJUnitPlatform()
-    reports {
-        junitXml.required.set(true) // Habilitar informe en formato XML
-        html.required.set(true) // Habilitar informe en formato HTML
+// Define test suites
+testing {
+    suites {
+        // Configure the built-in test suite
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter("5.10.2") // Explicitly specify JUnit Jupiter version
+        }
     }
 }
 
