@@ -59,7 +59,8 @@ class MissatgeRepositoryTest {
             usernameSender = "user1",
             usernameReceiver = "user2",
             dataEnviament = LocalDateTime.parse("2025-05-01T12:00:00"),
-            missatge = "Hola, com estàs?"
+            missatge = "Hola, com estàs?",
+            isEdited = false
         )
 
         val wasSaved = missatgeRepository.sendMessage(missatge)
@@ -85,13 +86,15 @@ class MissatgeRepositoryTest {
             usernameSender = "user1",
             usernameReceiver = "user2",
             dataEnviament = LocalDateTime.parse("2025-05-01T12:00:00"),
-            missatge = "Hola!"
+            missatge = "Hola!",
+            isEdited = false
         )
         val missatge2 = Missatge(
             usernameSender = "user2",
             usernameReceiver = "user1",
             dataEnviament = LocalDateTime.parse("2025-05-01T12:05:00"),
-            missatge = "Bones!"
+            missatge = "Bones!",
+            isEdited = false
         )
 
         missatgeRepository.sendMessage(missatge1)
@@ -111,13 +114,15 @@ class MissatgeRepositoryTest {
             usernameSender = "user1",
             usernameReceiver = "user2",
             dataEnviament = LocalDateTime.parse("2025-05-01T12:00:00"),
-            missatge = "Hola!"
+            missatge = "Hola!",
+            isEdited = false
         )
         val missatge2 = Missatge(
             usernameSender = "user3",
             usernameReceiver = "user1",
             dataEnviament = LocalDateTime.parse("2025-05-01T12:10:00"),
-            missatge = "Ei!"
+            missatge = "Ei!",
+            isEdited = false
         )
 
         missatgeRepository.sendMessage(missatge1)
