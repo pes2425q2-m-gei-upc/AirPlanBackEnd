@@ -5,6 +5,7 @@ import org.example.models.Missatge
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.database.MissatgesTable
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class MissatgeRepository {
     suspend fun sendMessage(message: Missatge): Boolean {
@@ -95,6 +96,20 @@ class MissatgeRepository {
             }
         } catch (e: Exception) {
             println("Error editing message: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun deleteMessage(sender: String, originalTimestamp: String): Boolean {
+        return try {
+            transaction {
+                MissatgesTable.deleteWhere {
+                    (MissatgesTable.usernameSender eq sender) and
+                            (MissatgesTable.dataEnviament eq originalTimestamp.toLocalDateTime())
+                } > 0
+            }
+        } catch (e: Exception) {
+            println("Error deleting message: ${e.message}")
             false
         }
     }
