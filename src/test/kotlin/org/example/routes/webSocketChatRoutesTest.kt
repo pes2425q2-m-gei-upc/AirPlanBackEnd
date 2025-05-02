@@ -86,7 +86,6 @@ class WebSocketChatRoutesTest {
 
     @Test
     fun `test envio y recepcion de mensajes`() = testApplication {
-        // Configuración del servidor
         application {
             install(WebSockets) {
                 pingPeriod = java.time.Duration.ofSeconds(15)
@@ -97,7 +96,6 @@ class WebSocketChatRoutesTest {
             }
         }
 
-        // Configuración del cliente
         val client = createClient {
             install(io.ktor.client.plugins.websocket.WebSockets) {
                 pingInterval = 15000
@@ -105,36 +103,64 @@ class WebSocketChatRoutesTest {
         }
 
         runBlocking {
-            // Cliente 1
-            val session1 = client.webSocket(
-                method = HttpMethod.Get,
-                path = "/ws/chat/user1/user2"
-            ) {
-                // Enviar mensaje
-                val testMessage = Missatge(
-                    usernameSender = "user1",
-                    usernameReceiver = "user2",
-                    dataEnviament = LocalDateTime.parse("2024-05-01T12:00:00"),
-                    missatge = "Hola desde test",
-                    isEdited = false
-                )
-                send(Frame.Text(Json.encodeToString(testMessage)))
+            // Create both WebSocket sessions before sending any messages
+            val session1Job = launch {
+                client.webSocket("/ws/chat/user1/user2") {
+                    // First receive and ignore the history message
+                    val historyFrame = withTimeout(5000) { incoming.receive() }
+                    assertTrue(historyFrame is Frame.Text)
+                    println("Session 1: History received")
+
+                    // Enviar mensaje
+                    val testMessage = Missatge(
+                        usernameSender = "user1",
+                        usernameReceiver = "user2",
+                        dataEnviament = LocalDateTime.parse("2024-05-01T12:00:00"),
+                        missatge = "Hola desde test",
+                        isEdited = false
+                    )
+                    send(Frame.Text(Json.encodeToString(testMessage)))
+                    println("Session 1: Message sent")
+
+                    // Keep connection open until explicitly cancelled
+                    delay(10000)
+                }
             }
 
-            // Cliente 2
-            client.webSocket(
-                method = HttpMethod.Get,
-                path = "/ws/chat/user1/user2"
-            ) {
-                // Recibir mensaje
-                val receivedFrame = withTimeout(5000) { incoming.receive() }
-                assertTrue(receivedFrame is Frame.Text)
-                val receivedMessage = Json.decodeFromString<Missatge>((receivedFrame as Frame.Text).readText())
-                assertEquals("Hola desde test", receivedMessage.missatge)
+            // Give some time for the first connection to establish
+            delay(500)
+
+            val session2Job = launch {
+                client.webSocket("/ws/chat/user1/user2") {
+                    // First receive the history message
+                    val historyFrame = withTimeout(5000) { incoming.receive() }
+                    assertTrue(historyFrame is Frame.Text)
+                    println("Session 2: History received")
+
+                    // Now receive the actual message
+                    val receivedFrame = withTimeout(5000) { incoming.receive() }
+                    assertTrue(receivedFrame is Frame.Text)
+                    println("Session 2: Message received")
+
+                    // Use ignoreUnknownKeys to handle any extra fields
+                    val json = Json { ignoreUnknownKeys = true }
+                    val receivedMessage = json.decodeFromString<Missatge>((receivedFrame as Frame.Text).readText())
+                    assertEquals("Hola desde test", receivedMessage.missatge)
+                }
             }
 
-            // Cerrar sesión
-            (session1 as? DefaultClientWebSocketSession)?.close()
+            // Wait for both sessions to complete their tasks
+            try {
+                withTimeout(15000) {
+                    session2Job.join()  // Wait for session2 to complete first
+                    session1Job.cancel() // Then cancel session1
+                }
+            } catch (e: Exception) {
+                // Make sure to cancel the jobs in case of an exception
+                session1Job.cancel()
+                session2Job.cancel()
+                throw e
+            }
         }
     }
 
