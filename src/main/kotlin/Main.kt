@@ -47,6 +47,7 @@ fun main() {
                 allowCredentials = true
             }
 
+
             // Configuració de negociació de contingut
             install(ContentNegotiation) {
                 json()
