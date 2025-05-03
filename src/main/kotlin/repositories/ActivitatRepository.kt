@@ -7,6 +7,7 @@ import org.example.models.Activitat
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+
 class ActivitatRepository {
     fun afegirActivitat(activitat: Activitat): Int? {
         return try {
