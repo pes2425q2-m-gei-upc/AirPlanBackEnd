@@ -66,7 +66,7 @@ class ControladorActivitat (private val ActivitatRepository: ActivitatRepository
     }
 
     fun obtenirTotesActivitats():  List<Activitat> {
-        var acti = ActivitatRepository.obtenirActivitats()
+        val acti = ActivitatRepository.obtenirActivitats()
         for (activitat in acti) {
             println("${activitat.nom} - ${activitat.descripcio} - ${activitat.ubicacio.latitud} -${activitat.ubicacio.longitud}  - ${activitat.dataInici} - ${activitat.dataFi} - ${activitat.creador}")
         }

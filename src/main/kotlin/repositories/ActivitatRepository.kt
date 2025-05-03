@@ -1,16 +1,12 @@
 package repositories
 
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.toJavaLocalDateTime
 import org.example.database.ActivitatTable
 import org.example.models.Localitzacio
 import org.example.models.Activitat
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import java.sql.Timestamp
 class ActivitatRepository {
     fun afegirActivitat(activitat: Activitat): Int? {
         return try {

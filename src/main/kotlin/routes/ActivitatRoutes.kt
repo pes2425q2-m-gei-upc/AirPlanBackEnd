@@ -9,7 +9,6 @@ import org.example.controllers.ControladorActivitat
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Activitat
 import repositories.ActivitatRepository
-import java.sql.Timestamp
 
 fun Route.activitatRoutes() {
     val activitatController = ControladorActivitat(ActivitatRepository(), ParticipantsActivitatsRepository())
