@@ -24,9 +24,6 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
-    // Ktor Client Content Negotiation (Added)
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
-
     // HikariCP para pooling de conexiones
     implementation("com.zaxxer:HikariCP:5.0.1")
 
@@ -47,37 +44,10 @@ dependencies {
 
     // Driver de base de datos (elige uno)
     implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL
-
-    // Pruebas
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    testImplementation("io.ktor:ktor-server-test-host:2.3.3") // o el que estés usando
-    implementation("io.ktor:ktor-server-test-host:2.0.0")  // Para las pruebas de Ktor
-    implementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21") // Para usar JUnit
-    testImplementation("io.ktor:ktor-server-test-host:2.0.0")  // Para las pruebas de Ktor
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21") // Para usar JUnit
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
-
-    // Dependencias para testing
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
-    testImplementation("org.mockito:mockito-core:5.10.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-    testImplementation("io.mockk:mockk:1.13.10")
-    testImplementation("com.h2database:h2:2.2.224") // H2 Database para tests
-    testImplementation("io.ktor:ktor-server-test-host:2.3.8") // Para tests de endpoints
-    // Ktor Client Core for testing (Added) - Needed for createClient
-    testImplementation("io.ktor:ktor-client-core:2.3.8")
-    // Ktor Client Engine (e.g., CIO) for testing (Added) - Needed for createClient
-    testImplementation("io.ktor:ktor-client-cio:2.3.8")
 }
 
 tasks.test {
     useJUnitPlatform()
-    reports {
-        junitXml.required.set(true) // Habilitar informe en formato XML
-        html.required.set(true) // Habilitar informe en formato HTML
-    }
 }
 
 application {

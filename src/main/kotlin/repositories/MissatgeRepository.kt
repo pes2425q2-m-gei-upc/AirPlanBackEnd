@@ -6,7 +6,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.database.MissatgesTable
 
 class MissatgeRepository {
-    suspend fun sendMessage(message: Missatge): Boolean {
+    fun sendMessage(message: Missatge): Boolean {
         return try {
             transaction {
                 MissatgesTable.insert {
@@ -22,7 +22,7 @@ class MissatgeRepository {
         }
     }
 
-    suspend fun getMessagesBetweenUsers(user1: String, user2: String): List<Missatge> {
+    fun getMessagesBetweenUsers(user1: String, user2: String): List<Missatge> {
         return transaction {
             MissatgesTable
                 .select { ((MissatgesTable.usernameSender eq user1) and (MissatgesTable.usernameReceiver eq user2)) or
@@ -39,7 +39,7 @@ class MissatgeRepository {
         }
     }
 
-    suspend fun getLatestChatsForUser(currentUsername: String): List<Missatge> {
+    fun getLatestChatsForUser(currentUsername: String): List<Missatge> {
         return transaction {
             // Subquery: obtener la lista de usuarios con los que ha hablado
             val subquery = MissatgesTable
