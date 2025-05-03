@@ -44,33 +44,6 @@ dependencies {
 
     // Driver de base de datos (elige uno)
     implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL
-
-    // Dependencias principales de testing
-    testImplementation(kotlin("test")) // Incluye las assertions básicas
-
-    // MockK
-    testImplementation("io.mockk:mockk:1.13.8") // Versión estable más reciente
-
-    // JUnit 5
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
-
-    // Para integración con Kotlin test
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.0")
-    testImplementation("org.jetbrains.exposed:exposed-java-time:0.44.1")
-    testImplementation("org.jetbrains.exposed:exposed-core:0.44.1")
-    testImplementation("org.jetbrains.exposed:exposed-dao:0.44.1")
-    testImplementation("org.jetbrains.exposed:exposed-jdbc:0.44.1")
-    testImplementation("com.h2database:h2:2.2.224")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-
-    // WebSocket
-    testImplementation("io.ktor:ktor-server-websockets:2.3.7")
-    testImplementation("io.ktor:ktor-client-websockets:2.3.7")
-
-    // Ktor Test (si necesitas probar rutas)
-    testImplementation("io.ktor:ktor-server-test-host:2.3.7")
-    testImplementation("io.ktor:ktor-client-content-negotiation:2.3.7")
 }
 
 tasks.test {

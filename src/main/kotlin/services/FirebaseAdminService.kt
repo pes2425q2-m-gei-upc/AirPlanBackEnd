@@ -5,8 +5,10 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserRecord.UpdateRequest
+import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.io.IOException
+import java.util.Base64
 
 /**
  * Servicio para interactuar con Firebase Admin SDK
@@ -16,38 +18,70 @@ object FirebaseAdminService {
     private var initialized = false
 
     /**
-     * Inicializa Firebase Admin SDK usando credenciales de archivo
+     * Inicializa Firebase Admin SDK usando credenciales de archivo o variable de entorno
      */
     fun initialize() {
         if (initialized) return
         
         try {
-            // Intentar usar credenciales de archivo local primero
-            val serviceAccount = FileInputStream("src/main/resources/firebase-service-account.json")
-            
-            val options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .build()
-            
-            FirebaseApp.initializeApp(options)
-            initialized = true
-            println("✅ Firebase Admin SDK inicializado correctamente desde archivo")
+            // 1. Intentar usar credenciales de archivo local
+            initializeFromFile()
         } catch (e: IOException) {
-            // Si no hay archivo, intentar usar credenciales por defecto
             try {
-                val options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.getApplicationDefault())
-                    .build()
-                
-                FirebaseApp.initializeApp(options)
-                initialized = true
-                println("✅ Firebase Admin SDK inicializado con credenciales por defecto")
+                // 2. Intentar usar variable de entorno
+                initializeFromEnvironment()
             } catch (e2: Exception) {
-                println("❌ Error al inicializar Firebase Admin SDK: ${e2.message}")
+                try {
+                    // 3. Intentar usar credenciales por defecto
+                    initializeWithDefaultCredentials()
+                } catch (e3: Exception) {
+                    println("❌ Error al inicializar Firebase Admin SDK: No se pudieron cargar credenciales")
+                }
             }
         } catch (e: Exception) {
             println("❌ Error al inicializar Firebase Admin SDK: ${e.message}")
         }
+    }
+    
+    private fun initializeFromFile() {
+        val serviceAccount = FileInputStream("src/main/resources/firebase-service-account.json")
+        val options = FirebaseOptions.builder()
+            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+            .build()
+        
+        FirebaseApp.initializeApp(options)
+        initialized = true
+        println("✅ Firebase Admin SDK inicializado correctamente desde archivo")
+    }
+    
+    private fun initializeFromEnvironment() {
+        val credentialsJson = System.getenv("FIREBASE_SERVICE_ACCOUNT")
+            ?: throw IOException("Variable FIREBASE_SERVICE_ACCOUNT no encontrada")
+            
+        // La variable puede estar en base64 o como JSON directo
+        val serviceAccount = try {
+            ByteArrayInputStream(Base64.getDecoder().decode(credentialsJson))
+        } catch (e: Exception) {
+            ByteArrayInputStream(credentialsJson.toByteArray())
+        }
+        
+        val options = FirebaseOptions.builder()
+            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+            .build()
+        
+        FirebaseApp.initializeApp(options)
+        initialized = true
+        println("✅ Firebase Admin SDK inicializado con credenciales de variable de entorno")
+    }
+    
+    private fun initializeWithDefaultCredentials() {
+        val options = FirebaseOptions.builder()
+            .setCredentials(GoogleCredentials.getApplicationDefault())
+            .build()
+        
+        FirebaseApp.initializeApp(options)
+        initialized = true
+        println("✅ Firebase Admin SDK inicializado con credenciales por defecto")
     }
 
     /**

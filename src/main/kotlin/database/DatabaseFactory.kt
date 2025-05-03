@@ -12,6 +12,8 @@ import java.sql.Connection
 
 object DatabaseFactory {
     fun init() {
+        // en cas de execucció local "jdbc:postgresql://nattech.fib.upc.edu:40351/midb"
+        // en cas de execucció al servidor "jdbc:postgresql://172.16.4.35:8081/midb"
         val url = "jdbc:postgresql://nattech.fib.upc.edu:40351/midb"
         val user = "airplan"
         val password = "airplan1234"
@@ -27,10 +29,10 @@ object DatabaseFactory {
         config.idleTimeout = TimeUnit.MINUTES.toMillis(10)
         config.maxLifetime = TimeUnit.MINUTES.toMillis(30)
         config.connectionTimeout = TimeUnit.SECONDS.toMillis(30)
-        
+
         // IMPORTANTE: Eliminamos la configuración de autoCommit y connectionTestQuery
         // para evitar conflictos con Exposed
-        
+
         // Propiedades PostgreSQL específicas para mayor estabilidad
         config.addDataSourceProperty("tcpKeepAlive", "true")
         config.addDataSourceProperty("socketTimeout", "30")
@@ -39,7 +41,7 @@ object DatabaseFactory {
 
         val dataSource = HikariDataSource(config)
         val database = Database.connect(dataSource)
-        
+
         // Configuramos el nivel de aislamiento de transacción de manera global
         // para evitar que cambie durante las transacciones
         TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_READ_COMMITTED
@@ -49,11 +51,13 @@ object DatabaseFactory {
             transaction {
                 exec("SELECT 1") // Comprobar que la conexión funciona
                 println("✅ Conexión a la base de datos establecida correctamente")
-                
+
                 // Crear tablas si no existen
                 SchemaUtils.create(ActivitatTable) // Crea la tabla si no existe
                 SchemaUtils.create(UsuarioTable) // Crea la tabla si no existe
-                
+                SchemaUtils.create(ValoracioTable) // Crea la tabla si no existe
+
+
                 println("✅ Esquema de la base de datos verificado")
             }
         } catch (e: Exception) {
