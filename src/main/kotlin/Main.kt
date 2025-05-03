@@ -12,6 +12,9 @@ import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
 import org.example.repositories.UsuarioRepository
+import org.example.routes.activitatRoutes
+import org.example.routes.usuarioRoutes
+import org.example.routes.invitacioRoutes
 
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
@@ -64,7 +67,7 @@ fun main() {
                 usuarioRoutes()
                 activitatRoutes()
                 solicitudRoutes()
-
+                invitacioRoutes()
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()

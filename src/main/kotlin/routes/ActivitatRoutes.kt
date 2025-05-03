@@ -8,15 +8,16 @@ import io.ktor.http.*
 import kotlinx.datetime.toKotlinLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import org.example.controllers.ControladorActivitat
+import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Activitat
 import repositories.ActivitatFavoritaRepository
 import repositories.ActivitatRepository
-import java.sql.Timestamp
 
 fun Route.activitatRoutes() {
     val activitatRepository = ActivitatRepository()
     val activitatFavoritaRepository = ActivitatFavoritaRepository() // Create an instance of ActivitatFavoritaRepository
-    val activitatController = ControladorActivitat(activitatRepository, activitatFavoritaRepository) // Pass both repositories
+    val participantsActivitatsRepository = ParticipantsActivitatsRepository()
+    val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository) // Pass both repositories
 
     println("Ha arribat a ActivitatRoutes")  // Depuració
     route("/api/activitats") {
@@ -186,5 +187,36 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Username is invalid")
             }
         }
+
+        //Obtenir participants de una activitat
+        get("/{activityId}/participants") {
+            val activityId = call.parameters["activityId"]?.toIntOrNull()
+            if (activityId == null) {
+                call.respond(HttpStatusCode.BadRequest, "ID d'activitat invàlid")
+                return@get
+            }
+
+            val participants = activitatController.obtenirParticipantsDeActivitat(activityId)
+            call.respond(participants)
+        }
+
+        //Borra usuario de actividad
+        delete("{id}/participants/{username}") {
+            val idActivitat = call.parameters["id"]?.toIntOrNull()
+            val usernameAEliminar = call.parameters["username"]
+
+            if (idActivitat == null || usernameAEliminar.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Paràmetres invàlids.")
+                return@delete
+            }
+
+            val eliminat = activitatController.eliminarParticipant(idActivitat, usernameAEliminar)
+            if (eliminat) {
+                call.respond(HttpStatusCode.OK, "Participant eliminat correctament.")
+            } else {
+                call.respond(HttpStatusCode.NotFound, "No s'ha trobat el participant.")
+            }
+        }
+
     }
 }
