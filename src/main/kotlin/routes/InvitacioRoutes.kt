@@ -170,7 +170,7 @@ fun Route.invitacioRoutes() {
 
             try {
                 // Obtener todos los usuarios
-                val allUsers = controladorUsuarios.listarUsuarios()
+                val allUsers = controladorUsuarios.listarUsernames()
 
                 // Filtrar usuarios que coincidan con la query
                 val matchingUsers = allUsers.filter { username ->
