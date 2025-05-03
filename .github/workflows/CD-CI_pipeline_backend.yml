@@ -1,0 +1,75 @@
+name: Build, Test and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - release
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for Gradle Wrapper
+        run: chmod +x ./gradlew
+
+      - name: Create Firebase Credentials (only on feature branch)
+        if: github.ref == 'refs/heads/release'
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > src/main/resources/firebase-service-account.json
+
+      - name: Cache Gradle dependencies
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build with Gradle
+        run: ./gradlew clean build --stacktrace
+
+      - name: Package JAR (only on main)
+        if: github.ref == 'refs/heads/main'
+        run: ./gradlew jar
+
+      - name: Run Tests (only on main)
+        if: github.ref == 'refs/heads/main'
+        run: ./gradlew test
+
+      - name: Upload artifact (only on feature branch)
+        if: github.ref == 'refs/heads/release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: build/libs/*.jar
+
+  deploy:
+    if: github.ref == 'refs/heads/release'
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-jar
+          path: build/libs/
+      - run: docker build -t my-backend .
+      - run: |
+          docker stop kot-backend || true
+          docker rm kot-backend || true
+          docker run -d --name kot-backend -p 8080:8080 my-backend

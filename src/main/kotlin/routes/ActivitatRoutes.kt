@@ -5,13 +5,20 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
+import kotlinx.datetime.toKotlinLocalDateTime
+import kotlinx.datetime.toLocalDateTime
 import org.example.controllers.ControladorActivitat
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Activitat
+import repositories.ActivitatFavoritaRepository
 import repositories.ActivitatRepository
 
 fun Route.activitatRoutes() {
-    val activitatController = ControladorActivitat(ActivitatRepository(), ParticipantsActivitatsRepository())
+    val activitatRepository = ActivitatRepository()
+    val activitatFavoritaRepository = ActivitatFavoritaRepository() // Create an instance of ActivitatFavoritaRepository
+    val participantsActivitatsRepository = ParticipantsActivitatsRepository()
+    val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository) // Pass both repositories
+
     println("Ha arribat a ActivitatRoutes")  // Depuració
     route("/api/activitats") {
         println("Ha arribat a /api/activitats")  // Depuració
@@ -85,7 +92,7 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "ID inválido")
             }
         }
-        put ("/editar/{id}"){
+        put("/editar/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
             if (id != null) {
                 val receivedText = call.receiveText()
@@ -111,6 +118,73 @@ fun Route.activitatRoutes() {
                 }
             } else {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
+            }
+        }
+        // Check if an activity is a favorite
+        get("/favorita/{id}/{username}") {
+            val id = call.parameters["id"]?.toInt()
+            val username = call.parameters["username"]
+
+            if (id != null && !username.isNullOrBlank()) {
+                val esFavorita = activitatController.comprovarActivitatFavorita(id, username)
+                call.respond(HttpStatusCode.OK, mapOf("esFavorita" to esFavorita))
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "ID or username is invalid")
+            }
+        }
+
+        // Add an activity as a favorite
+        post("/favorita/anadir/{id}/{username}") {
+            try {
+                val id = call.parameters["id"]?.toInt()
+                val username = call.parameters["username"]
+                val dataAfegida = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+
+                if (id != null && !username.isNullOrBlank()) {
+                    val resultado = activitatController.afegirActivitatFavorita(id, username, dataAfegida)
+                    if (resultado) {
+                        call.respond(HttpStatusCode.Created, "Activity added to favorites")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Activity not found")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid parameters")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Error processing the request")
+            }
+        }
+
+        // Remove an activity from favorites
+        delete("/favorita/eliminar/{id}/{username}") {
+            try {
+                val id = call.parameters["id"]?.toInt()
+                val username = call.parameters["username"]
+
+                if (id != null && !username.isNullOrBlank()) {
+                    val resultado = activitatController.eliminarActivitatFavorita(id, username)
+                    if (resultado) {
+                        call.respond(HttpStatusCode.OK, "Activity removed from favorites")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Activity not found or not a favorite")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid parameters")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Error processing the request")
+            }
+        }
+
+        // Get all favorite activities for a user
+        get("/favoritas/{username}") {
+            val username = call.parameters["username"]
+
+            if (!username.isNullOrBlank()) {
+                val activitatsFavorites = activitatController.obtenirActivitatsFavoritesPerUsuari(username)
+                call.respond(HttpStatusCode.OK, activitatsFavorites)
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Username is invalid")
             }
         }
 
