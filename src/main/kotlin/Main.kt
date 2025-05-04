@@ -8,11 +8,14 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.example.controllers.ControladorRuta
 import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
+import org.example.repositories.RutaRepository
 import org.example.repositories.UsuarioRepository
 import org.example.routes.activitatRoutes
+import org.example.routes.rutaRoutes
 import org.example.routes.usuarioRoutes
 import org.example.routes.invitacioRoutes
 
@@ -67,6 +70,7 @@ fun main() {
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                rutaRoutes(ControladorRuta(RutaRepository()))
                 solicitudRoutes()
                 invitacioRoutes()
                 missatgeRoutes()

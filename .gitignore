@@ -46,3 +46,4 @@ bin/
 
 ### Firebase Credentials ###
 src/main/resources/firebase-service-account.json
+/secrets.properties
