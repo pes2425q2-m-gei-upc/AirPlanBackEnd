@@ -1,6 +1,5 @@
 package org.example.database
 
-import org.example.models.Localitzacio
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 

@@ -62,7 +62,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
 
-    // Dependencias para testing
+    testImplementation("io.ktor:ktor-server-test-host:2.3.8")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testImplementation("org.mockito:mockito-core:5.10.0")
@@ -74,6 +75,7 @@ dependencies {
     testImplementation("io.ktor:ktor-client-core:2.3.8")
     // Ktor Client Engine (e.g., CIO) for testing (Added) - Needed for createClient
     testImplementation("io.ktor:ktor-client-cio:2.3.8")
+
 
     // Explicitly declare the test framework dependencies for Gradle 8.10+ compatibility
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
