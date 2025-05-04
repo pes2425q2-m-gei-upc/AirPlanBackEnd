@@ -17,13 +17,15 @@ class MissatgeTest {
             usernameSender = "bob",
             usernameReceiver = "alice",
             dataEnviament = dataEnviament,
-            missatge = "Hola Alice!"
+            missatge = "Hola Alice!",
+            isEdited = false
         )
 
         assertEquals("bob", missatge.usernameSender)
         assertEquals("alice", missatge.usernameReceiver)
         assertEquals(dataEnviament, missatge.dataEnviament)
         assertEquals("Hola Alice!", missatge.missatge)
+        assertFalse(missatge.isEdited)
     }
 
     // Test para verificar la serialización de Missatge
@@ -34,7 +36,8 @@ class MissatgeTest {
             usernameSender = "bob",
             usernameReceiver = "alice",
             dataEnviament = dataEnviament,
-            missatge = "Hola Alice!"
+            missatge = "Hola Alice!",
+            isEdited = false
         )
 
         val json = Json.encodeToString(missatge)
@@ -57,7 +60,8 @@ class MissatgeTest {
                 "usernameSender": "bob",
                 "usernameReceiver": "alice",
                 "dataEnviament": "2024-05-01T10:00:00",
-                "missatge": "Hola Alice!"
+                "missatge": "Hola Alice!",
+                "isEdited": false
             }
         """
         val missatge = Json.decodeFromString<Missatge>(json)
@@ -76,7 +80,8 @@ class MissatgeTest {
             usernameSender = "bob",
             usernameReceiver = "alice",
             dataEnviament = dataEnviament,
-            missatge = "Hola Alice!"
+            missatge = "Hola Alice!",
+            isEdited = false
         )
 
         val json = Json.encodeToString(missatge)
@@ -85,4 +90,3 @@ class MissatgeTest {
         assertEquals(missatge.dataEnviament, missatgeDeserialized.dataEnviament)
     }
 }
-

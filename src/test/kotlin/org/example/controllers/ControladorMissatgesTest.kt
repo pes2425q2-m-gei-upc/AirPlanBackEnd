@@ -26,6 +26,10 @@ class ControladorMissatgesTest {
     private val repo = mockk<MissatgeRepository>()
     private val controlador = ControladorMissatges(repo)
 
+    private val testJson = Json {
+        encodeDefaults = true
+    }
+
     private fun Application.testModule() {
         install(ContentNegotiation) {
             json()
@@ -41,7 +45,7 @@ class ControladorMissatgesTest {
     fun `sendMessage returns Created on success`() = testApplication {
         application { testModule() }
 
-        val message = Missatge("alice", "bob", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola Bob!")
+        val message = Missatge("alice", "bob", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola Bob!", false)
         coEvery { repo.sendMessage(message) } returns true
 
         val response = client.post("/chat/send") {
@@ -58,7 +62,7 @@ class ControladorMissatgesTest {
     fun `sendMessage returns InternalServerError on failure`() = testApplication {
         application { testModule() }
 
-        val message = Missatge("alice", "bob", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola Bob!")
+        val message = Missatge("alice", "bob", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola Bob!", false)
         coEvery { repo.sendMessage(message) } returns false
 
         val response = client.post("/chat/send") {
@@ -78,15 +82,15 @@ class ControladorMissatgesTest {
         val user1 = "alice"
         val user2 = "bob"
         val messages = listOf(
-            Missatge("alice", "bob", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola Bob!"),
-            Missatge("bob", "alice", LocalDateTime.parse("2024-05-01T10:01:00"), "Hola Alice!")
+            Missatge("alice", "bob", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola Bob!", false),
+            Missatge("bob", "alice", LocalDateTime.parse("2024-05-01T10:01:00"), "Hola Alice!", false)
         )
         coEvery { repo.getMessagesBetweenUsers(user1, user2) } returns messages
 
         val response = client.get("/chat/$user1/$user2")
 
         assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals(Json.encodeToString(messages), response.bodyAsText())
+        assertEquals(testJson.encodeToString(messages), response.bodyAsText())
         coVerify { repo.getMessagesBetweenUsers(user1, user2) }
     }
 
@@ -105,15 +109,15 @@ class ControladorMissatgesTest {
 
         val username = "alice"
         val chats = listOf(
-            Missatge("bob", "alice", LocalDateTime.parse("2024-05-01T10:01:00"), "Hola Alice!"),
-            Missatge("charlie", "alice", LocalDateTime.parse("2024-05-01T11:00:00"), "Buenas Alice!")
-       )
+            Missatge("bob", "alice", LocalDateTime.parse("2024-05-01T10:01:00"), "Hola Alice!", false),
+            Missatge("charlie", "alice", LocalDateTime.parse("2024-05-01T11:00:00"), "Buenas Alice!", false)
+        )
         coEvery { repo.getLatestChatsForUser(username) } returns chats
 
         val response = client.get("/chat/latest/$username")
 
         assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals(Json.encodeToString(chats), response.bodyAsText())
+        assertEquals(testJson.encodeToString(chats), response.bodyAsText())
         coVerify { repo.getLatestChatsForUser(username) }
     }
 
