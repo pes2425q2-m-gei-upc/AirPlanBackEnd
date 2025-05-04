@@ -8,16 +8,6 @@ plugins {
 group = "org.example"
 version = "1.0"
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17)) // Use Java 17
-    }
-}
-
-kotlin {
-    jvmToolchain(17) // Match this with the Java version above
-}
-
 repositories {
     mavenCentral()
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
