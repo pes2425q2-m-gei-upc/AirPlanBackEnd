@@ -29,7 +29,7 @@ class RutaRepositoryTest {
     @BeforeAll
     fun setupDatabase() {
         database = Database.connect(
-            "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=FALSE",
+            "jdbc:h2:mem:test_ruta_repository;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=FALSE",
             driver = "org.h2.Driver",
             user = "test",
             password = ""
