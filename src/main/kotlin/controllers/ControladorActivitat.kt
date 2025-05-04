@@ -117,4 +117,17 @@ class ControladorActivitat(
         return ParticipantsActivitatsRepository.obtenirParticipantsPerActivitat(idActivitat)
     }
 
+    /**
+     * Obtiene actividades excluyendo aquellas creadas por usuarios en la lista de bloqueados
+     */
+    fun obtenirActivitatsExcluintUsuaris(usuarisBloqueados: List<String>): List<Activitat> {
+        return ActivitatRepository.obtenirActivitatsExcluintUsuaris(usuarisBloqueados)
+    }
+
+    /**
+     * Obtiene actividades filtrando en una única consulta SQL las que pertenecen a usuarios bloqueados
+     */
+    fun obtenirActivitatsPerUsuariSenseBloquejos(username: String): List<Activitat> {
+        return ActivitatRepository.obtenirActivitatsPerUsuariSenseBloquejos(username)
+    }
 }

@@ -20,7 +20,7 @@ import org.example.routes.invitacioRoutes
 import org.example.services.FirebaseAdminService
 import io.ktor.server.http.content.*
 import org.example.routes.*
-import java.io.File
+// Eliminada la importación de java.io.File que ya no se utiliza
 import org.example.routes.valoracioRoutes
 import org.example.routes.generalRoutes
 
@@ -72,20 +72,13 @@ fun main() {
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()
-                uploadImageRoute() // Añadida la ruta para subir imágenes
+                userBlockRoutes() // Añadir rutas de bloqueo de usuarios
+                // Eliminada la llamada a uploadImageRoute()
                 webSocketRoutes() // Registrar rutas WebSocket
                 generalRoutes()
 
                 // Eliminada la llamada a authRoutes()
-
-                // Configurar ruta estática para servir archivos de imagen
-                val uploadsDir = File("uploads").apply {
-                    if (!exists()) mkdirs()
-                }
-                staticFiles("/uploads", uploadsDir) {
-                    // Configure default response headers if needed
-                    default("index.html")
-                }
+                // Eliminada la configuración de ruta estática para archivos de imagen
 
                 get("/") {
                     call.respond(

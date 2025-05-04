@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "2.0.0" // Usa una versión válida de Kotlin
     id("application") // Aplicar el plugin application correctamente
     kotlin("plugin.serialization") version "1.8.10"
+    id("jvm-test-suite") // Add this plugin for test suites support
 }
 
 group = "org.example"
@@ -23,6 +24,9 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.14")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
+    // Cloudinary para almacenamiento de imágenes en la nube
+    implementation("com.cloudinary:cloudinary-http44:1.35.0")
 
     // Ktor Client Content Negotiation (Added)
     implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
@@ -49,10 +53,14 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.2")  // Para PostgreSQL
 
     // Pruebas
-
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("io.ktor:ktor-server-test-host:2.0.0")
-    implementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21")
+    testImplementation("io.ktor:ktor-server-test-host:2.3.3") // o el que estés usando
+    implementation("io.ktor:ktor-server-test-host:2.0.0")  // Para las pruebas de Ktor
+    implementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21") // Para usar JUnit
+    testImplementation("io.ktor:ktor-server-test-host:2.0.0")  // Para las pruebas de Ktor
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21") // Para usar JUnit
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.1")
 
     testImplementation("io.ktor:ktor-server-test-host:2.3.8")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21")
@@ -61,17 +69,25 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.10.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
     testImplementation("io.mockk:mockk:1.13.10")
-    testImplementation("com.h2database:h2:2.2.224")
+    testImplementation("com.h2database:h2:2.2.224") // H2 Database para tests
+    testImplementation("io.ktor:ktor-server-test-host:2.3.8") // Para tests de endpoints
+    // Ktor Client Core for testing (Added) - Needed for createClient
     testImplementation("io.ktor:ktor-client-core:2.3.8")
+    // Ktor Client Engine (e.g., CIO) for testing (Added) - Needed for createClient
     testImplementation("io.ktor:ktor-client-cio:2.3.8")
 
+
+    // Explicitly declare the test framework dependencies for Gradle 8.10+ compatibility
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
 }
 
-tasks.test {
-    useJUnitPlatform()
-    reports {
-        junitXml.required.set(true) // Habilitar informe en formato XML
-        html.required.set(true) // Habilitar informe en formato HTML
+// Define test suites
+testing {
+    suites {
+        // Configure the built-in test suite
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter("5.10.2") // Explicitly specify JUnit Jupiter version
+        }
     }
 }
 

@@ -12,16 +12,38 @@ import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Activitat
 import repositories.ActivitatFavoritaRepository
 import repositories.ActivitatRepository
+import org.example.repositories.UserBlockRepository
+import java.sql.Timestamp
 
 fun Route.activitatRoutes() {
     val activitatRepository = ActivitatRepository()
     val activitatFavoritaRepository = ActivitatFavoritaRepository() // Create an instance of ActivitatFavoritaRepository
     val participantsActivitatsRepository = ParticipantsActivitatsRepository()
     val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository) // Pass both repositories
+    val userBlockRepository = UserBlockRepository() // Añadir repositorio de bloqueos de usuarios
 
     println("Ha arribat a ActivitatRoutes")  // Depuració
     route("/api/activitats") {
         println("Ha arribat a /api/activitats")  // Depuració
+
+        // Endpoint para filtrar actividades según usuarios bloqueados
+        get("/filter/{username}") {
+            try {
+                val username = call.parameters["username"]
+
+                if (username != null) {
+                    // Obtener actividades excluyendo las de usuarios bloqueados en una única consulta SQL
+                    val filteredActivities = activitatController.obtenirActivitatsPerUsuariSenseBloquejos(username)
+
+                    call.respond(HttpStatusCode.OK, filteredActivities)
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Username is required")
+                }
+            } catch (e: Exception) {
+                println("Error filtrando actividades: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error filtering activities: ${e.message}")
+            }
+        }
 
         post("/crear") {
             try {

@@ -88,13 +88,15 @@ class UsuarioRepository {
         nuevoNom: String?,
         nuevoUsername: String?,
         nuevoIdioma: String?,
-        nuevoCorreo: String?
+        nuevoCorreo: String?,
+        nuevaPhotoUrl: String? = null  // Añadir parámetro para la URL de la imagen
     ): Boolean {
         return transaction {
             val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq currentEmail }) {
                 if (nuevoNom != null) it[UsuarioTable.nom] = nuevoNom
                 if (nuevoUsername != null) it[UsuarioTable.username] = nuevoUsername
                 if (nuevoIdioma != null) it[UsuarioTable.idioma] = nuevoIdioma
+                if (nuevaPhotoUrl != null) it[UsuarioTable.photourl] = nuevaPhotoUrl  // Guardar la URL de la imagen
 
                 // Ahora actualizamos directamente el correo si se proporciona uno nuevo
                 if (nuevoCorreo != null) {
@@ -176,6 +178,17 @@ class UsuarioRepository {
             UsuarioTable
                 .selectAll()
                 .map { it[UsuarioTable.username] }
+        }
+    }
+
+    // Obtener la URL de la foto de perfil de un usuario
+    fun obtenerPhotoUrlPorEmail(email: String): String? {
+        return transaction {
+            UsuarioTable
+                .slice(UsuarioTable.photourl)
+                .select { UsuarioTable.email eq email }
+                .map { it[UsuarioTable.photourl] }
+                .singleOrNull()
         }
     }
 }

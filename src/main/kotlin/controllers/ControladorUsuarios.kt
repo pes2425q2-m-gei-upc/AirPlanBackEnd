@@ -115,9 +115,14 @@ class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
         nuevoNom: String?,
         nuevoUsername: String?,
         nuevoIdioma: String?,
-        nuevoCorreo: String?
+        nuevoCorreo: String?,
+        nuevaPhotoUrl: String? = null // Añadir parámetro para la URL de la foto
     ): Boolean {
-        return actualizarUsuario(currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo)
+        // Simplemente pasamos todos los parámetros al método actualizarUsuario del repositorio
+        // y devolvemos el resultado, sin la notificación duplicada
+        return usuarioRepository.actualizarUsuario(
+            currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo, nuevaPhotoUrl
+        )
     }
 
     // Método para listar usuarios
@@ -184,5 +189,10 @@ class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
     // Obtener tipo de usuario (admin o cliente) y nivel del cliente
     fun obtenerTipoYNivelUsuario(username: String): UserTypeInfo {
         return usuarioRepository.obtenerTipoYNivelUsuario(username)
+    }
+
+    // Obtener la URL de la foto de perfil de un usuario
+    fun obtenerPhotoUrlPorEmail(email: String): String? {
+        return usuarioRepository.obtenerPhotoUrlPorEmail(email)
     }
 }
