@@ -18,6 +18,8 @@ import org.junit.jupiter.api.TestInstance
 import java.sql.Connection
 import kotlin.test.Test
 import kotlinx.coroutines.runBlocking
+import org.example.database.UserBlockTable
+
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MissatgeRepositoryTest {
@@ -39,7 +41,7 @@ class MissatgeRepositoryTest {
     @BeforeEach
     fun setUp() {
         transaction(database) {
-            SchemaUtils.drop(MissatgesTable, UsuarioTable)
+            SchemaUtils.drop(UserBlockTable, MissatgesTable, UsuarioTable)
             SchemaUtils.create(MissatgesTable, UsuarioTable)
         }
         missatgeRepository = MissatgeRepository()
