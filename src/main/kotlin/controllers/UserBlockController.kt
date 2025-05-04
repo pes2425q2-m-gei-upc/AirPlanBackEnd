@@ -14,7 +14,7 @@ class UserBlockController(private val blockRepository: UserBlockRepository = Use
     data class BlockRequest(val blockerUsername: String, val blockedUsername: String)
     
     @Serializable
-    data class BlockStatusResponse(val isBlocked: Boolean, val blockInfo: UserBlock? = null)
+    data class BlockStatusResponse(val isBlocked: Boolean)
     
     suspend fun blockUser(call: ApplicationCall) {
         try {

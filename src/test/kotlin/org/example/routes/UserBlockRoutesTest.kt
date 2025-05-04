@@ -135,7 +135,7 @@ class UserBlockRoutesTest {
         println("Response status: "+response.status)
         println("Response body: "+response.bodyAsText())
         assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals("{\"isBlocked\":true,\"blockInfo\":null}", response.bodyAsText())
+        assertEquals("{\"isBlocked\":true}", response.bodyAsText())
     }
 
     @Test

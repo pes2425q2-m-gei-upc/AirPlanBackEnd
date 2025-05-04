@@ -10,13 +10,13 @@ import repositories.ActivitatFavoritaRepository
 import repositories.SolicitudRepository
 import org.example.database.ActivitatTable
 
-class UserBlockRepository {
+open class UserBlockRepository {
     
     private val activitatFavoritaRepository = ActivitatFavoritaRepository()
     private val solicitudRepository = SolicitudRepository()
     
     // Block a user
-    fun blockUser(blockerUsername: String, blockedUsername: String): Boolean {
+    open fun blockUser(blockerUsername: String, blockedUsername: String): Boolean {
         return try {
             println("📝 Iniciando transacción para bloquear usuario: $blockerUsername -> $blockedUsername")
             transaction {
@@ -109,7 +109,7 @@ class UserBlockRepository {
     }
     
     // Unblock a user
-    fun unblockUser(blockerUsername: String, blockedUsername: String): Boolean {
+    open fun unblockUser(blockerUsername: String, blockedUsername: String): Boolean {
         return try {
             println("📝 Iniciando transacción para desbloquear usuario: $blockerUsername -> $blockedUsername")
             transaction {
@@ -133,7 +133,7 @@ class UserBlockRepository {
     }
     
     // Check if a user is blocked by another user
-    fun isUserBlocked(blockerUsername: String, blockedUsername: String): Boolean {
+    open fun isUserBlocked(blockerUsername: String, blockedUsername: String): Boolean {
         return transaction {
             UserBlockTable.select {
                 (UserBlockTable.blockerUsername eq blockerUsername) and
@@ -153,7 +153,7 @@ class UserBlockRepository {
     }
     
     // Get all users blocked by a specific user
-    fun getBlockedUsers(blockerUsername: String): List<UserBlock> {
+    open fun getBlockedUsers(blockerUsername: String): List<UserBlock> {
         return transaction {
             UserBlockTable
                 .select { UserBlockTable.blockerUsername eq blockerUsername }
