@@ -113,6 +113,30 @@ class RutaRepository {
         }
     }
 
+    fun actualitzarRuta(ruta: Ruta) {
+        try {
+            transaction {
+                val updatedRows = RutaTable.update({ RutaTable.id eq ruta.id }) {
+                    it[duracioMin] = ruta.duracioMin
+                    it[duracioMax] = ruta.duracioMax
+                    it[tipusVehicle] = ruta.tipusVehicle.toString()
+                    it[latitudOrigen] = ruta.origen.latitud
+                    it[longitudOrigen] = ruta.origen.longitud
+                    it[latitudDesti] = ruta.desti.latitud
+                    it[longitudDesti] = ruta.desti.longitud
+                    it[dataRuta] = ruta.data
+                    it[clientUsername] = ruta.clientUsername
+                }
+                if (updatedRows == 0) {
+                    throw Exception("No s'ha pogut actualitzar la ruta amb id ${ruta.id}")
+                }
+            }
+        } catch (e: Exception) {
+            println("${e.message}")
+            false
+        }
+    }
+
     fun eliminarRuta(id: Int): Boolean {
         return transaction {
             val filasEliminades = RutaTable.deleteWhere { RutaTable.id eq id }

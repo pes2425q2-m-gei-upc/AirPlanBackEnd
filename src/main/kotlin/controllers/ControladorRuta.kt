@@ -8,7 +8,7 @@ import org.example.models.Localitzacio
 import org.example.models.Ruta
 import org.example.repositories.RutaRepository
 
-class ControladorRuta (private val RutaRepository: RutaRepository) {
+class ControladorRuta (private val rutaRepository: RutaRepository) {
     private val rutas = mutableListOf<Ruta>()
 
     fun crearRuta(rutaJson: JsonObject): Ruta {
@@ -30,9 +30,37 @@ class ControladorRuta (private val RutaRepository: RutaRepository) {
             duracioMax = rutaJson["duracioMax"]!!.jsonPrimitive.content.toInt(),
             tipusVehicle = TipusVehicle.valueOf(rutaJson["tipusVehicle"]!!.jsonPrimitive.content)
         )
-        val newRuta = RutaRepository.afegirRuta(ruta)
+        val newRuta = rutaRepository.afegirRuta(ruta)
         rutas.add(newRuta)
         return newRuta
+    }
+
+    fun actualitzarRuta(id: Int, rutaJson: JsonObject) {
+        val ruta = rutaRepository.getRutaPerId(id)
+        ruta.origen.latitud = rutaJson["origen"]?.jsonObject?.get("latitud")?.toString()?.toFloat() ?: 0.0f
+        ruta.origen.longitud = rutaJson["origen"]?.jsonObject?.get("longitud")?.toString()?.toFloat() ?: 0.0f
+        ruta.desti.latitud = rutaJson["desti"]?.jsonObject?.get("latitud")?.toString()?.toFloat() ?: 0.0f
+        ruta.desti.longitud = rutaJson["desti"]?.jsonObject?.get("longitud")?.toString()?.toFloat() ?: 0.0f
+        ruta.clientUsername = rutaJson["client"]!!.jsonPrimitive.content
+        ruta.data = rutaJson["data"]!!.jsonPrimitive.content.let { LocalDateTime.parse(it) }
+        ruta.duracioMin = rutaJson["duracioMin"]!!.jsonPrimitive.content.toInt()
+        ruta.duracioMax = rutaJson["duracioMax"]!!.jsonPrimitive.content.toInt()
+        ruta.tipusVehicle = TipusVehicle.valueOf(rutaJson["tipusVehicle"]!!.jsonPrimitive.content)
+
+        rutaRepository.actualitzarRuta(ruta)
+
+        val rutaBack = rutas.find { it.id == id }
+        if (rutaBack != null) {
+            ruta.origen.latitud = rutaJson["origen"]?.jsonObject?.get("latitud")?.toString()?.toFloat() ?: 0.0f
+            ruta.origen.longitud = rutaJson["origen"]?.jsonObject?.get("longitud")?.toString()?.toFloat() ?: 0.0f
+            ruta.desti.latitud = rutaJson["desti"]?.jsonObject?.get("latitud")?.toString()?.toFloat() ?: 0.0f
+            ruta.desti.longitud = rutaJson["desti"]?.jsonObject?.get("longitud")?.toString()?.toFloat() ?: 0.0f
+            ruta.clientUsername = rutaJson["client"]!!.jsonPrimitive.content
+            ruta.data = rutaJson["data"]!!.jsonPrimitive.content.let { LocalDateTime.parse(it) }
+            ruta.duracioMin = rutaJson["duracioMin"]!!.jsonPrimitive.content.toInt()
+            ruta.duracioMax = rutaJson["duracioMax"]!!.jsonPrimitive.content.toInt()
+            ruta.tipusVehicle = TipusVehicle.valueOf(rutaJson["tipusVehicle"]!!.jsonPrimitive.content)
+        }
     }
 
     fun eliminarRuta(id: Int): Boolean {
@@ -40,10 +68,10 @@ class ControladorRuta (private val RutaRepository: RutaRepository) {
         if (ruta != null) {
             rutas.remove(ruta)
         }
-        return RutaRepository.eliminarRuta(id)
+        return rutaRepository.eliminarRuta(id)
     }
 
     fun obtenirTotesRutesClient(clientUsername: String): List<Ruta> {
-        return RutaRepository.obtenirRutesClient(clientUsername)
+        return rutaRepository.obtenirRutesClient(clientUsername)
     }
 }

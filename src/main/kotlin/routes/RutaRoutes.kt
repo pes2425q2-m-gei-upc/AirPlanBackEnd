@@ -15,7 +15,6 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.example.controllers.ControladorRuta
-import org.example.repositories.RutaRepository
 import java.util.Properties
 import java.io.File
 import io.ktor.client.plugins.contentnegotiation.*
@@ -49,6 +48,22 @@ fun Route.rutaRoutes(rutaController: ControladorRuta) {
                 call.respond(HttpStatusCode.Created, createdRuta.id) // Respond with the created Ruta
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.BadRequest, "Error al crear la ruta: ${e.message}")
+            }
+        }
+
+        put("/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull()
+            if (id != null) {
+                try {
+                    val jsonString = call.receiveText() // Get raw JSON string
+                    val rutaJson = Json.parseToJsonElement(jsonString).jsonObject
+                    rutaController.actualitzarRuta(id, rutaJson) // Pass it to the controller
+                    call.respond(HttpStatusCode.OK, id) // Respond with the updated Ruta
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, "Error al actualitzar la ruta: ${e.message}")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "ID invàlid")
             }
         }
 
