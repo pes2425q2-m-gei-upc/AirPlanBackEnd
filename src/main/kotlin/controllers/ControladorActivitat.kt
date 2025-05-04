@@ -10,6 +10,12 @@ import repositories.ActivitatRepository
 import repositories.ActivitatFavoritaRepository
 import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.Clock
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toLocalDate
+import kotlinx.datetime.toLocalDateTime
+
 class ControladorActivitat(
     private val ActivitatRepository: ActivitatRepository,
     private val ParticipantsActivitatsRepository: ParticipantsActivitatsRepository,
@@ -129,5 +135,10 @@ class ControladorActivitat(
      */
     fun obtenirActivitatsPerUsuariSenseBloquejos(username: String): List<Activitat> {
         return ActivitatRepository.obtenirActivitatsPerUsuariSenseBloquejos(username)
+    }
+
+    fun obtenirActivitatsStartingToday(): List<Activitat> {
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        return ActivitatRepository.obtenirActivitatsStartingToday(today)
     }
 }
