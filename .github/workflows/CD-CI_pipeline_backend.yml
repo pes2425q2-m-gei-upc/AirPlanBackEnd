@@ -17,6 +17,11 @@ jobs:
       ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
 
     steps:
+      - name: Generate secrets.properties
+        run: |
+          echo "ORS_API_KEY=${ORS_API_KEY}" >> secrets.properties
+          echo "HERE_API_KEY=${HERE_API_KEY}" > secrets.properties
+
       - name: Checkout code
         uses: actions/checkout@v3
 
