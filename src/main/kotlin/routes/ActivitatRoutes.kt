@@ -5,16 +5,45 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
+import kotlinx.datetime.toKotlinLocalDateTime
+import kotlinx.datetime.toLocalDateTime
 import org.example.controllers.ControladorActivitat
+import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Activitat
+import repositories.ActivitatFavoritaRepository
 import repositories.ActivitatRepository
+import org.example.repositories.UserBlockRepository
 import java.sql.Timestamp
 
 fun Route.activitatRoutes() {
-    val activitatController = ControladorActivitat(ActivitatRepository())
+    val activitatRepository = ActivitatRepository()
+    val activitatFavoritaRepository = ActivitatFavoritaRepository() // Create an instance of ActivitatFavoritaRepository
+    val participantsActivitatsRepository = ParticipantsActivitatsRepository()
+    val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository) // Pass both repositories
+    val userBlockRepository = UserBlockRepository() // Añadir repositorio de bloqueos de usuarios
+
     println("Ha arribat a ActivitatRoutes")  // Depuració
     route("/api/activitats") {
         println("Ha arribat a /api/activitats")  // Depuració
+
+        // Endpoint para filtrar actividades según usuarios bloqueados
+        get("/filter/{username}") {
+            try {
+                val username = call.parameters["username"]
+
+                if (username != null) {
+                    // Obtener actividades excluyendo las de usuarios bloqueados en una única consulta SQL
+                    val filteredActivities = activitatController.obtenirActivitatsPerUsuariSenseBloquejos(username)
+
+                    call.respond(HttpStatusCode.OK, filteredActivities)
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Username is required")
+                }
+            } catch (e: Exception) {
+                println("Error filtrando actividades: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error filtering activities: ${e.message}")
+            }
+        }
 
         post("/crear") {
             try {
@@ -85,7 +114,7 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "ID inválido")
             }
         }
-        put ("/editar/{id}"){
+        put("/editar/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
             if (id != null) {
                 val receivedText = call.receiveText()
@@ -113,5 +142,103 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
             }
         }
+        // Check if an activity is a favorite
+        get("/favorita/{id}/{username}") {
+            val id = call.parameters["id"]?.toInt()
+            val username = call.parameters["username"]
+
+            if (id != null && !username.isNullOrBlank()) {
+                val esFavorita = activitatController.comprovarActivitatFavorita(id, username)
+                call.respond(HttpStatusCode.OK, mapOf("esFavorita" to esFavorita))
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "ID or username is invalid")
+            }
+        }
+
+        // Add an activity as a favorite
+        post("/favorita/anadir/{id}/{username}") {
+            try {
+                val id = call.parameters["id"]?.toInt()
+                val username = call.parameters["username"]
+                val dataAfegida = kotlinx.datetime.Clock.System.now().toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+
+                if (id != null && !username.isNullOrBlank()) {
+                    val resultado = activitatController.afegirActivitatFavorita(id, username, dataAfegida)
+                    if (resultado) {
+                        call.respond(HttpStatusCode.Created, "Activity added to favorites")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Activity not found")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid parameters")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Error processing the request")
+            }
+        }
+
+        // Remove an activity from favorites
+        delete("/favorita/eliminar/{id}/{username}") {
+            try {
+                val id = call.parameters["id"]?.toInt()
+                val username = call.parameters["username"]
+
+                if (id != null && !username.isNullOrBlank()) {
+                    val resultado = activitatController.eliminarActivitatFavorita(id, username)
+                    if (resultado) {
+                        call.respond(HttpStatusCode.OK, "Activity removed from favorites")
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Activity not found or not a favorite")
+                    }
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Invalid parameters")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Error processing the request")
+            }
+        }
+
+        // Get all favorite activities for a user
+        get("/favoritas/{username}") {
+            val username = call.parameters["username"]
+
+            if (!username.isNullOrBlank()) {
+                val activitatsFavorites = activitatController.obtenirActivitatsFavoritesPerUsuari(username)
+                call.respond(HttpStatusCode.OK, activitatsFavorites)
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Username is invalid")
+            }
+        }
+
+        //Obtenir participants de una activitat
+        get("/{activityId}/participants") {
+            val activityId = call.parameters["activityId"]?.toIntOrNull()
+            if (activityId == null) {
+                call.respond(HttpStatusCode.BadRequest, "ID d'activitat invàlid")
+                return@get
+            }
+
+            val participants = activitatController.obtenirParticipantsDeActivitat(activityId)
+            call.respond(participants)
+        }
+
+        //Borra usuario de actividad
+        delete("{id}/participants/{username}") {
+            val idActivitat = call.parameters["id"]?.toIntOrNull()
+            val usernameAEliminar = call.parameters["username"]
+
+            if (idActivitat == null || usernameAEliminar.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Paràmetres invàlids.")
+                return@delete
+            }
+
+            val eliminat = activitatController.eliminarParticipant(idActivitat, usernameAEliminar)
+            if (eliminat) {
+                call.respond(HttpStatusCode.OK, "Participant eliminat correctament.")
+            } else {
+                call.respond(HttpStatusCode.NotFound, "No s'ha trobat el participant.")
+            }
+        }
+
     }
 }

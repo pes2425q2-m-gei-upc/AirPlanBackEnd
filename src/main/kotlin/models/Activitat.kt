@@ -12,7 +12,7 @@ import java.sql.Timestamp
 
 @Serializable
 class Activitat(
-    val id: Int,
+    var id: Int,
     var nom: String,
     var descripcio: String,
     @Contextual var ubicacio: Localitzacio,
