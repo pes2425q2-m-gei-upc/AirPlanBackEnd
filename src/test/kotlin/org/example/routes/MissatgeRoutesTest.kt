@@ -13,6 +13,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.datetime.LocalDateTime
 import org.example.database.MissatgesTable
+import org.example.database.UsuarioTable
 import org.example.models.Missatge
 import org.example.repositories.MissatgeRepository
 import org.jetbrains.exposed.sql.Database
@@ -34,7 +35,9 @@ class MissatgeRoutesTest {
         fun setupClass() {
             database = Database.connect(
                 "jdbc:h2:mem:test_${UUID.randomUUID()};DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-                driver = "org.h2.Driver"
+                driver = "org.h2.Driver",
+                user = "sa",
+                password = ""
             )
         }
     }
@@ -42,14 +45,14 @@ class MissatgeRoutesTest {
     @BeforeEach
     fun setup() {
         transaction(database) {
-            SchemaUtils.create(MissatgesTable)
+            SchemaUtils.create(MissatgesTable, UsuarioTable)
         }
     }
 
     @AfterEach
     fun tearDown() {
         transaction(database) {
-            SchemaUtils.drop(MissatgesTable)
+            SchemaUtils.drop(MissatgesTable, UsuarioTable)
         }
     }
 

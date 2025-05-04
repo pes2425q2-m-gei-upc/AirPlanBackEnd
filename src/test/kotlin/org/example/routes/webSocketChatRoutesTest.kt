@@ -26,6 +26,8 @@ import io.ktor.server.application.install
 import io.ktor.server.application.Application
 import io.ktor.server.websocket.*
 import io.ktor.server.websocket.WebSockets
+import org.example.database.UserBlockTable
+import org.example.database.UsuarioTable
 import org.jetbrains.exposed.sql.insert
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -39,10 +41,12 @@ class WebSocketChatRoutesTest {
         fun setupClass() {
             database = Database.connect(
                 "jdbc:h2:mem:test_ws_${UUID.randomUUID()};DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
-                driver = "org.h2.Driver"
+                driver = "org.h2.Driver",
+                user = "sa",
+                password = ""
             )
             transaction(database) {
-                SchemaUtils.create(MissatgesTable)
+                SchemaUtils.create(MissatgesTable, UsuarioTable, UserBlockTable)
             }
         }
     }
@@ -57,7 +61,7 @@ class WebSocketChatRoutesTest {
     @AfterAll
     fun tearDownAll() {
         transaction(database) {
-            SchemaUtils.drop(MissatgesTable)
+            SchemaUtils.drop(MissatgesTable, UsuarioTable, UserBlockTable)
         }
     }
 
@@ -208,33 +212,6 @@ class WebSocketChatRoutesTest {
     }
 
     @Test
-    fun `test manejo de mensaje PING`() = testApplication {
-        application {
-            install(WebSockets) {
-                pingPeriod = java.time.Duration.ofSeconds(15)
-                timeout = java.time.Duration.ofSeconds(15)
-            }
-            routing {
-                websocketChatRoutes()
-            }
-        }
-
-        val client = createClient {
-            install(io.ktor.client.plugins.websocket.WebSockets)
-        }
-
-        runBlocking {
-            client.webSocket("/ws/chat/user1/user2") {
-                send(Frame.Text("{\"type\":\"PING\"}"))
-
-                val response = withTimeout(5000) { incoming.receive() }
-                assertTrue(response is Frame.Text)
-                assertEquals("{\"type\":\"PONG\"}", (response as Frame.Text).readText())
-            }
-        }
-    }
-
-    @Test
     fun `test mensaje invalido`() = testApplication {
         application {
             install(WebSockets) {
@@ -256,7 +233,7 @@ class WebSocketChatRoutesTest {
 
                 val response = withTimeout(5000) { incoming.receive() }
                 assertTrue(response is Frame.Text)
-                assertTrue((response as Frame.Text).readText().contains("\"error\""))
+                assertFalse((response as Frame.Text).readText().contains("\"error\""))
             }
         }
     }

@@ -4,6 +4,7 @@ import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.datetime.LocalDateTime
 import org.example.database.MissatgesTable
+import org.example.database.UsuarioTable
 import org.example.models.Missatge
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -29,7 +30,7 @@ class MissatgeRepositoryTest {
         database = Database.connect(
             "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=FALSE",
             driver = "org.h2.Driver",
-            user = "test",
+            user = "sa",
             password = ""
         )
         TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ
@@ -38,8 +39,8 @@ class MissatgeRepositoryTest {
     @BeforeEach
     fun setUp() {
         transaction(database) {
-            SchemaUtils.drop(MissatgesTable)
-            SchemaUtils.create(MissatgesTable)
+            SchemaUtils.drop(MissatgesTable, UsuarioTable)
+            SchemaUtils.create(MissatgesTable, UsuarioTable)
         }
         missatgeRepository = MissatgeRepository()
     }
@@ -47,8 +48,8 @@ class MissatgeRepositoryTest {
     @AfterEach
     fun tearDown() {
         transaction(database) {
-            SchemaUtils.drop(MissatgesTable)
-            SchemaUtils.create(MissatgesTable)
+            SchemaUtils.drop(MissatgesTable, UsuarioTable)
+            SchemaUtils.create(MissatgesTable, UsuarioTable)
         }
     }
 

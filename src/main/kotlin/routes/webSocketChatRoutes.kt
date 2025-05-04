@@ -8,8 +8,13 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.decodeFromString
 import org.example.models.Missatge
 import org.example.repositories.MissatgeRepository
+import org.example.repositories.UserBlockRepository
+import org.example.controllers.UserBlockController
 import java.util.Collections
 
 // Definir la colección de sesiones WebSocket de los usuarios conectados
@@ -17,6 +22,8 @@ val connectedUsers = Collections.synchronizedSet(mutableSetOf<WebSocketSession>(
 
 fun Route.websocketChatRoutes() {
     val repo = MissatgeRepository()
+    val blockRepository = UserBlockRepository()
+    val blockController = UserBlockController(blockRepository)
 
     webSocket("/ws/chat/{user1}/{user2}") {
         val user1 = call.parameters["user1"] ?: return@webSocket
@@ -25,11 +32,12 @@ fun Route.websocketChatRoutes() {
         println("Nuevo cliente conectado: $user1 - $user2")
         connectedUsers += this
 
-        sendChatHistory(repo, user1, user2)
+        // Enviar historial y estado de bloqueo
+        sendChatHistoryAndBlockStatus(repo, blockRepository, user1, user2)
 
         try {
             println("Esperando mensajes del cliente...")
-            handleIncomingMessages(repo, this)
+            handleIncomingMessages(repo, blockRepository, blockController, user1, user2, this)
         } catch (e: Exception) {
             println("Error al consumir WebSocket: ${e.message}")
         } finally {
@@ -39,31 +47,60 @@ fun Route.websocketChatRoutes() {
     }
 }
 
-private suspend fun WebSocketSession.sendChatHistory(repo: MissatgeRepository, user1: String, user2: String) {
+private suspend fun WebSocketSession.sendChatHistoryAndBlockStatus(
+    repo: MissatgeRepository,
+    blockRepository: UserBlockRepository,
+    user1: String,
+    user2: String
+) {
     val messages = repo.getMessagesBetweenUsers(user1, user2)
-    if (messages.isNotEmpty()) {
-        val historyJson = Json.encodeToString(messages)
-        send(Frame.Text("{\"type\":\"history\", \"messages\":$historyJson}"))
-    }
+    val user1BlockedUser2 = blockRepository.isUserBlocked(user1, user2)
+    val user2BlockedUser1 = blockRepository.isUserBlocked(user2, user1)
+
+    val blockData = mapOf(
+        "user1BlockedUser2" to user1BlockedUser2,
+        "user2BlockedUser1" to user2BlockedUser1
+    )
+
+    val historyJson = Json.encodeToString(messages)
+    val blockJson = Json.encodeToString(blockData)
+    send(Frame.Text("{\"type\":\"history\", \"messages\":$historyJson, \"blockStatus\":$blockJson}"))
 }
 
-private suspend fun handleIncomingMessages(repo: MissatgeRepository, session: WebSocketSession) {
+private suspend fun handleIncomingMessages(
+    repo: MissatgeRepository,
+    blockRepository: UserBlockRepository,
+    blockController: UserBlockController,
+    user1: String,
+    user2: String,
+    session: WebSocketSession
+) {
     session.incoming.consumeEach { frame ->
         if (frame is Frame.Text) {
             val text = frame.readText()
             println("Texto recibido: $text")
 
-            processMessage(text, repo, session)
+            processMessage(text, repo, blockRepository, blockController, user1, user2, session)
         }
     }
 }
 
-private suspend fun processMessage(text: String, repo: MissatgeRepository, session: WebSocketSession) {
+private suspend fun processMessage(
+    text: String,
+    repo: MissatgeRepository,
+    blockRepository: UserBlockRepository,
+    blockController: UserBlockController,
+    user1: String,
+    user2: String,
+    session: WebSocketSession
+) {
     try {
         when {
             text.contains("\"type\":\"PING\"") -> handlePingMessage(session)
             text.contains("\"type\":\"EDIT\"") -> handleEditMessage(text, repo, session)
-            else -> handleRegularMessage(text, repo, session)
+            text.contains("\"type\":\"BLOCK\"") -> handleBlockMessage(text, blockRepository, session)
+            text.contains("\"type\":\"UNBLOCK\"") -> handleUnblockMessage(text, blockRepository, session)
+            else -> handleRegularMessage(text, repo, blockController, session)
         }
     } catch (e: Exception) {
         handleMessageError(e, session)
@@ -98,6 +135,54 @@ private suspend fun handleEditMessage(text: String, repo: MissatgeRepository, se
     }
 }
 
+private suspend fun handleBlockMessage(text: String, blockRepository: UserBlockRepository, session: WebSocketSession) {
+    val jsonObject = Json.parseToJsonElement(text).jsonObject
+    val blockerUsername = jsonObject["blockerUsername"]?.jsonPrimitive?.content ?: return
+    val blockedUsername = jsonObject["blockedUsername"]?.jsonPrimitive?.content ?: return
+
+    val success = blockRepository.blockUser(blockerUsername, blockedUsername)
+    if (success) {
+        val response = "{\"type\":\"BLOCK_RESPONSE\", \"success\":true, \"message\":\"Usuario bloqueado\"}"
+        session.send(Frame.Text(response))
+
+        // Notificar al otro usuario si está conectado
+        val blockNotification = "{\"type\":\"BLOCK_NOTIFICATION\", \"blockerUsername\":\"$blockerUsername\"}"
+        connectedUsers.forEach { userSession ->
+            if (userSession != session) {
+                try {
+                    userSession.send(Frame.Text(blockNotification))
+                } catch (e: Exception) {
+                    println("Error al enviar notificación de bloqueo: ${e.message}")
+                }
+            }
+        }
+    }
+}
+
+private suspend fun handleUnblockMessage(text: String, blockRepository: UserBlockRepository, session: WebSocketSession) {
+    val jsonObject = Json.parseToJsonElement(text).jsonObject
+    val blockerUsername = jsonObject["blockerUsername"]?.jsonPrimitive?.content ?: return
+    val blockedUsername = jsonObject["blockedUsername"]?.jsonPrimitive?.content ?: return
+
+    val success = blockRepository.unblockUser(blockerUsername, blockedUsername)
+    if (success) {
+        val response = "{\"type\":\"UNBLOCK_RESPONSE\", \"success\":true, \"message\":\"Usuario desbloqueado\"}"
+        session.send(Frame.Text(response))
+
+        // Notificar al otro usuario si está conectado
+        val unblockNotification = "{\"type\":\"UNBLOCK_NOTIFICATION\", \"blockerUsername\":\"$blockerUsername\"}"
+        connectedUsers.forEach { userSession ->
+            if (userSession != session) {
+                try {
+                    userSession.send(Frame.Text(unblockNotification))
+                } catch (e: Exception) {
+                    println("Error al enviar notificación de desbloqueo: ${e.message}")
+                }
+            }
+        }
+    }
+}
+
 private fun isMessageEditableByTime(originalTimestamp: String): Boolean {
     val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
     val originalDateTime = java.time.LocalDateTime.parse(originalTimestamp, formatter)
@@ -127,12 +212,28 @@ private suspend fun broadcastEditedMessage(sender: String, originalTimestamp: St
     }
 }
 
-private suspend fun handleRegularMessage(text: String, repo: MissatgeRepository, currentSession: WebSocketSession) {
+private suspend fun handleRegularMessage(
+    text: String,
+    repo: MissatgeRepository,
+    blockController: UserBlockController,
+    currentSession: WebSocketSession
+) {
     val missatge = Json.decodeFromString<Missatge>(text)
+
+    // Verificar si algún usuario ha bloqueado al otro antes de enviar el mensaje
+    val canSendMessage = !blockController.isEitherUserBlocked(missatge.usernameSender, missatge.usernameReceiver)
+
+    if (!canSendMessage) {
+        // Si hay un bloqueo, informar al remitente
+        currentSession.send(Frame.Text("{\"type\":\"ERROR\", \"message\":\"No se puede enviar el mensaje debido a un bloqueo\"}"))
+        return
+    }
+
+    // Guarda el mensaje en la base de datos
     repo.sendMessage(missatge)
 
+    // Enviar el mensaje a los usuarios conectados en formato JSON
     val messageJson = Json.encodeToString(missatge)
-    //arreglar session para que solo sean 2 personas quien los reciban
     connectedUsers.forEach { session ->
         if (session != currentSession) {
             try {

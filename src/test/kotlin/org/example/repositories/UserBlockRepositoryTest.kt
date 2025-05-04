@@ -11,10 +11,12 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.BeforeAll
+import java.sql.Connection
 
 class UserBlockRepositoryTest {
 
@@ -22,9 +24,14 @@ class UserBlockRepositoryTest {
         @BeforeAll
         @JvmStatic
         fun setupDatabase() {
-            Database.connect("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;", driver = "org.h2.Driver")
+            Database.connect("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;",
+                driver = "org.h2.Driver",
+                user = "sa",
+                password = ""
+                )
+            TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ
             transaction {
-                SchemaUtils.create(UserBlockTable)
+                SchemaUtils.create(UsuarioTable,UserBlockTable)
             }
         }
     }

@@ -30,7 +30,7 @@ class UserBlockRoutesTest {
         Database.connect(
             "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=FALSE",
             driver = "org.h2.Driver",
-            user = "",
+            user = "sa",
             password = ""
         )
 

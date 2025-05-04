@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.0.0" // Usa una versión válida de Kotlin
+    kotlin("jvm") version "1.9.22" // Usa una versión válida de Kotlin
     id("application") // Aplicar el plugin application correctamente
     kotlin("plugin.serialization") version "1.8.10"
     id("jvm-test-suite") // Add this plugin for test suites support
@@ -66,7 +66,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
 
     // Para integración con Kotlin test
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.0")
+    //testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.0")
     testImplementation("org.jetbrains.exposed:exposed-java-time:0.44.1")
     testImplementation("org.jetbrains.exposed:exposed-core:0.44.1")
     testImplementation("org.jetbrains.exposed:exposed-dao:0.44.1")
@@ -79,10 +79,10 @@ dependencies {
     testImplementation("io.ktor:ktor-client-websockets:2.3.7")
 
     // Ktor Test (si necesitas probar rutas)
+    testImplementation(kotlin("test-junit5")) // This will use the version matching your Kotlin version
     testImplementation("io.ktor:ktor-server-test-host:2.3.7")
     testImplementation("io.ktor:ktor-client-content-negotiation:2.3.7")
     testImplementation("io.ktor:ktor-server-test-host:2.3.8")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.5.21")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testImplementation("org.mockito:mockito-core:5.10.0")
@@ -108,6 +108,7 @@ testing {
             useJUnitJupiter("5.10.2") // Explicitly specify JUnit Jupiter version
         }
     }
+}
 tasks.test {
     useJUnitPlatform()
 }
