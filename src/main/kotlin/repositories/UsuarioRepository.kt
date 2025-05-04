@@ -88,14 +88,16 @@ class UsuarioRepository {
         nuevoNom: String?,
         nuevoUsername: String?,
         nuevoIdioma: String?,
-        nuevoCorreo: String?
+        nuevoCorreo: String?,
+        nuevaPhotoUrl: String? = null  // Añadir parámetro para la URL de la imagen
     ): Boolean {
         return transaction {
             val filasActualizadas = UsuarioTable.update({ UsuarioTable.email eq currentEmail }) {
                 if (nuevoNom != null) it[UsuarioTable.nom] = nuevoNom
                 if (nuevoUsername != null) it[UsuarioTable.username] = nuevoUsername
                 if (nuevoIdioma != null) it[UsuarioTable.idioma] = nuevoIdioma
-                
+                if (nuevaPhotoUrl != null) it[UsuarioTable.photourl] = nuevaPhotoUrl  // Guardar la URL de la imagen
+
                 // Ahora actualizamos directamente el correo si se proporciona uno nuevo
                 if (nuevoCorreo != null) {
                     println("📧 Actualizando correo directamente: $currentEmail → $nuevoCorreo")
@@ -137,7 +139,7 @@ class UsuarioRepository {
                 )
             } else {
                 val isAdmin = usuario.second
-                
+
                 if (isAdmin) {
                     // Si es admin, devolvemos tipo "admin" sin nivel
                     UserTypeInfo(
@@ -151,7 +153,7 @@ class UsuarioRepository {
                         .map {
                             it[ClienteTable.nivell]
                         }.singleOrNull()
-                    
+
                     UserTypeInfo(
                         tipo = "cliente",
                         username = usuario.first,
@@ -159,6 +161,34 @@ class UsuarioRepository {
                     )
                 }
             }
+        }
+    }
+
+    fun existeUsuario(username: String): Boolean {
+        return transaction {
+            UsuarioTable
+                .select { UsuarioTable.username eq username }
+                .count() > 0
+        }
+    }
+
+    //Lista todos los usuarios con su username
+    fun listarUsuarios(): List<String> {
+        return transaction {
+            UsuarioTable
+                .selectAll()
+                .map { it[UsuarioTable.username] }
+        }
+    }
+
+    // Obtener la URL de la foto de perfil de un usuario
+    fun obtenerPhotoUrlPorEmail(email: String): String? {
+        return transaction {
+            UsuarioTable
+                .slice(UsuarioTable.photourl)
+                .select { UsuarioTable.email eq email }
+                .map { it[UsuarioTable.photourl] }
+                .singleOrNull()
         }
     }
 }

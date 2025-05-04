@@ -5,9 +5,10 @@ import org.example.models.Missatge
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.database.MissatgesTable
+import org.example.database.UsuarioTable
 
 class MissatgeRepository {
-    suspend fun sendMessage(message: Missatge): Boolean {
+    fun sendMessage(message: Missatge): Boolean {
         return try {
             transaction {
                 MissatgesTable.insert {
@@ -24,7 +25,7 @@ class MissatgeRepository {
         }
     }
 
-    suspend fun getMessagesBetweenUsers(user1: String, user2: String): List<Missatge> {
+    fun getMessagesBetweenUsers(user1: String, user2: String): List<Missatge> {
         return transaction {
             MissatgesTable
                 .select { ((MissatgesTable.usernameSender eq user1) and (MissatgesTable.usernameReceiver eq user2)) or
@@ -42,7 +43,7 @@ class MissatgeRepository {
         }
     }
 
-    suspend fun getLatestChatsForUser(currentUsername: String): List<Missatge> {
+    fun getLatestChatsForUser(currentUsername: String): List<Missatge> {
         return transaction {
             // Subquery: obtener la lista de usuarios con los que ha hablado
             val subquery = MissatgesTable
@@ -61,6 +62,12 @@ class MissatgeRepository {
 
             // Para cada usuario con quien ha hablado, buscamos el último mensaje
             subquery.mapNotNull { otherUser ->
+                // Obtener la URL de la imagen de perfil del otro usuario
+                val photoURL = UsuarioTable
+                    .select { UsuarioTable.username eq otherUser }
+                    .map { it[UsuarioTable.photourl] }
+                    .firstOrNull()
+
                 MissatgesTable
                     .select {
                         ((MissatgesTable.usernameSender eq currentUsername) and (MissatgesTable.usernameReceiver eq otherUser)) or
@@ -74,7 +81,8 @@ class MissatgeRepository {
                             usernameReceiver = it[MissatgesTable.usernameReceiver],
                             dataEnviament = it[MissatgesTable.dataEnviament],
                             missatge = it[MissatgesTable.missatge],
-                            isEdited = it[MissatgesTable.isEdited]
+                            isEdited = it[MissatgesTable.isEdited],
+                            photoURL = photoURL // Incluir la URL de la foto de perfil
                         )
                     }
                     .firstOrNull()

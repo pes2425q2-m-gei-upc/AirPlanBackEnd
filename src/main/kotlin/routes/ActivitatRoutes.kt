@@ -8,19 +8,42 @@ import io.ktor.http.*
 import kotlinx.datetime.toKotlinLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import org.example.controllers.ControladorActivitat
+import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Activitat
 import repositories.ActivitatFavoritaRepository
 import repositories.ActivitatRepository
+import org.example.repositories.UserBlockRepository
 import java.sql.Timestamp
 
 fun Route.activitatRoutes() {
     val activitatRepository = ActivitatRepository()
     val activitatFavoritaRepository = ActivitatFavoritaRepository() // Create an instance of ActivitatFavoritaRepository
-    val activitatController = ControladorActivitat(activitatRepository, activitatFavoritaRepository) // Pass both repositories
+    val participantsActivitatsRepository = ParticipantsActivitatsRepository()
+    val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository) // Pass both repositories
+    val userBlockRepository = UserBlockRepository() // Añadir repositorio de bloqueos de usuarios
 
     println("Ha arribat a ActivitatRoutes")  // Depuració
     route("/api/activitats") {
         println("Ha arribat a /api/activitats")  // Depuració
+
+        // Endpoint para filtrar actividades según usuarios bloqueados
+        get("/filter/{username}") {
+            try {
+                val username = call.parameters["username"]
+
+                if (username != null) {
+                    // Obtener actividades excluyendo las de usuarios bloqueados en una única consulta SQL
+                    val filteredActivities = activitatController.obtenirActivitatsPerUsuariSenseBloquejos(username)
+
+                    call.respond(HttpStatusCode.OK, filteredActivities)
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Username is required")
+                }
+            } catch (e: Exception) {
+                println("Error filtrando actividades: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error filtering activities: ${e.message}")
+            }
+        }
 
         post("/crear") {
             try {
@@ -186,5 +209,36 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Username is invalid")
             }
         }
+
+        //Obtenir participants de una activitat
+        get("/{activityId}/participants") {
+            val activityId = call.parameters["activityId"]?.toIntOrNull()
+            if (activityId == null) {
+                call.respond(HttpStatusCode.BadRequest, "ID d'activitat invàlid")
+                return@get
+            }
+
+            val participants = activitatController.obtenirParticipantsDeActivitat(activityId)
+            call.respond(participants)
+        }
+
+        //Borra usuario de actividad
+        delete("{id}/participants/{username}") {
+            val idActivitat = call.parameters["id"]?.toIntOrNull()
+            val usernameAEliminar = call.parameters["username"]
+
+            if (idActivitat == null || usernameAEliminar.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Paràmetres invàlids.")
+                return@delete
+            }
+
+            val eliminat = activitatController.eliminarParticipant(idActivitat, usernameAEliminar)
+            if (eliminat) {
+                call.respond(HttpStatusCode.OK, "Participant eliminat correctament.")
+            } else {
+                call.respond(HttpStatusCode.NotFound, "No s'ha trobat el participant.")
+            }
+        }
+
     }
 }
