@@ -8,17 +8,27 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.example.controllers.ControladorRuta
 import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
+import org.example.repositories.RutaRepository
 import org.example.repositories.UsuarioRepository
 import org.example.routes.activitatRoutes
+import org.example.routes.rutaRoutes
 import org.example.routes.usuarioRoutes
+import org.example.routes.invitacioRoutes
+
+// Eliminada la importación de authRoutes
+import org.example.services.FirebaseAdminService
+import io.ktor.server.http.content.*
+import org.example.routes.*
+// Eliminada la importación de java.io.File que ya no se utiliza
+import org.example.routes.valoracioRoutes
+import org.example.routes.generalRoutes
 
 
 fun main() {
-
-
 
     // 🔹 Creem l'entorn del servidor amb SSL
     val environment = applicationEngineEnvironment {
@@ -36,22 +46,44 @@ fun main() {
                 allowMethod(HttpMethod.Delete)
                 allowMethod(HttpMethod.Put)
                 allowHeader(HttpHeaders.ContentType)
+                allowNonSimpleContentTypes = true  // Allow WebSocket connections
                 allowCredentials = true
             }
+
 
             // Configuració de negociació de contingut
             install(ContentNegotiation) {
                 json()
             }
 
+            // Configurar WebSockets
+            configureWebSockets()
+
             DatabaseFactory.init()
             val usuarioRepository = UsuarioRepository()
             val controladorUsuario = ControladorUsuarios(usuarioRepository)
+
+            // Inicializar Firebase Admin SDK al inicio
+            FirebaseAdminService.initialize()
 
             // Configuració de rutes
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                rutaRoutes(ControladorRuta(RutaRepository()))
+                solicitudRoutes()
+                invitacioRoutes()
+                missatgeRoutes()
+                websocketChatRoutes()
+                valoracioRoutes()
+                userBlockRoutes() // Añadir rutas de bloqueo de usuarios
+                // Eliminada la llamada a uploadImageRoute()
+                webSocketRoutes() // Registrar rutas WebSocket
+                generalRoutes()
+
+                // Eliminada la llamada a authRoutes()
+                // Eliminada la configuración de ruta estática para archivos de imagen
+
                 get("/") {
                     call.respond(
                         """
@@ -101,7 +133,7 @@ fun main() {
                         username = "usuario123",
                         nom = "Carlos Gómez",
                         email = "carlos.gomez@example.com",
-                        idioma = Idioma.Castellano,
+                        idioma = Idioma.Castellano.toString(),
                         isAdmin = false
                     )
 
@@ -124,7 +156,8 @@ fun main() {
                         call.respond(mapOf("isAdmin" to isAdmin))
                     } else {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Email no proporcionado"))
-                    }                }
+                    }
+                }
             }
         }
     }
