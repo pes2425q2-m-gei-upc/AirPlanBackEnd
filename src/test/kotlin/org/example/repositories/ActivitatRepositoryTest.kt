@@ -17,11 +17,13 @@ import kotlin.test.assertTrue
 class ActivitatRepositoryTest {
 
     private lateinit var repository: ActivitatRepository
+    private lateinit var database: Database
 
     @BeforeAll
     fun setUpDatabase() {
         // Connect to an in-memory H2 database
-        Database.connect("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;", driver = "org.h2.Driver")
+        database = Database.connect("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;", driver = "org.h2.Driver", user = "sa",
+            password = "")
         transaction {
             SchemaUtils.create(ActivitatTable) // Create the schema
         }
@@ -30,11 +32,20 @@ class ActivitatRepositoryTest {
 
     @BeforeEach
     fun cleanDatabase() {
-        transaction {
+        transaction (database){
             SchemaUtils.drop(ActivitatTable)
             SchemaUtils.create(ActivitatTable)
         }
     }
+
+    @AfterEach
+    fun tearDown() {
+        transaction (database){
+            SchemaUtils.drop(ActivitatTable)
+        }
+    }
+
+    
 
     @Test
     fun `test afegirActivitat`() {

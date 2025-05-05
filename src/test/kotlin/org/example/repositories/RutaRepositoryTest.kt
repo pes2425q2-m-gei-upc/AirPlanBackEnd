@@ -50,7 +50,6 @@ class RutaRepositoryTest {
     fun tearDown() {
         transaction(database) {
             SchemaUtils.drop(RutaTable)
-            SchemaUtils.create(RutaTable)
         }
     }
 
