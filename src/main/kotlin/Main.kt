@@ -8,16 +8,22 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.example.controllers.ControladorRuta
 import org.example.controllers.ControladorUsuarios
 import org.example.enums.Idioma
 import org.example.database.DatabaseFactory
+import org.example.repositories.RutaRepository
 import org.example.repositories.UsuarioRepository
+import org.example.routes.activitatRoutes
+import org.example.routes.rutaRoutes
+import org.example.routes.usuarioRoutes
+import org.example.routes.invitacioRoutes
 
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
 import io.ktor.server.http.content.*
 import org.example.routes.*
-import java.io.File
+// Eliminada la importación de java.io.File que ya no se utiliza
 import org.example.routes.valoracioRoutes
 import org.example.routes.generalRoutes
 
@@ -44,6 +50,7 @@ fun main() {
                 allowCredentials = true
             }
 
+
             // Configuració de negociació de contingut
             install(ContentNegotiation) {
                 json()
@@ -63,25 +70,19 @@ fun main() {
             routing {
                 usuarioRoutes()
                 activitatRoutes()
+                rutaRoutes(ControladorRuta(RutaRepository()))
                 solicitudRoutes()
-
+                invitacioRoutes()
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()
-                uploadImageRoute() // Añadida la ruta para subir imágenes
+                userBlockRoutes() // Añadir rutas de bloqueo de usuarios
+                // Eliminada la llamada a uploadImageRoute()
                 webSocketRoutes() // Registrar rutas WebSocket
                 generalRoutes()
 
                 // Eliminada la llamada a authRoutes()
-
-                // Configurar ruta estática para servir archivos de imagen
-                val uploadsDir = File("uploads").apply {
-                    if (!exists()) mkdirs()
-                }
-                staticFiles("/uploads", uploadsDir) {
-                    // Configure default response headers if needed
-                    default("index.html")
-                }
+                // Eliminada la configuración de ruta estática para archivos de imagen
 
                 get("/") {
                     call.respond(

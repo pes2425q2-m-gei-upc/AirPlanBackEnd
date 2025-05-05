@@ -2,10 +2,12 @@ package org.example.repositories
 
 import org.example.database.ClienteTable
 import org.example.database.UsuarioTable
+import org.example.database.UserBlockTable
 import org.example.enums.Idioma
 import org.example.models.Usuario
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.sql.Connection
+
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UsuarioRepositoryTest {
@@ -31,7 +34,7 @@ class UsuarioRepositoryTest {
         database = Database.connect(
             "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_UPPER=FALSE",
             driver = "org.h2.Driver",
-            user = "test",
+            user = "sa",
             password = ""
         )
         
@@ -41,22 +44,20 @@ class UsuarioRepositoryTest {
     
     @BeforeEach
     fun setUp() {
-        // Crear las tablas en la base de datos antes de cada test
         transaction(database) {
-            SchemaUtils.drop(UsuarioTable, ClienteTable)
-            SchemaUtils.create(UsuarioTable, ClienteTable)
+            // Ensure tables are created in the correct order (dependencies first)
+            SchemaUtils.create(UsuarioTable, ClienteTable) // Create base tables
+            SchemaUtils.create(UserBlockTable) // Create tables dependent on UsuarioTable
         }
-        
         usuarioRepository = UsuarioRepository()
     }
     
     @AfterEach
     fun tearDown() {
-        // Limpiar datos después de cada test usando drop y create en lugar de deleteWhere
         transaction(database) {
-            // En lugar de usar deleteWhere, recreamos las tablas para limpiarlas
-            SchemaUtils.drop(UsuarioTable, ClienteTable)
-            SchemaUtils.create(UsuarioTable, ClienteTable)
+            // Drop tables in reverse order of creation/dependency
+            SchemaUtils.drop(UserBlockTable) // Drop dependent tables first
+            SchemaUtils.drop(ClienteTable, UsuarioTable) // Drop base tables
         }
     }
     

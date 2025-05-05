@@ -56,7 +56,8 @@ object DatabaseFactory {
                 SchemaUtils.create(ActivitatTable) // Crea la tabla si no existe
                 SchemaUtils.create(UsuarioTable) // Crea la tabla si no existe
                 SchemaUtils.create(ValoracioTable) // Crea la tabla si no existe
-
+                SchemaUtils.create(UserBlockTable) // Crea la tabla de bloqueos si no existe
+                SchemaUtils.create(RutaTable)
 
                 println("✅ Esquema de la base de datos verificado")
             }
