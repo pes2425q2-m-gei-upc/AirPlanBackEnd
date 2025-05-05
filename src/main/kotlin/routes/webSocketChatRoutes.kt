@@ -100,6 +100,7 @@ private suspend fun processMessage(
             text.contains("\"type\":\"EDIT\"") -> handleEditMessage(text, repo, session)
             text.contains("\"type\":\"BLOCK\"") -> handleBlockMessage(text, blockRepository, session)
             text.contains("\"type\":\"UNBLOCK\"") -> handleUnblockMessage(text, blockRepository, session)
+            text.contains("\"type\":\"DELETE\"") -> handleDeleteMessage(text, repo, session)
             else -> handleRegularMessage(text, repo, blockController, session)
         }
     } catch (e: Exception) {
@@ -234,6 +235,7 @@ private suspend fun handleRegularMessage(
 
     // Enviar el mensaje a los usuarios conectados en formato JSON
     val messageJson = Json.encodeToString(missatge)
+    //arreglar session para que solo sean 2 personas quien los reciban
     connectedUsers.forEach { session ->
         if (session != currentSession) {
             try {
@@ -241,6 +243,41 @@ private suspend fun handleRegularMessage(
             } catch (e: Exception) {
                 println("Error al enviar mensaje a sesión: ${e.message}")
             }
+        }
+    }
+}
+
+private suspend fun handleDeleteMessage(text: String, repo: MissatgeRepository, session: WebSocketSession) {
+    val deleteData = Json.decodeFromString<Map<String, String>>(text)
+    val sender = deleteData["usernameSender"]
+    val originalTimestamp = deleteData["timestamp"]
+
+    if (sender == null || originalTimestamp == null) {
+        session.send(Frame.Text("{\"error\": \"Datos de eliminación incompletos\"}"))
+        return
+    }
+
+    val success = repo.deleteMessage(sender, originalTimestamp)
+    if (success) {
+        broadcastDeletedMessage(sender, originalTimestamp)
+    } else {
+        session.send(Frame.Text("{\"error\": \"No se pudo eliminar el mensaje\"}"))
+    }
+}
+
+private suspend fun broadcastDeletedMessage(sender: String, originalTimestamp: String) {
+    val deleteResponse = buildJsonObject {
+        put("type", "DELETE")
+        put("usernameSender", sender)
+        put("originalTimestamp", originalTimestamp)
+    }
+
+    val deleteJson = deleteResponse.toString()
+    connectedUsers.forEach { session ->
+        try {
+            session.send(Frame.Text(deleteJson))
+        } catch (e: Exception) {
+            println("Error al enviar eliminación a sesión: ${e.message}")
         }
     }
 }
