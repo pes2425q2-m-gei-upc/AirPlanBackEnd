@@ -9,11 +9,16 @@ import org.jetbrains.exposed.sql.and
 import repositories.ActivitatFavoritaRepository
 import repositories.SolicitudRepository
 import org.example.database.ActivitatTable
+import org.example.repositories.ParticipantsActivitatsRepository
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 open class UserBlockRepository {
     
     private val activitatFavoritaRepository = ActivitatFavoritaRepository()
     private val solicitudRepository = SolicitudRepository()
+    private val participantsActivitatsRepository = ParticipantsActivitatsRepository()
     
     // Block a user
     open fun blockUser(blockerUsername: String, blockedUsername: String): Boolean {
@@ -55,6 +60,9 @@ open class UserBlockRepository {
                         
                         println("🗑️ Eliminando solicitudes/invitaciones entre usuarios...")
                         solicitudRepository.eliminarTodasSolicitudesEntreUsuarios(blockerUsername, blockedUsername)
+                        
+                        println("🗑️ Eliminando participación en actividades futuras...")
+                        removeParticipationInFutureActivities(blockerUsername, blockedUsername)
                     }
                     
                     true
@@ -67,6 +75,50 @@ open class UserBlockRepository {
             println("❌ Error en la operación de bloqueo: ${e.message}")
             e.printStackTrace()
             false
+        }
+    }
+    
+    // Función para eliminar participantes en actividades futuras
+    private fun removeParticipationInFutureActivities(user1: String, user2: String) {
+        try {
+            val currentDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+            
+            // Obtener actividades futuras creadas por user1 donde user2 es participante
+            val activitiesFromUser1 = transaction {
+                ActivitatTable.select {
+                    (ActivitatTable.username_creador eq user1) and
+                    (ActivitatTable.dataInici greater currentDateTime)
+                }.map { row ->
+                    row[ActivitatTable.id_activitat]
+                }
+            }
+            
+            // Eliminar a user2 como participante de las actividades futuras de user1
+            for (activityId in activitiesFromUser1) {
+                participantsActivitatsRepository.eliminarParticipant(activityId, user2)
+                println("✅ Usuario $user2 eliminado como participante de la actividad $activityId creada por $user1")
+            }
+            
+            // Obtener actividades futuras creadas por user2 donde user1 es participante
+            val activitiesFromUser2 = transaction {
+                ActivitatTable.select {
+                    (ActivitatTable.username_creador eq user2) and
+                    (ActivitatTable.dataInici greater currentDateTime)
+                }.map { row ->
+                    row[ActivitatTable.id_activitat]
+                }
+            }
+            
+            // Eliminar a user1 como participante de las actividades futuras de user2
+            for (activityId in activitiesFromUser2) {
+                participantsActivitatsRepository.eliminarParticipant(activityId, user1)
+                println("✅ Usuario $user1 eliminado como participante de la actividad $activityId creada por $user2")
+            }
+            
+            println("✅ Participaciones en actividades futuras eliminadas correctamente entre $user1 y $user2")
+        } catch (e: Exception) {
+            println("❌ Error al eliminar participaciones en actividades: ${e.message}")
+            e.printStackTrace()
         }
     }
     

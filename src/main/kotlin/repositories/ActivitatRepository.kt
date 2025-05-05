@@ -10,6 +10,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.notInList
 import java.sql.Timestamp
+import kotlinx.datetime.LocalDate
+
 
 class ActivitatRepository {
     fun afegirActivitat(activitat: Activitat): Int? {
@@ -167,6 +169,28 @@ class ActivitatRepository {
                     not(ActivitatTable.username_creador inSubQuery blockerUserSubQuery)
                 }
                 .map { row ->
+                    Activitat(
+                        id = row[ActivitatTable.id_activitat],
+                        nom = row[ActivitatTable.nom],
+                        descripcio = row[ActivitatTable.descripcio],
+                        ubicacio = Localitzacio(
+                            latitud = row[ActivitatTable.latitud],
+                            longitud = row[ActivitatTable.longitud]
+                        ),
+                        dataInici = row[ActivitatTable.dataInici],
+                        dataFi = row[ActivitatTable.dataFi],
+                        creador = row[ActivitatTable.username_creador]
+                    )
+                }
+        }
+    }
+
+    fun obtenirActivitatsStartingToday(today: LocalDate): List<Activitat> {
+        return transaction {
+            // Select activities where dataInici's date part matches today's date
+            ActivitatTable.select {
+                (ActivitatTable.dataInici.castTo<String>(VarCharColumnType()).like("${today}%"))
+            }.map { row ->
                     Activitat(
                         id = row[ActivitatTable.id_activitat],
                         nom = row[ActivitatTable.nom],

@@ -15,12 +15,18 @@ import repositories.ActivitatRepository
 import org.example.repositories.UserBlockRepository
 import java.sql.Timestamp
 
+import ControladorValoracio
+import ValoracioRepository
+import kotlinx.serialization.json.*
+import org.example.services.AirQualityService
+
 fun Route.activitatRoutes() {
     val activitatRepository = ActivitatRepository()
     val activitatFavoritaRepository = ActivitatFavoritaRepository() // Create an instance of ActivitatFavoritaRepository
     val participantsActivitatsRepository = ParticipantsActivitatsRepository()
     val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository) // Pass both repositories
     val userBlockRepository = UserBlockRepository() // Añadir repositorio de bloqueos de usuarios
+    val valoracioRepository = ValoracioRepository() // Añadir repositorio de valoraciones
 
     println("Ha arribat a ActivitatRoutes")  // Depuració
     route("/api/activitats") {
@@ -240,5 +246,65 @@ fun Route.activitatRoutes() {
             }
         }
 
+        get("/hoy") {
+            try {
+                // Get activities that start today
+                val activitiesToday = activitatController.obtenirActivitatsStartingToday()
+
+                // Enhanced response list to hold complete activity data
+                val enhancedActivities = mutableListOf<JsonObject>()
+
+                // Fetch air quality data once for all activities and cache it - now using the service
+                val airQualityData = AirQualityService.fetchAirQualityData()
+
+                // Process each activity
+                for (activitat in activitiesToday) {
+                    // Get participants for this activity
+                    val participants = activitatController.obtenirParticipantsDeActivitat(activitat.id)
+
+                    // Get ratings for this activity
+                    val ratings = valoracioRepository.obtenirValoracionsPerActivitat(activitat.id)
+
+                    // Find the closest air quality station data for this activity location - now using the service
+                    val airQuality = AirQualityService.findClosestAirQualityData(activitat.ubicacio.latitud, activitat.ubicacio.longitud, airQualityData)
+
+                    // Build enhanced activity object with all information
+                    val enhancedActivity = buildJsonObject {
+                        put("id", activitat.id)
+                        put("nom", activitat.nom)
+                        put("descripcio", activitat.descripcio)
+                        put("ubicacio", buildJsonObject {
+                            put("latitud", activitat.ubicacio.latitud)
+                            put("longitud", activitat.ubicacio.longitud)
+                        })
+                        put("dataInici", activitat.dataInici.toString())
+                        put("dataFi", activitat.dataFi.toString())
+                        put("creador", activitat.creador)
+                        put("participants", JsonArray(participants.map { JsonPrimitive(it) }))
+
+                        // Add ratings as array
+                        put("valoracions", JsonArray(ratings.map { rating ->
+                            buildJsonObject {
+                                put("username", rating.username)
+                                put("valoracion", rating.valoracion)
+                                put("comentario", rating.comentario?.let { JsonPrimitive(it) } ?: JsonNull)
+                                put("fechaValoracion", rating.fechaValoracion.toString())
+                            }
+                        }))
+
+                        // Add air quality information
+                        put("qualityAire", airQuality)
+                    }
+
+                    enhancedActivities.add(enhancedActivity)
+                }
+
+                // Return the enhanced activity list
+                call.respond(HttpStatusCode.OK, enhancedActivities)
+            } catch (e: Exception) {
+                println("Error getting activities for today: ${e.message}")
+                call.respond(HttpStatusCode.InternalServerError, "Error getting activities for today: ${e.message}")
+            }
+        }
     }
 }

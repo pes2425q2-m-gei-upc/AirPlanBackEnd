@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.sql.Connection
 
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UsuarioRepositoryTest {
 
