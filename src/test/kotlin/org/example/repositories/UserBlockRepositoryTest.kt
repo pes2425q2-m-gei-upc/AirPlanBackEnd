@@ -17,6 +17,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.BeforeAll
 import java.sql.Connection
+import org.junit.jupiter.api.AfterEach
+import org.example.database.ActivitatTable
+
 
 class UserBlockRepositoryTest {
 
@@ -39,7 +42,7 @@ class UserBlockRepositoryTest {
     @BeforeEach
     fun clearAndSetupDatabase() {
         transaction {
-            SchemaUtils.drop(UserBlockTable, UsuarioTable)
+            SchemaUtils.drop(UserBlockTable, UsuarioTable, ActivitatTable)
             SchemaUtils.create(UsuarioTable, UserBlockTable)
 
             // Insert mock users
@@ -55,6 +58,13 @@ class UserBlockRepositoryTest {
                 it[email] = "user2@example.com"
                 it[idioma] = "en"
             }
+        }
+    }
+
+    @AfterEach
+    fun tearDown() {
+        transaction {
+            SchemaUtils.drop(UsuarioTable, UserBlockTable)
         }
     }
 

@@ -51,7 +51,6 @@ class MissatgeRepositoryTest {
     fun tearDown() {
         transaction(database) {
             SchemaUtils.drop(MissatgesTable, UsuarioTable)
-            SchemaUtils.create(MissatgesTable, UsuarioTable)
         }
     }
 
