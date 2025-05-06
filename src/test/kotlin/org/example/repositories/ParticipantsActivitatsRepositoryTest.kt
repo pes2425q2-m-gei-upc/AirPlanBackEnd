@@ -31,7 +31,6 @@ class ParticipantsActivitatsRepositoryTest {
     @BeforeEach
     fun cleanDatabase() {
         transaction (database) {
-            SchemaUtils.drop(ParticipantsActivitatsTable, ActivitatTable, UsuarioTable)
             SchemaUtils.create(ActivitatTable, ParticipantsActivitatsTable, UsuarioTable)
         }
     }

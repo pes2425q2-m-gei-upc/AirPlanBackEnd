@@ -36,8 +36,9 @@ fun Route.generalRoutes() {
         }
     }
 
-    route ("api/airquality") {
+    route ("/api/airquality") {
         get {
+            print("Obtenint la qualitat de l'aire")
             val data = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString().substring(0,10)
 
             val endpoint = "https://analisi.transparenciacatalunya.cat/resource/tasf-thgu.json?data=${data}"
