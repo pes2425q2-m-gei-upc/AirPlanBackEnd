@@ -9,7 +9,7 @@ import org.example.database.UsuarioTable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class MissatgeRepository {
-    fun sendMessage(message: Missatge): Boolean {
+    suspend fun sendMessage(message: Missatge, notify: suspend (Missatge) -> Unit): Boolean {
         return try {
             transaction {
                 MissatgesTable.insert {
@@ -20,6 +20,8 @@ class MissatgeRepository {
                     it[isEdited] = message.isEdited
                 }
             }
+            notify(message)
+
             true
         } catch (e: Exception) {
             false

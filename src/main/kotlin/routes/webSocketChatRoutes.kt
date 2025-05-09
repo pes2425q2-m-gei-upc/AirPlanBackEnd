@@ -10,15 +10,16 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.decodeFromString
 import org.example.models.Missatge
 import org.example.repositories.MissatgeRepository
 import org.example.repositories.UserBlockRepository
 import org.example.controllers.UserBlockController
 import java.util.Collections
+import org.example.websocket.WebSocketManager
 
 // Definir la colección de sesiones WebSocket de los usuarios conectados
 val connectedUsers = Collections.synchronizedSet(mutableSetOf<WebSocketSession>())
+val webSocketManager = WebSocketManager.instance
 
 fun Route.websocketChatRoutes() {
     val repo = MissatgeRepository()
@@ -231,7 +232,16 @@ private suspend fun handleRegularMessage(
     }
 
     // Guarda el mensaje en la base de datos
-    repo.sendMessage(missatge)
+    repo.sendMessage(missatge) { msg ->
+        webSocketManager.notifyRealTimeEvent(
+            username = msg.usernameReceiver,
+            message = "Tienes un nuevo mensaje de ${msg.usernameSender}",
+            clientId = null,
+            type = "MESSAGE"
+        )
+    }
+
+    println("Enviado el mensaje: ${missatge.missatge}")
 
     // Enviar el mensaje a los usuarios conectados en formato JSON
     val messageJson = Json.encodeToString(missatge)

@@ -12,11 +12,6 @@ fun Route.missatgeRoutes() {
 
     route("/chat") {
 
-        // Ruta per enviar un missatge
-        post("/send") {
-            missatgeController.sendMessage(call)
-        }
-
         // Ruta per obtenir la conversa entre dos usuaris
         get("/{user1}/{user2}") {
             missatgeController.getConversation(call)
