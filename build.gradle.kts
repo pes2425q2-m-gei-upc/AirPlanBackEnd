@@ -79,6 +79,7 @@ application {
     mainClass.set("org.example.MainKt")
 }
 
+
 tasks.jar {
     manifest {
         attributes(

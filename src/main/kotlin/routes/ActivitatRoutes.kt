@@ -245,6 +245,18 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.NotFound, "No s'ha trobat el participant.")
             }
         }
+        get ("/participant/{username}") {
+            val username = call.parameters["username"]
+            if (username != null) {
+                val activitats = activitatController.obtenirActivitatsPerParticipant(username)
+                for (activitat in activitats) {
+                    println("${activitat.nom} - ${activitat.descripcio} - ${activitat.ubicacio.latitud} -${activitat.ubicacio.longitud}  - ${activitat.dataInici} - ${activitat.dataFi} - ${activitat.creador}")
+                }
+                call.respond(HttpStatusCode.OK, activitats)
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Username is required")
+            }
+        }
 
         get("/hoy") {
             try {

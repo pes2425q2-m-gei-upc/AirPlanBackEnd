@@ -1,6 +1,9 @@
 package org.example.repositories
 
+import org.example.database.ActivitatTable
 import org.example.database.ParticipantsActivitatsTable
+import org.example.models.Activitat
+import org.example.models.Localitzacio
 import org.example.models.ParticipantsActivitats
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -48,5 +51,25 @@ class ParticipantsActivitatsRepository {
         }
     }
 
+    fun obtenirActivitatsPerParticipant(username: String): List<Activitat> {
+        return transaction {
+            (ParticipantsActivitatsTable innerJoin ActivitatTable)
+                .select { ParticipantsActivitatsTable.username_participant eq username }
+                .map { row ->
+                    Activitat(
+                        id = row[ActivitatTable.id_activitat],
+                        nom = row[ActivitatTable.nom],
+                        descripcio = row[ActivitatTable.descripcio],
+                        ubicacio = Localitzacio(
+                            latitud = row[ActivitatTable.latitud],
+                            longitud = row[ActivitatTable.longitud]
+                        ),
+                        dataInici = row[ActivitatTable.dataInici],
+                        dataFi = row[ActivitatTable.dataFi],
+                        creador = row[ActivitatTable.username_creador]
+                    )
+                }
+        }
+    }
 
 }
