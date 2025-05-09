@@ -26,6 +26,7 @@ import org.example.routes.*
 // Eliminada la importación de java.io.File que ya no se utiliza
 import org.example.routes.valoracioRoutes
 import org.example.routes.generalRoutes
+import org.example.utils.NotificationScheduler
 
 
 fun main() {
@@ -60,6 +61,10 @@ fun main() {
             configureWebSockets()
 
             DatabaseFactory.init()
+
+            println("✅✅✅Arrancado el sistema de notificaciones")
+            NotificationScheduler.start()
+
             val usuarioRepository = UsuarioRepository()
             val controladorUsuario = ControladorUsuarios(usuarioRepository)
 
@@ -161,7 +166,6 @@ fun main() {
             }
         }
     }
-
     // 🔹 Arranquem el servidor amb l'entorn configurat
     embeddedServer(Netty, environment).start(wait = true)
 }

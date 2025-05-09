@@ -65,4 +65,13 @@ class NotificationRepository {
             rowCount > 0  // Devuelve true si al menos una fila fue eliminada
         }
     }
+
+    // Eliminar las notificaciones de un usuario
+    fun deleteNotificationsUser(usernameNoti: String): Boolean {
+        return transaction {
+            val rowCount = NotificacionsTable
+                .deleteWhere { username eq usernameNoti }
+            rowCount > 0  // Devuelve true si al menos una fila fue eliminada
+        }
+    }
 }

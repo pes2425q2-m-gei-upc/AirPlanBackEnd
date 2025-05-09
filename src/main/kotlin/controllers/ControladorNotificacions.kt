@@ -20,4 +20,8 @@ class ControladorNotificacions(private val notificationRepository: NotificationR
     fun deleteNotification(notificationId: Int): Boolean {
         return notificationRepository.deleteNotification(notificationId)
     }
+
+    fun deleteNotificationsUser(usernameNoti: String): Boolean {
+        return notificationRepository.deleteNotificationsUser(usernameNoti)
+    }
 }
