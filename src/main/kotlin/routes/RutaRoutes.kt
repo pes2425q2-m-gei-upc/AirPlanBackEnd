@@ -20,6 +20,8 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.*
+import java.util.Properties
+import java.io.FileInputStream
 
 @Serializable
 data class RouteRequest(
@@ -28,8 +30,15 @@ data class RouteRequest(
     val language: String,
 )
 
-val hereApiKey = System.getenv("HERE_API_KEY") ?: throw IllegalStateException("No HERE_API_KEY environment variable")
-val orsApiKey = System.getenv("ORS_API_KEY") ?: throw IllegalStateException("No ORS_API_KEY environment variable")
+private fun loadApiKey(key: String): String {
+    val properties = Properties()
+    val propertiesFile = FileInputStream("secrets.properties")
+    properties.load(propertiesFile)
+    return properties.getProperty(key) ?: throw IllegalStateException("No $key found in secrets.properties")
+}
+
+val hereApiKey = loadApiKey("HERE_API_KEY")
+val orsApiKey = loadApiKey("ORS_API_KEY")
 
 fun Route.rutaRoutes(rutaController: ControladorRuta) {
 
