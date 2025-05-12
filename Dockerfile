@@ -7,8 +7,6 @@ WORKDIR /app
 # Copia l'arxiu JAR generat al contenidor
 COPY build/libs/*.jar app.jar
 
-COPY secrets.properties /app/secrets.properties
-
 # Crear un directorio para los recursos si no existe
 RUN mkdir -p /app/src/main/resources
 

@@ -15,8 +15,6 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.example.controllers.ControladorRuta
-import java.util.Properties
-import java.io.File
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -30,12 +28,8 @@ data class RouteRequest(
     val language: String,
 )
 
-val properties = Properties().apply {
-    load(File("secrets.properties").inputStream())
-}
-
-val hereApiKey = properties.getProperty("HERE_API_KEY")
-val orsApiKey = properties.getProperty("ORS_API_KEY")
+val hereApiKey = System.getenv("HERE_API_KEY") ?: throw IllegalStateException("No HERE_API_KEY environment variable")
+val orsApiKey = System.getenv("ORS_API_KEY") ?: throw IllegalStateException("No ORS_API_KEY environment variable")
 
 fun Route.rutaRoutes(rutaController: ControladorRuta) {
 
