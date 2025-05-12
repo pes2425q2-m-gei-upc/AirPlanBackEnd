@@ -26,6 +26,7 @@ import org.example.routes.*
 // Eliminada la importación de java.io.File que ya no se utiliza
 import org.example.routes.valoracioRoutes
 import org.example.routes.generalRoutes
+import org.example.routes.perspectiveAdminRoutes // Import perspective admin routes
 
 
 fun main() {
@@ -76,10 +77,10 @@ fun main() {
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()
-                userBlockRoutes() // Añadir rutas de bloqueo de usuarios
-                // Eliminada la llamada a uploadImageRoute()
-                webSocketRoutes() // Registrar rutas WebSocket
+                userBlockRoutes() 
+                webSocketRoutes() 
                 generalRoutes()
+                perspectiveAdminRoutes() // Add perspective admin routes
 
                 // Eliminada la llamada a authRoutes()
                 // Eliminada la configuración de ruta estática para archivos de imagen
