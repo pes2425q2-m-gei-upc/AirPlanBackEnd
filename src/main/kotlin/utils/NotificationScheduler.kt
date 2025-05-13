@@ -11,6 +11,7 @@ import org.example.repositories.NotificationRepository
 import org.example.websocket.WebSocketManager
 import java.sql.Timestamp
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 val notifiedActivities = mutableSetOf<Int>()
 val notificationRepository = NotificationRepository()
@@ -30,7 +31,7 @@ object NotificationScheduler {
 
     suspend fun checkAndNotifyUpcomingActivities() {
         withContext(Dispatchers.IO) {
-            val now = LocalDateTime.now()
+            val now = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)
 
             val activitiesToNotify = transaction {
                 val in30Minutes = now.plusMinutes(30)
@@ -72,6 +73,5 @@ object NotificationScheduler {
             }
         }
     }
-
 
 }
