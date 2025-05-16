@@ -19,6 +19,7 @@ import ControladorValoracio
 import ValoracioRepository
 import kotlinx.serialization.json.*
 import org.example.services.AirQualityService
+import org.example.services.PerspectiveService
 
 fun Route.activitatRoutes() {
     val activitatRepository = ActivitatRepository()
@@ -27,6 +28,7 @@ fun Route.activitatRoutes() {
     val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository) // Pass both repositories
     val userBlockRepository = UserBlockRepository() // Añadir repositorio de bloqueos de usuarios
     val valoracioRepository = ValoracioRepository() // Añadir repositorio de valoraciones
+    val perspectiveService = PerspectiveService()
 
     println("Ha arribat a ActivitatRoutes")  // Depuració
     route("/api/activitats") {
@@ -58,6 +60,11 @@ fun Route.activitatRoutes() {
 
                 // Deserialitzar manualment el JSON
                 val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
+                // Filter title and description through PerspectiveService
+                if (perspectiveService.analyzeMessage(activitat.nom) || perspectiveService.analyzeMessage(activitat.descripcio)) {
+                    call.respond(HttpStatusCode.BadRequest, "Títol o descripció bloquejats per ser inapropiats")
+                    return@post
+                }
                 println("Activitat deserialitzada: $activitat")
 
                 val resultado = activitatController.afegirActivitat(
@@ -128,6 +135,11 @@ fun Route.activitatRoutes() {
 
                 // Deserialitzar manualment el JSON
                 val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
+                // Filter title and description through PerspectiveService
+                if (perspectiveService.analyzeMessage(activitat.nom) || perspectiveService.analyzeMessage(activitat.descripcio)) {
+                    call.respond(HttpStatusCode.BadRequest, "Títol o descripció bloquejats per ser inapropiats")
+                    return@put
+                }
                 println("Activitat deserialitzada: $activitat")
 
                 val resultado = activitatController.modificarActivitat(
