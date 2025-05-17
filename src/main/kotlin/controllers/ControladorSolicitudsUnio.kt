@@ -2,6 +2,7 @@ package org.example.controllers
 
 import org.example.models.Activitat
 import repositories.SolicitudRepository
+import org.example.models.SolicitudUnio
 
 class ControladorSolicitudsUnio(private val solicitudRepository: SolicitudRepository) {
 
@@ -19,5 +20,9 @@ class ControladorSolicitudsUnio(private val solicitudRepository: SolicitudReposi
 
     fun activitatJaSolicitada(usernameAnfitrio: String, usernameSolicitant: String, idActivitat: Int): Boolean {
         return solicitudRepository.existeixSolicitud(usernameAnfitrio, usernameSolicitant, idActivitat)
+    }
+
+    fun obtenirSolicitudesPerActivitat(idActivitat: Int): List<SolicitudUnio> {
+        return solicitudRepository.obtenirSolicitudesPerActivitat(idActivitat)
     }
 }

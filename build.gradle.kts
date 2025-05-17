@@ -5,6 +5,13 @@ plugins {
     id("jvm-test-suite") // Add this plugin for test suites support
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17)) // Set the Java
+        version
+    }
+}
+
 group = "org.example"
 version = "1.0"
 
