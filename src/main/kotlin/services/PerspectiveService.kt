@@ -12,6 +12,9 @@ import kotlinx.serialization.Serializable // Ensure this is imported
 import org.example.config.PerspectiveConfig
 import org.example.config.PerspectiveSettingsManager // Import Settings Manager
 import org.example.config.PerspectiveCurrentSettings // Import Settings Data Class
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 @Serializable
 data class AnalyzeCommentRequest(
@@ -53,97 +56,74 @@ class PerspectiveService {
     private val perspectiveApiUrl = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze"
 
     suspend fun analyzeMessage(text: String): Boolean {
-        if (apiKeyFromConfig.isEmpty()) {
-            println("WARN: Perspective API key is empty in secrets.properties. Skipping analysis. Message will be allowed.")
-            return false 
-        }
+        // Delegate to batch analysis to reuse settings and request setup
+        return analyzeMessages(listOf(text)).firstOrNull() ?: false
+    }
 
+    /**
+     * Batch analyze multiple messages efficiently by reusing settings and attributes.
+     */
+    suspend fun analyzeMessages(texts: List<String>): List<Boolean> {
+        if (apiKeyFromConfig.isEmpty()) {
+            println("WARN: Perspective API key is empty. Skipping analysis for all messages.")
+            return List(texts.size) { false }
+        }
         val currentSettings = PerspectiveSettingsManager.getSettings()
         if (!currentSettings.isEnabled) {
-            println("Perspective service is disabled by admin settings. Message will be allowed.")
-            return false 
+            println("INFO: Perspective service disabled. Skipping analysis for all messages.")
+            return List(texts.size) { false }
         }
-
-        val activeAttributes = currentSettings.attributeSettings
-            .filter { it.value.enabled }
-
+        val activeAttributes = currentSettings.attributeSettings.filter { it.value.enabled }
         if (activeAttributes.isEmpty()) {
-            println("No Perspective attributes enabled for analysis in admin settings. Message will be allowed.")
-            return false 
+            println("INFO: No Perspective attributes enabled. Skipping analysis for all messages.")
+            return List(texts.size) { false }
         }
-
+        // Prepare static JSON parts
         val requestedAttributesJson = buildJsonObject {
-            activeAttributes.keys.forEach { attrName ->
-                put(attrName, buildJsonObject {})
-            }
+            activeAttributes.keys.forEach { attrName -> put(attrName, buildJsonObject {}) }
         }
-
-        // Attributes known to be highly sensitive to language specification or have limited support for non-English languages.
         val highlySensitiveAttributes = listOf("PROFANITY", "SEXUALLY_EXPLICIT", "FLIRTATION")
-        val anyHighlySensitiveActive = activeAttributes.keys.any { it in highlySensitiveAttributes }
-
-        val languagesForRequest = if (anyHighlySensitiveActive) {
-            println("INFO: Detected highly sensitive attribute(s) (${activeAttributes.keys.filter { it in highlySensitiveAttributes }.joinToString()}). Analyzing with [en] only for maximum compatibility.")
-            buildJsonArray { add("en") } // Use only "en"
-        } else {
-            println("INFO: No highly sensitive attributes detected. Analyzing with [es, en, ca].")
-            buildJsonArray { add("es"); add("en"); add("ca") } // Default to broader language set
-        }
-
-        val requestBody = buildJsonObject {
-            put("comment", buildJsonObject { put("text", text) })
-            put("languages", languagesForRequest)
-            put("requestedAttributes", requestedAttributesJson)
-            put("doNotStore", currentSettings.doNotStore)
-            put("spanAnnotations", currentSettings.spanAnnotations)
-        }
-
-        try {
-            // Corrected string interpolation for the log message
-            val languagesString = languagesForRequest.joinToString { it.jsonPrimitive.content }
-            println("Sending request to Perspective API. URL: $perspectiveApiUrl, Languages: $languagesString, DoNotStore: ${currentSettings.doNotStore}, SpanAnnotations: ${currentSettings.spanAnnotations}")
-            
-            val response: HttpResponse = client.post(perspectiveApiUrl) {
-                parameter("key", apiKeyFromConfig) 
-                contentType(ContentType.Application.Json)
-                setBody(requestBody.toString()) 
-            }
-
-            val responseBodyText = response.bodyAsText()
-            
-            if (response.status == HttpStatusCode.OK) {
-                val jsonResponse = Json.parseToJsonElement(responseBodyText).jsonObject
-                val attributeScores = jsonResponse["attributeScores"]?.jsonObject
-                    ?: run {
-                        println("WARN: 'attributeScores' field missing in Perspective API response.")
-                        return false 
+        val anyHighly = activeAttributes.keys.any { it in highlySensitiveAttributes }
+        val languagesForRequest = if (anyHighly) buildJsonArray { add("en") } else buildJsonArray { add("es"); add("en"); add("ca") }
+        val languagesString = languagesForRequest.joinToString { it.jsonPrimitive.content }
+        println("Batch analyzing ${texts.size} messages. Languages: $languagesString, DoNotStore: ${currentSettings.doNotStore}, SpanAnnotations: ${currentSettings.spanAnnotations}")
+        return coroutineScope {
+            texts.map { text ->
+                async {
+                    // Build request body per text
+                    val requestBody = buildJsonObject {
+                        put("comment", buildJsonObject { put("text", text) })
+                        put("languages", languagesForRequest)
+                        put("requestedAttributes", requestedAttributesJson)
+                        put("doNotStore", currentSettings.doNotStore)
+                        put("spanAnnotations", currentSettings.spanAnnotations)
                     }
-
-                for ((attrName, attrSetting) in activeAttributes) {
-                    val scoreObject = attributeScores[attrName]?.jsonObject
-                    val summaryScoreObject = scoreObject?.get("summaryScore")?.jsonObject
-                    val scoreValue = summaryScoreObject?.get("value")?.jsonPrimitive?.floatOrNull
-
-                    if (scoreValue != null) {
-                        println("Message attribute '$attrName': Score = $scoreValue, Threshold = ${'$'}{attrSetting.threshold}")
-                        if (scoreValue >= attrSetting.threshold) {
-                            println("FLAGGED: Message is toxic for attribute '$attrName'. Score $scoreValue >= Threshold ${'$'}{attrSetting.threshold}")
-                            return true 
+                    try {
+                        val response: HttpResponse = client.post(perspectiveApiUrl) {
+                            parameter("key", apiKeyFromConfig)
+                            contentType(ContentType.Application.Json)
+                            setBody(requestBody.toString())
                         }
-                    } else {
-                        println("WARN: Could not parse summary score for attribute '$attrName'.")
+                        if (response.status == HttpStatusCode.OK) {
+                            val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                            val attrScores = json["attributeScores"]?.jsonObject ?: return@async false
+                            // Check all returned attributes
+                            attrScores.any { (attrName, scoreEl) ->
+                                val scoreValue = scoreEl.jsonObject["summaryScore"]
+                                    ?.jsonObject?.get("value")?.jsonPrimitive?.floatOrNull
+                                val threshold = currentSettings.attributeSettings[attrName]?.threshold
+                                scoreValue != null && threshold != null && scoreValue >= threshold
+                            }
+                        } else {
+                            println("Error from Perspective API in batch: ${response.status}")
+                            false
+                        }
+                    } catch (e: Exception) {
+                        println("Exception during batch analysis for text '$text': ${e.message}")
+                        false
                     }
                 }
-                println("PASSED: Message is not considered toxic by any active attribute.")
-                return false 
-            } else {
-                println("Error from Perspective API: Status ${'$'}{response.status} - Body: $responseBodyText")
-                return false 
-            }
-        } catch (e: Exception) {
-            println("Exception during Perspective API call for text '$text': ${'$'}{e.message}")
-            e.printStackTrace() 
-            return false 
+            }.awaitAll()
         }
     }
 }
