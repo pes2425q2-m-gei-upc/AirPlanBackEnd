@@ -15,19 +15,33 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.toLocalDateTime
+import org.example.services.PerspectiveService
+import kotlinx.coroutines.runBlocking
 
 class ControladorActivitat(
     private val ActivitatRepository: ActivitatRepository,
     private val ParticipantsActivitatsRepository: ParticipantsActivitatsRepository,
-    private val ActivitatFavoritaRepository: ActivitatFavoritaRepository
+    private val ActivitatFavoritaRepository: ActivitatFavoritaRepository,
+    private val perspectiveService: PerspectiveService = PerspectiveService()
 ) {
+    // Secondary constructor for test compatibility without passing PerspectiveService
+    constructor(
+        ActivitatRepository: ActivitatRepository,
+        ParticipantsActivitatsRepository: ParticipantsActivitatsRepository,
+        ActivitatFavoritaRepository: ActivitatFavoritaRepository
+    ) : this(
+        ActivitatRepository,
+        ParticipantsActivitatsRepository,
+        ActivitatFavoritaRepository,
+        PerspectiveService()
+    )
+
     private val activitats = mutableListOf<Activitat>()
 
-    fun obtenirActivitats(): List<Activitat> {
-        return activitats
-    }
-
     fun afegirActivitat(nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime, creador: String) {
+        // Batch validate title and description via perspective service
+        val results = runBlocking { perspectiveService.analyzeMessages(listOf(nom, descripcio)) }
+        if (results.any { it }) throw IllegalArgumentException("Títol o descripció bloquejats per ser inapropiats")
         val novaActivitat = Activitat(
             id = 0,
             nom = nom,
@@ -66,7 +80,10 @@ class ControladorActivitat(
     }
 
     fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime): Boolean {
-        return ActivitatRepository.modificarActivitat(id,nom, descripcio, ubicacio, dataInici, dataFi)
+        // Batch validate content before modification
+        val results = runBlocking { perspectiveService.analyzeMessages(listOf(nom, descripcio)) }
+        if (results.any { it }) throw IllegalArgumentException("Títol o descripció bloquejats per ser inapropiats")
+        return ActivitatRepository.modificarActivitat(id, nom, descripcio, ubicacio, dataInici, dataFi)
     }
 
     fun eliminarActivitat(id: Int): Boolean {
