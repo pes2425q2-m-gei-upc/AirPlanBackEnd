@@ -36,6 +36,7 @@ class SolicitudRepository {
     }
 
     fun obtenirSolicitudesPerUsuari(usernameSolicitant: String): List<Activitat> {
+        println("🔍 Debug: Obteniendo actividades solicitadas por el usuario: $usernameSolicitant")
         return transaction {
             (SolicitudsTable innerJoin ActivitatTable).select {
                 SolicitudsTable.usernameSolicitant eq usernameSolicitant
@@ -92,6 +93,7 @@ class SolicitudRepository {
     }
 
     fun obtenirSolicitudesPerActivitat(idActivitat: Int): List<SolicitudUnio> {
+        println("🔍 Debug: Obteniendo solicitudes para la actividad con ID: $idActivitat")
         return transaction {
             SolicitudsTable.select {
                 SolicitudsTable.idActivitat eq idActivitat

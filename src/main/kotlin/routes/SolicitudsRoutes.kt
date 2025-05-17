@@ -25,7 +25,7 @@ fun Route.solicitudRoutes() {
         get("/{usernameAnfitrio}/{usernameSolicitant}/{idActivitat}") {
             call.activitatJaSolicitada(solicitudController)
         }
-        get("/{idActivitat}") {
+        get("/{idActivitat}/solicituds") {
             call.obtenirSolicitudsActivitat(solicitudController)
         }
     }
@@ -89,6 +89,8 @@ suspend fun ApplicationCall.activitatJaSolicitada(controller: ControladorSolicit
 }
 
 suspend fun ApplicationCall.obtenirSolicitudsActivitat(controller: ControladorSolicitudsUnio) {
+
+    println("Obteniendo solicitudes para la actividad")
     val idActivitat = parameters["idActivitat"]?.toIntOrNull()
 
     if (idActivitat != null) {

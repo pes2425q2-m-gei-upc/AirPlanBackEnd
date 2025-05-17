@@ -18,6 +18,7 @@ import java.sql.Timestamp
 import ControladorValoracio
 import ValoracioRepository
 import kotlinx.serialization.json.*
+import org.example.models.ParticipantsActivitats
 import org.example.services.AirQualityService
 
 fun Route.activitatRoutes() {
@@ -226,6 +227,22 @@ fun Route.activitatRoutes() {
 
             val participants = activitatController.obtenirParticipantsDeActivitat(activityId)
             call.respond(participants)
+        }
+        //Afegir participant a activitat
+        post("/{activityId}/{username}") {
+            val idActivitat = call.parameters["activityId"]?.toInt()
+            val username = call.parameters["username"]
+
+            if (idActivitat == null || username.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Paràmetres invàlids.")
+                return@post
+            }
+            val afegit = participantsActivitatsRepository.afegirParticipant(ParticipantsActivitats(idActivitat, username))
+            if (afegit) {
+                call.respond(HttpStatusCode.Created, "Participant afegit correctament.")
+            } else {
+                call.respond(HttpStatusCode.Conflict, "No s'ha pogut afegir el participant.")
+            }
         }
 
         //Borra usuario de actividad
