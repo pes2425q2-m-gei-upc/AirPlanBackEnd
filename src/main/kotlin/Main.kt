@@ -76,7 +76,8 @@ fun main() {
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()
-                userBlockRoutes() // Añadir rutas de bloqueo de usuarios
+                userBlockRoutes()
+                reportRoutes()
                 // Eliminada la llamada a uploadImageRoute()
                 webSocketRoutes() // Registrar rutas WebSocket
                 generalRoutes()
