@@ -18,6 +18,7 @@ import java.sql.Timestamp
 import ControladorValoracio
 import ValoracioRepository
 import kotlinx.serialization.json.*
+import org.example.models.Localitzacio
 import org.example.services.AirQualityService
 
 fun Route.activitatRoutes() {
@@ -120,6 +121,7 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "ID inválido")
             }
         }
+
         put("/editar/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
             if (id != null) {
@@ -304,6 +306,26 @@ fun Route.activitatRoutes() {
             } catch (e: Exception) {
                 println("Error getting activities for today: ${e.message}")
                 call.respond(HttpStatusCode.InternalServerError, "Error getting activities for today: ${e.message}")
+            }
+        }
+
+        get("/recomanades") {
+            val latitud = call.request.queryParameters["latitud"]!!.toFloat()
+            val longitud = call.request.queryParameters["longitud"]!!.toFloat()
+            
+            try {
+                val activitatsRecomanades = activitatController.obtenirActivitatsRecomanades(Localitzacio(latitud, longitud))
+                call.respond(HttpStatusCode.OK, activitatsRecomanades)
+            } catch (e: Exception) {
+                when (e) {
+                    is NumberFormatException -> {
+                        call.respond(HttpStatusCode.BadRequest, e.message.toString())
+                    }
+                    is NoSuchElementException -> {
+                        call.respond(HttpStatusCode.ServiceUnavailable, e.message.toString())
+                    }
+                    else -> call.respond(HttpStatusCode.InternalServerError, "Error en processar la petició")
+                }
             }
         }
     }
