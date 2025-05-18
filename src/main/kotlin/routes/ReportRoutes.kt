@@ -7,7 +7,7 @@ import org.example.controllers.ControladorReport
 fun Route.reportRoutes() {
     val reportController = ControladorReport()
 
-    route("/api/reports") {
+    route("/api/report") {
         // Create a report
         post {
             reportController.createReport(call)
