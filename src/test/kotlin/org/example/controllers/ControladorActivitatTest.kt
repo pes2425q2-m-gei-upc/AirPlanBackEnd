@@ -194,6 +194,7 @@ class ControladorActivitatTest {
         assertEquals(1, activitats.size)
         assertEquals("Excursió", activitats[0].nom)
         verify(participantsActivitatsRepository).obtenirActivitatsPerParticipant("user1")
+    }
 
 
     @Test
