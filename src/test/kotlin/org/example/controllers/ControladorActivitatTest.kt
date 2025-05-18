@@ -164,4 +164,25 @@ class ControladorActivitatTest {
         assertEquals("Excursió", activitats[0].nom)
         verify(activitatRepository).obtenirActivitatsExcluintUsuaris(listOf("blockedUser"))
     }
+    @Test
+    @DisplayName("Test obtenir activitats per participant")
+    fun testObtenirActivitatsPerParticipant() {
+        val activitat = Activitat(
+            id = 1,
+            nom = "Excursió",
+            descripcio = "Excursió a la muntanya",
+            ubicacio = Localitzacio(41.40338f, 2.17403f),
+            dataInici = LocalDateTime(2024, 5, 1, 10, 0),
+            dataFi = LocalDateTime(2024, 5, 1, 18, 0),
+            creador = "anfitrioUser"
+        )
+
+        `when`(participantsActivitatsRepository.obtenirActivitatsPerParticipant("user1")).thenReturn(listOf(activitat))
+
+        val activitats = controladorActivitat.obtenirActivitatsPerParticipant("user1")
+
+        assertEquals(1, activitats.size)
+        assertEquals("Excursió", activitats[0].nom)
+        verify(participantsActivitatsRepository).obtenirActivitatsPerParticipant("user1")
+    }
 }
