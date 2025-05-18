@@ -18,6 +18,7 @@ import org.example.routes.activitatRoutes
 import org.example.routes.rutaRoutes
 import org.example.routes.usuarioRoutes
 import org.example.routes.invitacioRoutes
+import org.example.routes.notaRoutes
 
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
@@ -70,6 +71,7 @@ fun main() {
             // Configuració de rutes
             routing {
                 usuarioRoutes()
+                notaRoutes()
                 activitatRoutes()
                 rutaRoutes(ControladorRuta(RutaRepository()))
                 solicitudRoutes()

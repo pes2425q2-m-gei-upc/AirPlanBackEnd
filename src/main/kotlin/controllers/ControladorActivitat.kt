@@ -158,4 +158,8 @@ class ControladorActivitat(
         val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         return ActivitatRepository.obtenirActivitatsStartingToday(today)
     }
+
+    fun obtenirActivitatsPerParticipant(username: String): List<Activitat> {
+        return ParticipantsActivitatsRepository.obtenirActivitatsPerParticipant(username)
+    }
 }
