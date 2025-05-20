@@ -13,6 +13,13 @@ repositories {
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(20)) // Set the Java
+        version
+    }
+}
+
 dependencies {
     // Ktor dependencies
     implementation("io.ktor:ktor-server-core:2.3.8")
