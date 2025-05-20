@@ -79,8 +79,9 @@ fun main() {
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()
-                userBlockRoutes() 
-                webSocketRoutes() 
+                userBlockRoutes()
+                reportRoutes()
+                webSocketRoutes()
                 generalRoutes()
                 perspectiveAdminRoutes() // Add perspective admin routes
 
