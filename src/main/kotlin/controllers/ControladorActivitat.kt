@@ -17,6 +17,10 @@ import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.toLocalDateTime
 import org.example.services.PerspectiveService
 import kotlinx.coroutines.runBlocking
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class ControladorActivitat(
     private val ActivitatRepository: ActivitatRepository,
@@ -161,5 +165,36 @@ class ControladorActivitat(
 
     fun obtenirActivitatsPerParticipant(username: String): List<Activitat> {
         return ParticipantsActivitatsRepository.obtenirActivitatsPerParticipant(username)
+    }
+
+    fun obtenirActivitatsRecomanades(localitzacio: Localitzacio): List<Activitat> {
+        val activitats = ActivitatRepository.obtenirActivitats()
+        if (activitats.isEmpty()) {
+            throw IllegalStateException("No hi han activitats al sistema.")
+        }
+
+        // Helper to calculate distance in km using Haversine formula
+        fun distanceKm(loc1: Localitzacio, loc2: Localitzacio): Double {
+            val R = 6371.0 // Earth radius in km
+            val dLat = Math.toRadians((loc2.latitud - loc1.latitud).toDouble())
+            val dLon = Math.toRadians((loc2.longitud - loc1.longitud).toDouble())
+            val a = sin(dLat / 2) * sin(dLat / 2) +
+                    cos(Math.toRadians(loc1.latitud.toDouble())) * cos(Math.toRadians(loc2.latitud.toDouble())) *
+                    sin(dLon / 2) * sin(dLon / 2)
+            val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            return R * c
+        }
+
+        // Find the closest activity
+        val closest = activitats.minByOrNull { distanceKm(localitzacio, it.ubicacio) }
+            ?: throw IllegalStateException("No hi han activitats al sistema.")
+
+        val minDistance = distanceKm(localitzacio, closest.ubicacio)
+        if (minDistance > 50.0) {
+            throw NoSuchElementException("Les activitats més properes es troben a més de 50 km.")
+        }
+
+        val searchRadius = 5.0 + minDistance
+        return activitats.filter { distanceKm(localitzacio, it.ubicacio) <= searchRadius }
     }
 }
