@@ -34,6 +34,8 @@ class ControladorReport(private val reportRepository: ReportRepository = ReportR
     }
 
     suspend fun deleteReport(call: ApplicationCall) {
+        println("Deleting report con los siguientes datos:")
+        println("${call.request.queryParameters}")
         try {
             val request = call.receive<ReportRequest>()
             val success = reportRepository.deleteReport(request.reporterUsername, request.reportedUsername)
@@ -45,6 +47,15 @@ class ControladorReport(private val reportRepository: ReportRepository = ReportR
             }
         } catch (e: Exception) {
             call.respond(HttpStatusCode.BadRequest, "Invalid delete request: ${e.message}")
+        }
+    }
+
+    suspend fun getReports(call: ApplicationCall) {
+        try {
+            val reports = reportRepository.getAllReports()
+            call.respond(HttpStatusCode.OK, reports)
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.InternalServerError, "Failed to retrieve reports: ${e.message}")
         }
     }
 }

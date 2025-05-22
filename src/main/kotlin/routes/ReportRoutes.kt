@@ -17,5 +17,9 @@ fun Route.reportRoutes() {
         delete {
             reportController.deleteReport(call)
         }
+
+        get {
+            reportController.getReports(call)
+        }
     }
 }
