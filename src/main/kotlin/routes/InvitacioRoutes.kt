@@ -13,7 +13,7 @@ import org.example.repositories.UsuarioRepository
 import org.example.websocket.WebSocketManager
 
 fun Route.invitacioRoutes() {
-    val controladorInvitacions = ControladorInvitacions(ParticipantsActivitatsRepository(), InvitacioRepository(), UsuarioRepository(), WebSocketManager())
+    val controladorInvitacions = ControladorInvitacions(ParticipantsActivitatsRepository(), InvitacioRepository(), UsuarioRepository(), WebSocketManager.instance)
     val controladorUsuarios = ControladorUsuarios(UsuarioRepository())
 
     route("/api/invitacions") {
