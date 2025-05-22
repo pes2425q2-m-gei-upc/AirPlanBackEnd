@@ -55,4 +55,20 @@ class NotaRepository {
             } > 0
         }
     }
+
+    fun obtenirNotaPerId(id: Int): Nota? {
+        return transaction {
+            NotesTable.select { NotesTable.id eq id }
+                .map { row ->
+                    Nota(
+                        id = row[NotesTable.id],
+                        username = row[NotesTable.username],
+                        fechaCreacion = row[NotesTable.fechaCreacion],
+                        horaRecordatorio = row[NotesTable.horaRecordatorio],
+                        comentario = row[NotesTable.comentario]
+                    )
+                }
+                .singleOrNull()
+        }
+    }
 }

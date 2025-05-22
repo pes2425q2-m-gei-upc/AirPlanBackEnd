@@ -82,5 +82,25 @@ fun Route.notaRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
             }
         }
+        // Get note by ID
+        get("/id/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull()
+
+            if (id == null) {
+                call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID vàlid")
+                return@get
+            }
+
+            try {
+                val nota = controladorNotes.obtenirNotaPerId(id)
+                if (nota != null) {
+                    call.respond(HttpStatusCode.OK, nota)
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "No s'ha trobat la nota amb ID: $id")
+                }
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, "Error al obtenir la nota: ${e.message}")
+            }
+        }
     }
 }
