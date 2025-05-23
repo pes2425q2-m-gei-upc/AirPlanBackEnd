@@ -7,65 +7,96 @@ import io.ktor.http.*
 import org.example.controllers.ControladorSolicitudsUnio
 import repositories.SolicitudRepository
 
+const val PARAMETROS_INVALIDOS = "Parámetros inválidos"
+
 fun Route.solicitudRoutes() {
     val solicitudController = ControladorSolicitudsUnio(SolicitudRepository())
 
     route("/api/solicituds") {
-
         post("/{usernameAnfitrio}/{usernameSolicitant}/{idActivitat}") {
-            val usernameAnfitrio = call.parameters["usernameAnfitrio"]
-            val usernameSolicitant = call.parameters["usernameSolicitant"]
-            val idActivitat = call.parameters["idActivitat"]?.toIntOrNull()
-
-            if (usernameAnfitrio != null && usernameSolicitant != null && idActivitat != null) {
-                val result = solicitudController.enviarSolicitud(usernameAnfitrio, usernameSolicitant, idActivitat)
-                if (result) {
-                    call.respond(HttpStatusCode.Created, "Solicitud enviada correctamente")
-                } else {
-                    call.respond(HttpStatusCode.Conflict, "Error al enviar la solicitud")
-                }
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Parámetros inválidos")
-            }
+            call.enviarSolicitud(solicitudController)
         }
-
         delete("/{usernameSolicitant}/{idActivitat}") {
-            val usernameSolicitant = call.parameters["usernameSolicitant"]
-            val idActivitat = call.parameters["idActivitat"]?.toIntOrNull()
-
-            if (usernameSolicitant != null && idActivitat != null) {
-                val result = solicitudController.eliminarSolicitud(usernameSolicitant, idActivitat)
-                if (result) {
-                    call.respond(HttpStatusCode.OK, "Solicitud eliminada correctamente")
-                } else {
-                    call.respond(HttpStatusCode.NotFound, "Solicitud no encontrada")
-                }
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Parámetros inválidos")
-            }
+            call.eliminarSolicitud(solicitudController)
         }
-
         get("/{username}") {
-            val username = call.parameters["username"]
-
-            if (username != null) {
-                val solicitudes = solicitudController.obtenirSolicitudesPerUsuari(username)
-                call.respond(HttpStatusCode.OK, solicitudes)
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Username no proporcionado")
-            }
+            call.obtenirSolicitudsUsuari(solicitudController)
         }
-        get ("/{usernameAnfitrio}/{usernameSolicitant}/{idActivitat}") {
-            val usernameAnfitrio = call.parameters["usernameAnfitrio"]
-            val usernameSolicitant = call.parameters["usernameSolicitant"]
-            val idActivitat = call.parameters["idActivitat"]?.toIntOrNull()
-
-            if (usernameAnfitrio != null && usernameSolicitant != null && idActivitat != null) {
-                val result = solicitudController.activitatJaSolicitada(usernameAnfitrio, usernameSolicitant, idActivitat)
-                call.respond(HttpStatusCode.OK, mapOf("result" to result))
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Parámetros inválidos")
-            }
+        get("/{usernameAnfitrio}/{usernameSolicitant}/{idActivitat}") {
+            call.activitatJaSolicitada(solicitudController)
         }
+        get("/{idActivitat}/solicituds") {
+            call.obtenirSolicitudsActivitat(solicitudController)
+        }
+    }
+}
+
+suspend fun ApplicationCall.enviarSolicitud(controller: ControladorSolicitudsUnio) {
+    val usernameAnfitrio = parameters["usernameAnfitrio"]
+    val usernameSolicitant = parameters["usernameSolicitant"]
+    val idActivitat = parameters["idActivitat"]?.toIntOrNull()
+
+    if (usernameAnfitrio != null && usernameSolicitant != null && idActivitat != null) {
+        val result = controller.enviarSolicitud(usernameAnfitrio, usernameSolicitant, idActivitat)
+        if (result) {
+            respond(HttpStatusCode.Created, "Solicitud enviada correctamente")
+        } else {
+            respond(HttpStatusCode.Conflict, "Error al enviar la solicitud")
+        }
+    } else {
+        respond(HttpStatusCode.BadRequest, PARAMETROS_INVALIDOS)
+    }
+}
+
+suspend fun ApplicationCall.eliminarSolicitud(controller: ControladorSolicitudsUnio) {
+    val usernameSolicitant = parameters["usernameSolicitant"]
+    val idActivitat = parameters["idActivitat"]?.toIntOrNull()
+
+    if (usernameSolicitant != null && idActivitat != null) {
+        val result = controller.eliminarSolicitud(usernameSolicitant, idActivitat)
+        if (result) {
+            respond(HttpStatusCode.OK, "Solicitud eliminada correctamente")
+        } else {
+            respond(HttpStatusCode.NotFound, "Solicitud no encontrada")
+        }
+    } else {
+        respond(HttpStatusCode.BadRequest, PARAMETROS_INVALIDOS)
+    }
+}
+
+suspend fun ApplicationCall.obtenirSolicitudsUsuari(controller: ControladorSolicitudsUnio) {
+    val username = parameters["username"]
+
+    if (username != null) {
+        val solicitudes = controller.obtenirSolicitudesPerUsuari(username)
+        respond(HttpStatusCode.OK, solicitudes)
+    } else {
+        respond(HttpStatusCode.BadRequest, "Username no proporcionado")
+    }
+}
+
+suspend fun ApplicationCall.activitatJaSolicitada(controller: ControladorSolicitudsUnio) {
+    val usernameAnfitrio = parameters["usernameAnfitrio"]
+    val usernameSolicitant = parameters["usernameSolicitant"]
+    val idActivitat = parameters["idActivitat"]?.toIntOrNull()
+
+    if (usernameAnfitrio != null && usernameSolicitant != null && idActivitat != null) {
+        val result = controller.activitatJaSolicitada(usernameAnfitrio, usernameSolicitant, idActivitat)
+        respond(HttpStatusCode.OK, mapOf("result" to result))
+    } else {
+        respond(HttpStatusCode.BadRequest, PARAMETROS_INVALIDOS)
+    }
+}
+
+suspend fun ApplicationCall.obtenirSolicitudsActivitat(controller: ControladorSolicitudsUnio) {
+
+    println("Obteniendo solicitudes para la actividad")
+    val idActivitat = parameters["idActivitat"]?.toIntOrNull()
+
+    if (idActivitat != null) {
+        val solicitudes = controller.obtenirSolicitudesPerActivitat(idActivitat)
+        respond(HttpStatusCode.OK, solicitudes)
+    } else {
+        respond(HttpStatusCode.BadRequest, "ID de actividad no proporcionado")
     }
 }
