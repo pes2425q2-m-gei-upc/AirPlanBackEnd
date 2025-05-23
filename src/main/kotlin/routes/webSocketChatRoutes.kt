@@ -275,8 +275,6 @@ private suspend fun handleRegularMessage(
 
     println("Enviado el mensaje: ${missatgeObj.missatge}")
 
-    // Guarda el mensaje en la base de datos
-    repo.sendMessage(missatgeObj)
     val messageJson = Json.encodeToString(missatgeObj)
     //arreglar session para que solo sean 2 personas quien los reciban
     chatSessions[chatRoomId]?.forEach { session ->
