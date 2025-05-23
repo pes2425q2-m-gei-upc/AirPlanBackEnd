@@ -19,6 +19,7 @@ import org.example.routes.rutaRoutes
 import org.example.routes.usuarioRoutes
 import org.example.routes.invitacioRoutes
 import org.example.routes.notaRoutes
+import org.example.routes.trofeuRoutes
 
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
@@ -81,6 +82,7 @@ fun main() {
                 valoracioRoutes()
                 userBlockRoutes()
                 reportRoutes()
+                trofeuRoutes()
                 webSocketRoutes()
                 generalRoutes()
                 perspectiveAdminRoutes() // Add perspective admin routes
