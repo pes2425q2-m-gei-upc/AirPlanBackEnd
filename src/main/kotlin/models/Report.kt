@@ -9,5 +9,5 @@ data class Report(
     val reporterUsername: String,
     val reportedUsername: String,
     val reason: String,
-    @Contextual val timestamp: LocalDateTime
+    val timestamp: String
 )
