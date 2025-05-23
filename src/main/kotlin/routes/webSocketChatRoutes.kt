@@ -10,15 +10,18 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.decodeFromString
 import org.example.models.Missatge
 import org.example.repositories.MissatgeRepository
 import org.example.repositories.UserBlockRepository
 import org.example.controllers.UserBlockController
 import org.example.services.PerspectiveService
 import java.util.Collections
+import org.example.websocket.WebSocketManager
 import java.util.concurrent.ConcurrentHashMap // Added import
 
+// Definir la colección de sesiones WebSocket de los usuarios conectados
+val connectedUsers = Collections.synchronizedSet(mutableSetOf<WebSocketSession>())
+val webSocketManager = WebSocketManager.instance
 // Store sessions per chat room
 val chatSessions = ConcurrentHashMap<String, MutableSet<WebSocketSession>>()
 
@@ -260,18 +263,27 @@ private suspend fun handleRegularMessage(
         return
     }
 
-    repo.sendMessage(missatgeObj)
+    // Guarda el mensaje en la base de datos
+    repo.sendMessage(missatgeObj) { msg ->
+        webSocketManager.notifyRealTimeEvent(
+            username = msg.usernameReceiver,
+            message = "Tienes un nuevo mensaje de ${msg.usernameSender}",
+            clientId = null,
+            type = "MESSAGE"
+        )
+    }
+
+    println("Enviado el mensaje: ${missatgeObj.missatge}")
+
     val messageJson = Json.encodeToString(missatgeObj)
-    
-    // Send to all users in the specific chat room (including sender for confirmation, or exclude sender if frontend handles it)
-    // Current logic sends to everyone in the room. If sender should not receive their own message back, add `if (session != currentSession)`
+    //arreglar session para que solo sean 2 personas quien los reciban
     chatSessions[chatRoomId]?.forEach { session ->
         // if (session != currentSession) { // Uncomment if sender should not receive their own message
-            try {
-                session.send(Frame.Text(messageJson))
-            } catch (e: Exception) {
-                println("Error al enviar mensaje a sesión en $chatRoomId: ${e.message}")
-            }
+        try {
+            session.send(Frame.Text(messageJson))
+        } catch (e: Exception) {
+            println("Error al enviar mensaje a sesión en $chatRoomId: ${e.message}")
+        }
         // }
     }
 }
