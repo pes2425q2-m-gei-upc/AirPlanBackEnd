@@ -18,13 +18,17 @@ import java.sql.Timestamp
 import ControladorValoracio
 import ValoracioRepository
 import kotlinx.serialization.json.*
+import org.example.models.ParticipantsActivitats
+import org.example.models.Localitzacio
 import org.example.services.AirQualityService
+import org.example.services.PerspectiveService
 
 fun Route.activitatRoutes() {
     val activitatRepository = ActivitatRepository()
     val activitatFavoritaRepository = ActivitatFavoritaRepository() // Create an instance of ActivitatFavoritaRepository
     val participantsActivitatsRepository = ParticipantsActivitatsRepository()
-    val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository) // Pass both repositories
+    val perspectiveService = PerspectiveService()
+    val activitatController = ControladorActivitat(activitatRepository, participantsActivitatsRepository, activitatFavoritaRepository, perspectiveService) // Pass repositories and service
     val userBlockRepository = UserBlockRepository() // Añadir repositorio de bloqueos de usuarios
     val valoracioRepository = ValoracioRepository() // Añadir repositorio de valoraciones
 
@@ -55,12 +59,8 @@ fun Route.activitatRoutes() {
             try {
                 val receivedText = call.receiveText()
                 println("Dades rebudes: $receivedText")
-
-                // Deserialitzar manualment el JSON
                 val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
-                println("Activitat deserialitzada: $activitat")
-
-                val resultado = activitatController.afegirActivitat(
+                activitatController.afegirActivitat(
                     nom = activitat.nom,
                     descripcio = activitat.descripcio,
                     ubicacio = activitat.ubicacio,
@@ -68,12 +68,9 @@ fun Route.activitatRoutes() {
                     dataFi = activitat.dataFi,
                     creador = activitat.creador
                 )
-
-                if (resultado != null) {
-                    call.respond(HttpStatusCode.Created, "Activitat creada correctament")
-                } else {
-                    call.respond(HttpStatusCode.Conflict, "L'activitat ja existeix")
-                }
+                call.respond(HttpStatusCode.Created, "Activitat creada correctament")
+            } catch (e: IllegalArgumentException) {
+                call.respond(HttpStatusCode.BadRequest, e.message ?: "Contingut inapropiat")
             } catch (e: Exception) {
                 println("Error: ${e.message}")
                 call.respond(HttpStatusCode.BadRequest, "Error en processar la petició")
@@ -120,29 +117,29 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "ID inválido")
             }
         }
+
         put("/editar/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
             if (id != null) {
-                val receivedText = call.receiveText()
-                println("Dades rebudes: $receivedText")
-
-                // Deserialitzar manualment el JSON
-                val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
-                println("Activitat deserialitzada: $activitat")
-
-                val resultado = activitatController.modificarActivitat(
-                    id = id,
-                    nom = activitat.nom,
-                    descripcio = activitat.descripcio,
-                    ubicacio = activitat.ubicacio,
-                    dataInici = activitat.dataInici,
-                    dataFi = activitat.dataFi
-                )
-
-                if (resultado) {
-                    call.respond(HttpStatusCode.OK, "Activitat modificada correctament")
-                } else {
-                    call.respond(HttpStatusCode.NotFound, "L'activitat no existeix")
+                try {
+                    val receivedText = call.receiveText()
+                    println("Dades rebudes: $receivedText")
+                    val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
+                    val modified = activitatController.modificarActivitat(
+                        id = id,
+                        nom = activitat.nom,
+                        descripcio = activitat.descripcio,
+                        ubicacio = activitat.ubicacio,
+                        dataInici = activitat.dataInici,
+                        dataFi = activitat.dataFi
+                    )
+                    if (modified) call.respond(HttpStatusCode.OK, "Activitat modificada correctament")
+                    else call.respond(HttpStatusCode.NotFound, "L'activitat no existeix")
+                } catch (e: IllegalArgumentException) {
+                    call.respond(HttpStatusCode.BadRequest, e.message ?: "Contingut inapropiat")
+                } catch (e: Exception) {
+                    println("Error: ${e.message}")
+                    call.respond(HttpStatusCode.BadRequest, "Error en processar la petició")
                 }
             } else {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
@@ -227,6 +224,22 @@ fun Route.activitatRoutes() {
             val participants = activitatController.obtenirParticipantsDeActivitat(activityId)
             call.respond(participants)
         }
+        //Afegir participant a activitat
+        post("/{activityId}/{username}") {
+            val idActivitat = call.parameters["activityId"]?.toInt()
+            val username = call.parameters["username"]
+
+            if (idActivitat == null || username.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Paràmetres invàlids.")
+                return@post
+            }
+            val afegit = participantsActivitatsRepository.afegirParticipant(ParticipantsActivitats(idActivitat, username))
+            if (afegit) {
+                call.respond(HttpStatusCode.Created, "Participant afegit correctament.")
+            } else {
+                call.respond(HttpStatusCode.Conflict, "No s'ha pogut afegir el participant.")
+            }
+        }
 
         //Borra usuario de actividad
         delete("{id}/participants/{username}") {
@@ -243,6 +256,18 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.OK, "Participant eliminat correctament.")
             } else {
                 call.respond(HttpStatusCode.NotFound, "No s'ha trobat el participant.")
+            }
+        }
+        get ("/participant/{username}") {
+            val username = call.parameters["username"]
+            if (username != null) {
+                val activitats = activitatController.obtenirActivitatsPerParticipant(username)
+                for (activitat in activitats) {
+                    println("${activitat.nom} - ${activitat.descripcio} - ${activitat.ubicacio.latitud} -${activitat.ubicacio.longitud}  - ${activitat.dataInici} - ${activitat.dataFi} - ${activitat.creador}")
+                }
+                call.respond(HttpStatusCode.OK, activitats)
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "Username is required")
             }
         }
 
@@ -304,6 +329,26 @@ fun Route.activitatRoutes() {
             } catch (e: Exception) {
                 println("Error getting activities for today: ${e.message}")
                 call.respond(HttpStatusCode.InternalServerError, "Error getting activities for today: ${e.message}")
+            }
+        }
+
+        get("/recomanades") {
+            val latitud = call.request.queryParameters["latitud"]!!.toFloat()
+            val longitud = call.request.queryParameters["longitud"]!!.toFloat()
+
+            try {
+                val activitatsRecomanades = activitatController.obtenirActivitatsRecomanades(Localitzacio(latitud, longitud))
+                call.respond(HttpStatusCode.OK, activitatsRecomanades)
+            } catch (e: Exception) {
+                when (e) {
+                    is NumberFormatException -> {
+                        call.respond(HttpStatusCode.BadRequest, e.message.toString())
+                    }
+                    is NoSuchElementException -> {
+                        call.respond(HttpStatusCode.ServiceUnavailable, e.message.toString())
+                    }
+                    else -> call.respond(HttpStatusCode.InternalServerError, "Error en processar la petició")
+                }
             }
         }
     }
