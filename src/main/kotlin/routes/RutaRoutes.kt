@@ -15,13 +15,13 @@ import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.example.controllers.ControladorRuta
-import java.util.Properties
-import java.io.File
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.*
+import java.util.Properties
+import java.io.FileInputStream
 
 @Serializable
 data class RouteRequest(
@@ -30,12 +30,15 @@ data class RouteRequest(
     val language: String,
 )
 
-val properties = Properties().apply {
-    load(File("secrets.properties").inputStream())
+private fun loadApiKey(key: String): String {
+    val properties = Properties()
+    val propertiesFile = FileInputStream("secrets.properties")
+    properties.load(propertiesFile)
+    return properties.getProperty(key) ?: throw IllegalStateException("No $key found in secrets.properties")
 }
 
-val hereApiKey = properties.getProperty("HERE_API_KEY")
-val orsApiKey = properties.getProperty("ORS_API_KEY")
+val hereApiKey = loadApiKey("HERE_API_KEY")
+val orsApiKey = loadApiKey("ORS_API_KEY")
 
 fun Route.rutaRoutes(rutaController: ControladorRuta) {
 

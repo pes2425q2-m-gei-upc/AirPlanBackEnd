@@ -18,6 +18,8 @@ import org.example.routes.activitatRoutes
 import org.example.routes.rutaRoutes
 import org.example.routes.usuarioRoutes
 import org.example.routes.invitacioRoutes
+import org.example.routes.notaRoutes
+import org.example.routes.trofeuRoutes
 
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
@@ -26,6 +28,7 @@ import org.example.routes.*
 // Eliminada la importación de java.io.File que ya no se utiliza
 import org.example.routes.valoracioRoutes
 import org.example.routes.generalRoutes
+import org.example.routes.perspectiveAdminRoutes // Import perspective admin routes
 
 
 fun main() {
@@ -69,6 +72,7 @@ fun main() {
             // Configuració de rutes
             routing {
                 usuarioRoutes()
+                notaRoutes()
                 activitatRoutes()
                 rutaRoutes(ControladorRuta(RutaRepository()))
                 solicitudRoutes()
@@ -76,10 +80,12 @@ fun main() {
                 missatgeRoutes()
                 websocketChatRoutes()
                 valoracioRoutes()
-                userBlockRoutes() // Añadir rutas de bloqueo de usuarios
-                // Eliminada la llamada a uploadImageRoute()
-                webSocketRoutes() // Registrar rutas WebSocket
+                userBlockRoutes()
+                reportRoutes()
+                trofeuRoutes()
+                webSocketRoutes()
                 generalRoutes()
+                perspectiveAdminRoutes() // Add perspective admin routes
 
                 // Eliminada la llamada a authRoutes()
                 // Eliminada la configuración de ruta estática para archivos de imagen

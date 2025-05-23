@@ -19,6 +19,7 @@ import org.example.routes.activitatRoutes
 import org.example.database.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Connection
@@ -126,5 +127,67 @@ class ActivitatRoutesTest {
         
         // La respuesta debe ser un array (vacío o con elementos)
         assertTrue(jsonArray is JsonArray, "La respuesta debe ser un array JSON")
+    }
+
+    @Test
+    fun `test get activitats per participant endpoint responds with OK`() = testApplication {
+        // Configure the test application
+        application {
+            install(ContentNegotiation) {
+                json()
+            }
+            routing {
+                activitatRoutes()
+            }
+        }
+
+        // Insert test data
+        transaction(database) {
+            // Insert user
+            UsuarioTable.insert {
+                it[username] = "testUser"
+                it[nom] = "Test User"
+                it[email] = "test@example.com"
+                it[idioma] = "Castellano"
+                it[sesionIniciada] = false
+                it[isAdmin] = false
+            }
+
+            // Insert activity
+            ActivitatTable.insert {
+                it[id_activitat] = 1
+                it[nom] = "Test Activity"
+                it[descripcio] = "Test Description"
+                it[latitud] = 41.40338f
+                it[longitud] = 2.17403f
+                it[dataInici] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0)
+                it[dataFi] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0)
+                it[username_creador] = "testUser"
+            }
+
+            // Make user a participant
+            ParticipantsActivitatsTable.insert {
+                it[id_activitat] = 1
+                it[username_participant] = "testUser"
+            }
+        }
+
+        // Execute request to the endpoint
+        val response = client.get("/api/activitats/participant/testUser")
+
+        // Verify response
+        assertEquals(HttpStatusCode.OK, response.status)
+
+        // Verify response content
+        val responseBody = response.bodyAsText()
+        val jsonArray = Json.decodeFromString<JsonArray>(responseBody)
+
+        // Response should be a JSON array with at least one element
+        assertTrue(jsonArray is JsonArray)
+        assertTrue(jsonArray.size >= 1)
+
+        // Check first activity details
+        val firstActivity = jsonArray[0].jsonObject
+        assertEquals("Test Activity", firstActivity["nom"]?.jsonPrimitive?.content)
     }
 }

@@ -15,19 +15,37 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.toLocalDateTime
+import org.example.services.PerspectiveService
+import kotlinx.coroutines.runBlocking
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class ControladorActivitat(
     private val ActivitatRepository: ActivitatRepository,
     private val ParticipantsActivitatsRepository: ParticipantsActivitatsRepository,
-    private val ActivitatFavoritaRepository: ActivitatFavoritaRepository
+    private val ActivitatFavoritaRepository: ActivitatFavoritaRepository,
+    private val perspectiveService: PerspectiveService = PerspectiveService()
 ) {
+    // Secondary constructor for test compatibility without passing PerspectiveService
+    constructor(
+        ActivitatRepository: ActivitatRepository,
+        ParticipantsActivitatsRepository: ParticipantsActivitatsRepository,
+        ActivitatFavoritaRepository: ActivitatFavoritaRepository
+    ) : this(
+        ActivitatRepository,
+        ParticipantsActivitatsRepository,
+        ActivitatFavoritaRepository,
+        PerspectiveService()
+    )
+
     private val activitats = mutableListOf<Activitat>()
 
-    fun obtenirActivitats(): List<Activitat> {
-        return activitats
-    }
-
     fun afegirActivitat(nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime, creador: String) {
+        // Batch validate title and description via perspective service
+        val results = runBlocking { perspectiveService.analyzeMessages(listOf(nom, descripcio)) }
+        if (results.any { it }) throw IllegalArgumentException("Títol o descripció bloquejats per ser inapropiats")
         val novaActivitat = Activitat(
             id = 0,
             nom = nom,
@@ -66,7 +84,10 @@ class ControladorActivitat(
     }
 
     fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime): Boolean {
-        return ActivitatRepository.modificarActivitat(id,nom, descripcio, ubicacio, dataInici, dataFi)
+        // Batch validate content before modification
+        val results = runBlocking { perspectiveService.analyzeMessages(listOf(nom, descripcio)) }
+        if (results.any { it }) throw IllegalArgumentException("Títol o descripció bloquejats per ser inapropiats")
+        return ActivitatRepository.modificarActivitat(id, nom, descripcio, ubicacio, dataInici, dataFi)
     }
 
     fun eliminarActivitat(id: Int): Boolean {
@@ -140,5 +161,40 @@ class ControladorActivitat(
     fun obtenirActivitatsStartingToday(): List<Activitat> {
         val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         return ActivitatRepository.obtenirActivitatsStartingToday(today)
+    }
+
+    fun obtenirActivitatsPerParticipant(username: String): List<Activitat> {
+        return ParticipantsActivitatsRepository.obtenirActivitatsPerParticipant(username)
+    }
+
+    fun obtenirActivitatsRecomanades(localitzacio: Localitzacio): List<Activitat> {
+        val activitats = ActivitatRepository.obtenirActivitats()
+        if (activitats.isEmpty()) {
+            throw IllegalStateException("No hi han activitats al sistema.")
+        }
+
+        // Helper to calculate distance in km using Haversine formula
+        fun distanceKm(loc1: Localitzacio, loc2: Localitzacio): Double {
+            val R = 6371.0 // Earth radius in km
+            val dLat = Math.toRadians((loc2.latitud - loc1.latitud).toDouble())
+            val dLon = Math.toRadians((loc2.longitud - loc1.longitud).toDouble())
+            val a = sin(dLat / 2) * sin(dLat / 2) +
+                    cos(Math.toRadians(loc1.latitud.toDouble())) * cos(Math.toRadians(loc2.latitud.toDouble())) *
+                    sin(dLon / 2) * sin(dLon / 2)
+            val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            return R * c
+        }
+
+        // Find the closest activity
+        val closest = activitats.minByOrNull { distanceKm(localitzacio, it.ubicacio) }
+            ?: throw IllegalStateException("No hi han activitats al sistema.")
+
+        val minDistance = distanceKm(localitzacio, closest.ubicacio)
+        if (minDistance > 50.0) {
+            throw NoSuchElementException("Les activitats més properes es troben a més de 50 km.")
+        }
+
+        val searchRadius = 5.0 + minDistance
+        return activitats.filter { distanceKm(localitzacio, it.ubicacio) <= searchRadius }
     }
 }

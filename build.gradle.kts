@@ -32,6 +32,8 @@ dependencies {
     implementation("io.ktor:ktor-client-core:2.3.8")
     implementation("io.ktor:ktor-client-cio:2.3.8")
     implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
+    implementation("io.ktor:ktor-client-json:2.3.8") // Added for Ktor client JSON support
+    implementation("io.ktor:ktor-client-serialization:2.3.8") // Added for Ktor client serialization
 
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
@@ -85,6 +87,7 @@ tasks.test {
 application {
     mainClass.set("org.example.MainKt")
 }
+
 
 tasks.jar {
     manifest {
