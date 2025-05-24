@@ -18,7 +18,8 @@ class UsuarioTest {
             email = "test@example.com",
             idioma = Idioma.Catala,
             sesionIniciada = false,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
     }
     

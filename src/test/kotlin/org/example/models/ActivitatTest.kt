@@ -20,7 +20,8 @@ class ActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
     }
 
@@ -46,7 +47,8 @@ class ActivitatTest {
             descripcio = "Excursió a Nova York",
             ubicacio = nuevaUbicacio,
             dataInici = java.sql.Timestamp.valueOf("2024-06-01 09:00:00"),
-            dataFi = java.sql.Timestamp.valueOf("2024-06-01 17:00:00")
+            dataFi = java.sql.Timestamp.valueOf("2024-06-01 17:00:00"),
+            imatge = "nova_imagen.jpg"
         )
 
         assertEquals("Nova Excursió", activitat.nom)
@@ -54,6 +56,7 @@ class ActivitatTest {
         assertEquals(nuevaUbicacio, activitat.ubicacio)
         assertEquals(LocalDateTime(2024, 6, 1, 9, 0), activitat.dataInici)
         assertEquals(LocalDateTime(2024, 6, 1, 17, 0), activitat.dataFi)
+        assertEquals("nova_imagen.jpg", activitat.imatge)
     }
 
     @Test
@@ -77,7 +80,8 @@ class ActivitatTest {
                 "ubicacio": {"latitud": 41.40338, "longitud": 2.17403},
                 "dataInici": "2024-05-01T10:00:00",
                 "dataFi": "2024-05-01T18:00:00",
-                "creador": "anfitrioUser"
+                "creador": "anfitrioUser",
+                "imatge": ""
             }
         """
         val deserializedActivitat = Json.decodeFromString(Activitat.serializer(), json)

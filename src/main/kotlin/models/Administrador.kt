@@ -14,5 +14,6 @@ class Administrador(
     email = email,
     idioma = idioma,
     sesionIniciada = false,
-    isAdmin = true // Siempre true para administradores
+    isAdmin = true, // Siempre true para administradores
+    esExtern = false // Por defecto, no es externo
 )

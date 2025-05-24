@@ -26,6 +26,7 @@ class ActivitatRepository {
                     it[dataFi] = activitat.dataFi
                     it[descripcio] = activitat.descripcio
                     it[username_creador] = activitat.creador
+                    it[imatge] = activitat.imatge
                 } get ActivitatTable.id_activitat // Use `get` to retrieve the generated ID
 
                 println("Generated activity ID: $generatedId") // Debugging
@@ -38,21 +39,26 @@ class ActivitatRepository {
     }
 
     fun obtenirActivitats(): List<Activitat> {
-        return transaction {
-            ActivitatTable.selectAll().map { row ->
-                Activitat(
-                    id = row[ActivitatTable.id_activitat],
-                    nom = row[ActivitatTable.nom],
-                    descripcio = row[ActivitatTable.descripcio],
-                    ubicacio = Localitzacio(
-                        latitud = row[ActivitatTable.latitud],
-                        longitud = row[ActivitatTable.longitud]
-                    ),
-                    dataInici = row[ActivitatTable.dataInici],
-                    dataFi = row[ActivitatTable.dataFi],
-                    creador = row[ActivitatTable.username_creador]
-                )
+        return try {
+            transaction {
+                ActivitatTable.selectAll().map { row ->
+                    Activitat(
+                        id = row[ActivitatTable.id_activitat],
+                        nom = row[ActivitatTable.nom],
+                        descripcio = row[ActivitatTable.descripcio],
+                        ubicacio = Localitzacio(
+                            latitud = row[ActivitatTable.latitud],
+                            longitud = row[ActivitatTable.longitud]
+                        ),
+                        dataInici = row[ActivitatTable.dataInici],
+                        dataFi = row[ActivitatTable.dataFi],
+                        creador = row[ActivitatTable.username_creador],
+                        imatge = row[ActivitatTable.imatge]
+                    )
+                }
             }
+        } catch (e: Exception) {
+            throw Exception("Error while retrieving activities: ${e.message}") // Rethrow
         }
     }
 
@@ -65,6 +71,19 @@ class ActivitatRepository {
             }
         } catch (e: Exception) {
             println("Error al eliminar actividad: ${e.message}")
+            false
+        }
+    }
+
+    fun eliminarActivitatsUsuari(username: String): Boolean {
+        return try {
+            transaction {
+                // Eliminar directamente y verificar filas afectadas
+                val filasEliminadas = ActivitatTable.deleteWhere { ActivitatTable.username_creador eq username }
+                filasEliminadas > 0
+            }
+        } catch (e: Exception) {
+            println("Error al eliminar actividades del usuario: ${e.message}")
             false
         }
     }
@@ -109,7 +128,8 @@ class ActivitatRepository {
                     ),
                     dataInici = row[ActivitatTable.dataInici],
                     dataFi = row[ActivitatTable.dataFi],
-                    creador = row[ActivitatTable.username_creador]
+                    creador = row[ActivitatTable.username_creador],
+                    imatge = row[ActivitatTable.imatge]
                 )
             }.firstOrNull()
         } ?: throw Exception("Activitat no trobada")
@@ -139,7 +159,8 @@ class ActivitatRepository {
                     ),
                     dataInici = row[ActivitatTable.dataInici],
                     dataFi = row[ActivitatTable.dataFi],
-                    creador = row[ActivitatTable.username_creador]
+                    creador = row[ActivitatTable.username_creador],
+                    imatge = row[ActivitatTable.imatge]
                 )
             }
         }
@@ -179,7 +200,8 @@ class ActivitatRepository {
                         ),
                         dataInici = row[ActivitatTable.dataInici],
                         dataFi = row[ActivitatTable.dataFi],
-                        creador = row[ActivitatTable.username_creador]
+                        creador = row[ActivitatTable.username_creador],
+                        imatge = row[ActivitatTable.imatge]
                     )
                 }
         }
@@ -201,7 +223,8 @@ class ActivitatRepository {
                         ),
                         dataInici = row[ActivitatTable.dataInici],
                         dataFi = row[ActivitatTable.dataFi],
-                        creador = row[ActivitatTable.username_creador]
+                        creador = row[ActivitatTable.username_creador],
+                        imatge = row[ActivitatTable.imatge]
                     )
                 }
         }

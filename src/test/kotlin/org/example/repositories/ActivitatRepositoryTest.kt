@@ -56,7 +56,8 @@ class ActivitatRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
 
         val id = repository.afegirActivitat(activitat)
@@ -72,7 +73,8 @@ class ActivitatRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
         repository.afegirActivitat(activitat)
 
@@ -90,7 +92,8 @@ class ActivitatRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
         val id = repository.afegirActivitat(activitat)
 
@@ -107,7 +110,8 @@ class ActivitatRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "blockedUser"
+            creador = "blockedUser",
+            imatge = ""
         )
         repository.afegirActivitat(activitat)
 
@@ -124,7 +128,8 @@ class ActivitatRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
         val id = repository.afegirActivitat(activitat)
 
@@ -151,7 +156,8 @@ class ActivitatRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
         val id = repository.afegirActivitat(activitat)
 

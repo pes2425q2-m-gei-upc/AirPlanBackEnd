@@ -19,6 +19,7 @@ class Activitat(
     var dataInici: LocalDateTime,
     var dataFi: LocalDateTime,
     var creador: String,
+    var imatge: String
 ) {
 
     fun modificarActivitat(
@@ -26,13 +27,15 @@ class Activitat(
         descripcio: String,
         ubicacio: Localitzacio,
         dataInici: Timestamp,
-        dataFi: Timestamp
+        dataFi: Timestamp,
+        imatge: String
     ) {
         this.nom = nom
         this.descripcio = descripcio
         this.ubicacio = ubicacio
         this.dataInici = dataInici.toLocalDateTime().toKotlinLocalDateTime()
         this.dataFi = dataFi.toLocalDateTime().toKotlinLocalDateTime()
+        this.imatge = imatge
     }
 
     fun eliminarActivitat() {

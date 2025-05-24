@@ -53,6 +53,7 @@ class ParticipantsActivitatsRepositoryTest {
                 it[dataInici] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0)
                 it[dataFi] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0)
                 it[username_creador] = "creatorUser"
+                it[imatge] = ""
             }
         }
     }

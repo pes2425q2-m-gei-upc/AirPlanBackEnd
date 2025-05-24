@@ -151,6 +151,7 @@ class ActivitatRoutesTest {
                 it[idioma] = "Castellano"
                 it[sesionIniciada] = false
                 it[isAdmin] = false
+                it[esExtern] = false
             }
 
             // Insert activity
@@ -163,6 +164,7 @@ class ActivitatRoutesTest {
                 it[dataInici] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0)
                 it[dataFi] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0)
                 it[username_creador] = "testUser"
+                it[imatge] = ""
             }
 
             // Make user a participant

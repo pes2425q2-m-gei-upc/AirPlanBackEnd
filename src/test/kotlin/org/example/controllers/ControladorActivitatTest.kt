@@ -1,7 +1,6 @@
 package org.example.controllers
 
 import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.json.Json
 import org.example.models.*
 import org.example.repositories.*
 import repositories.ActivitatRepository
@@ -55,7 +54,15 @@ class ControladorActivitatTest {
         whenever(activitatRepository.afegirActivitat(any())).thenReturn(1)
         whenever(participantsActivitatsRepository.afegirParticipant(any())).thenReturn(true)
 
-        controladorActivitat.afegirActivitat("Excursió", "Excursió a la muntanya", ubicacio, dataInici, dataFi, creador)
+        controladorActivitat.afegirActivitat(
+            "Excursió",
+            "Excursió a la muntanya",
+            ubicacio,
+            dataInici,
+            dataFi,
+            creador,
+            ""
+        )
 
         verify(activitatRepository).afegirActivitat(any())
         verify(participantsActivitatsRepository).afegirParticipant(any())
@@ -71,7 +78,8 @@ class ControladorActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
 
         `when`(activitatRepository.obtenirActivitats()).thenReturn(listOf(activitat))
@@ -127,7 +135,8 @@ class ControladorActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
 
         whenever(activitatFavoritaRepository.obtenirActivitatsFavoritesPerUsuari("user")).thenReturn(listOf(activitat))
@@ -162,7 +171,8 @@ class ControladorActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
 
         `when`(activitatRepository.obtenirActivitatsExcluintUsuaris(listOf("blockedUser"))).thenReturn(listOf(activitat))
@@ -184,7 +194,8 @@ class ControladorActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser"
+            creador = "anfitrioUser",
+            imatge = ""
         )
 
         `when`(participantsActivitatsRepository.obtenirActivitatsPerParticipant("user1")).thenReturn(listOf(activitat))
@@ -215,7 +226,7 @@ class ControladorActivitatTest {
 
         // Assert that creating activity with inappropriate title throws exception
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            controladorActivitat.afegirActivitat(titolInapropiat, descripcioBona, ubicacio, dataInici, dataFi, creador)
+            controladorActivitat.afegirActivitat(titolInapropiat, descripcioBona, ubicacio, dataInici, dataFi, creador, imatge = "")
         }
 
         assertEquals("Títol o descripció bloquejats per ser inapropiats", exception.message)
@@ -247,7 +258,7 @@ class ControladorActivitatTest {
 
         // Assert that creating activity with inappropriate description throws exception
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            controladorActivitat.afegirActivitat(titolBo, descripcioInapropiada, ubicacio, dataInici, dataFi, creador)
+            controladorActivitat.afegirActivitat(titolBo, descripcioInapropiada, ubicacio, dataInici, dataFi, creador, imatge = "")
         }
 
         assertEquals("Títol o descripció bloquejats per ser inapropiats", exception.message)
@@ -345,7 +356,7 @@ class ControladorActivitatTest {
         whenever(participantsActivitatsRepository.afegirParticipant(any())).thenReturn(true)
 
         // No exception should be thrown here
-        controladorActivitat.afegirActivitat(titolBo, descripcioBona, ubicacio, dataInici, dataFi, creador)
+        controladorActivitat.afegirActivitat(titolBo, descripcioBona, ubicacio, dataInici, dataFi, creador, imatge = "")
 
         // Verify PerspectiveService was called
         runBlocking {

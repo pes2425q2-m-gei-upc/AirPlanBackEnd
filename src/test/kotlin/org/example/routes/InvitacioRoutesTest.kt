@@ -71,6 +71,7 @@ class InvitacioRoutesTest {
                 it[idioma] = "en"
                 it[sesionIniciada] = false
                 it[isAdmin] = false
+                it[esExtern] = false
                 it[photourl] = null
             }
             UsuarioTable.insert {
@@ -80,6 +81,7 @@ class InvitacioRoutesTest {
                 it[idioma] = "en"
                 it[sesionIniciada] = false
                 it[isAdmin] = false
+                it[esExtern] = false
                 it[photourl] = null
             }
             ActivitatTable.insert {
@@ -91,6 +93,7 @@ class InvitacioRoutesTest {
                 it[dataInici] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0)
                 it[dataFi] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0)
                 it[username_creador] = "user1"
+                it[imatge] = ""
             }
         }
     }

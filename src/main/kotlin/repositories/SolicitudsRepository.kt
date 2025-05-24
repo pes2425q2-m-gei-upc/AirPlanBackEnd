@@ -49,7 +49,8 @@ class SolicitudRepository {
                     ),
                     dataInici = row[ActivitatTable.dataInici],
                     dataFi = row[ActivitatTable.dataFi],
-                    creador = row[ActivitatTable.username_creador]
+                    creador = row[ActivitatTable.username_creador],
+                    imatge = row[ActivitatTable.imatge]
                 )
             }
         }

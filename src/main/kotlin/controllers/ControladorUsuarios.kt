@@ -16,7 +16,7 @@ class ControladorUsuarios(
 ) {
 
     // Crear nuevo usuario
-    fun crearUsuario(username: String, nom: String, email: String, idioma: String, isAdmin: Boolean): Usuario? {
+    fun crearUsuario(username: String, nom: String, email: String, idioma: String, isAdmin: Boolean, esExtern: Boolean): Usuario? {
         // Block inappropriate content via Perspective API (batch)
         val inputs = listOf(nom, username, email)
         val results = runBlocking { perspectiveService.analyzeMessages(inputs) }
@@ -39,7 +39,8 @@ class ControladorUsuarios(
             email = email,
             idioma = idiomaEnum,
             sesionIniciada = false, // Por defecto, no tiene la sesión iniciada
-            isAdmin = isAdmin
+            isAdmin = isAdmin,
+            esExtern = esExtern  // Por defecto, no es externo,
         )
 
         val success = usuarioRepository.agregarUsuario(usuario)
@@ -224,5 +225,9 @@ class ControladorUsuarios(
     // Obtener la URL de la foto de perfil de un usuario
     fun obtenerPhotoUrlPorEmail(email: String): String? {
         return usuarioRepository.obtenerPhotoUrlPorEmail(email)
+    }
+
+    fun obtenirExterns(): List<Usuario> {
+        return usuarioRepository.obtenirExterns()
     }
 }
