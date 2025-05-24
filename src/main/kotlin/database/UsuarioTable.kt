@@ -10,6 +10,7 @@ object UsuarioTable : Table("usuaris") {
     val sesionIniciada = bool("sesion_iniciada").default(false)
     val isAdmin = bool("is_admin").default(false)
     val photourl = varchar("photourl", 255).nullable() // Aumentado a 255 caracteres para URLs de Cloudinary
+    val fcmToken = varchar("fcm_token", 255).nullable()
     // Se eliminó el campo pendingEmail
 
     override val primaryKey = PrimaryKey(username, name = "PK_username")

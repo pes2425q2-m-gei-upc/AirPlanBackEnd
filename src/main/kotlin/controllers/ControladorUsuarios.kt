@@ -225,4 +225,14 @@ class ControladorUsuarios(
     fun obtenerPhotoUrlPorEmail(email: String): String? {
         return usuarioRepository.obtenerPhotoUrlPorEmail(email)
     }
+
+    fun updateFCMToken(username: String, token: String): Boolean {
+        return try {
+            usuarioRepository.updateFCMToken(username, token)
+            true
+        } catch (e: Exception) {
+            println("Error actualizando token FCM: ${e.message}")
+            false
+        }
+    }
 }

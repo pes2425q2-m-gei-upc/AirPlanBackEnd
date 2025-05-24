@@ -1,5 +1,6 @@
 package org.example.repositories
 
+import kotlinx.datetime.*
 import org.example.models.Nota
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -45,6 +46,7 @@ class NotaRepository {
                 }
         }
     }
+
     fun editarNota(id: Int, novaNota: Nota): Boolean {
         return transaction {
             NotesTable.update({ NotesTable.id eq id }) {
@@ -53,6 +55,55 @@ class NotaRepository {
                 it[horaRecordatorio] = novaNota.horaRecordatorio
                 it[comentario] = novaNota.comentario
             } > 0
+        }
+    }
+
+    fun obtenirNotaPerId(id: Int): Nota? {
+        return transaction {
+            NotesTable.select { NotesTable.id eq id }
+                .mapNotNull { row ->
+                    Nota(
+                        id = row[NotesTable.id],
+                        username = row[NotesTable.username],
+                        fechaCreacion = row[NotesTable.fechaCreacion],
+                        horaRecordatorio = row[NotesTable.horaRecordatorio],
+                        comentario = row[NotesTable.comentario]
+                    )
+                }.singleOrNull()
+        }
+    }
+
+    fun obtenirNotesProperes(minutosMargen: Long): List<Nota> {
+        return transaction {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+            val currentDate = now.date
+            val currentTime = now.time
+
+            // Convertir tiempo actual a minutos desde medianoche
+            val currentMinutesFromMidnight = currentTime.hour * 60 + currentTime.minute
+            val limitMinutesFromMidnight = currentMinutesFromMidnight + minutosMargen.toInt()
+
+            // Crear tiempo límite (máximo 23:59)
+            val limitHour = minOf(limitMinutesFromMidnight / 60, 23)
+            val limitMinute = if (limitHour == 23) 59 else limitMinutesFromMidnight % 60
+            val limitTime = LocalTime(limitHour, limitMinute)
+
+            println("Buscando notas entre ${currentTime} y ${limitTime} para fecha ${currentDate}")
+
+            // Buscar notas de hoy que estén entre la hora actual y la hora límite
+            NotesTable.select {
+                (NotesTable.fechaCreacion eq currentDate) and
+                        (NotesTable.horaRecordatorio greater currentTime) and
+                        (NotesTable.horaRecordatorio lessEq limitTime)
+            }.map { row ->
+                Nota(
+                    id = row[NotesTable.id],
+                    username = row[NotesTable.username],
+                    fechaCreacion = row[NotesTable.fechaCreacion],
+                    horaRecordatorio = row[NotesTable.horaRecordatorio],
+                    comentario = row[NotesTable.comentario]
+                )
+            }
         }
     }
 }
