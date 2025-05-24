@@ -6,28 +6,31 @@ import org.example.models.ParticipantsActivitats
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.repositories.UsuarioRepository
+import org.example.websocket.WebSocketManager
 
 class ControladorInvitacions(
     private val participantsActivitatsRepository: ParticipantsActivitatsRepository,
     private val invitacionsRepository: InvitacioRepository,
-    private val usuarioRepository: UsuarioRepository
+    private val usuarioRepository: UsuarioRepository,
+    private val webSocketManager: WebSocketManager
 ) {
     // Crear una nueva invitación
-    fun crearInvitacio(idAct: Int, usAnfitrio: String, usDestinatari: String): Boolean {
+    suspend fun crearInvitacio(idAct: Int, usAnfitrio: String, usDestinatari: String): Boolean {
         if (!usuarioRepository.existeUsuario(usDestinatari)) {
             println("El usuario destinatario no existe.")
             return false
         }
 
-        // Verify that the host is the creator of the activity
-        /*if (!participantsActivitatsRepository.esCreador(idAct, usAnfitrio)) {
-            println("Solo el creador de la actividad puede enviar invitaciones.")
-            return false
-        }*/
-
         val invitacio = Invitacio(id_act = idAct, us_anfitrio = usAnfitrio, us_destinatari = usDestinatari)
         invitacionsRepository.afegirInvitacio(invitacio)
         println("Invitación creada para $usDestinatari con anfitrion $usAnfitrio.")
+
+        webSocketManager.notifyRealTimeEvent(
+            username = usDestinatari,
+            message = "Tienes una nueva invitación para la actividad con ID: $idAct de $usAnfitrio.",
+            clientId = null,
+            type = "INVITACIONS"
+        )
         return true
     }
 

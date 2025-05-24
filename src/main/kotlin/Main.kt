@@ -19,6 +19,7 @@ import org.example.routes.rutaRoutes
 import org.example.routes.usuarioRoutes
 import org.example.routes.invitacioRoutes
 import org.example.routes.notaRoutes
+import org.example.routes.trofeuRoutes
 
 // Eliminada la importación de authRoutes
 import org.example.services.FirebaseAdminService
@@ -28,6 +29,7 @@ import org.example.routes.*
 import org.example.routes.valoracioRoutes
 import org.example.routes.generalRoutes
 import org.example.routes.perspectiveAdminRoutes // Import perspective admin routes
+import org.example.utils.NotificationScheduler
 
 
 fun main() {
@@ -62,6 +64,10 @@ fun main() {
             configureWebSockets()
 
             DatabaseFactory.init()
+
+            println("✅✅✅Arrancado el sistema de notificaciones")
+            NotificationScheduler.start()
+
             val usuarioRepository = UsuarioRepository()
             val controladorUsuario = ControladorUsuarios(usuarioRepository)
 
@@ -81,6 +87,7 @@ fun main() {
                 valoracioRoutes()
                 userBlockRoutes()
                 reportRoutes()
+                trofeuRoutes()
                 webSocketRoutes()
                 generalRoutes()
                 perspectiveAdminRoutes() // Add perspective admin routes

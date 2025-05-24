@@ -3,6 +3,7 @@ package repositories
 import org.example.database.SolicitudsTable
 import org.example.database.ActivitatTable
 import org.example.models.Activitat
+import org.example.models.SolicitudUnio
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -35,6 +36,7 @@ class SolicitudRepository {
     }
 
     fun obtenirSolicitudesPerUsuari(usernameSolicitant: String): List<Activitat> {
+        println("🔍 Debug: Obteniendo actividades solicitadas por el usuario: $usernameSolicitant")
         return transaction {
             (SolicitudsTable innerJoin ActivitatTable).select {
                 SolicitudsTable.usernameSolicitant eq usernameSolicitant
@@ -71,23 +73,38 @@ class SolicitudRepository {
             transaction {
                 // Eliminar solicitudes donde user1 es anfitrión y user2 es solicitante
                 val count1 = SolicitudsTable.deleteWhere {
-                    (SolicitudsTable.usernameAnfitrio eq user1) and
-                    (SolicitudsTable.usernameSolicitant eq user2)
+                    (usernameAnfitrio eq user1) and
+                    (usernameSolicitant eq user2)
                 }
                 
                 // Eliminar solicitudes donde user2 es anfitrión y user1 es solicitante
                 val count2 = SolicitudsTable.deleteWhere {
-                    (SolicitudsTable.usernameAnfitrio eq user2) and
-                    (SolicitudsTable.usernameSolicitant eq user1)
+                    (usernameAnfitrio eq user2) and
+                    (usernameSolicitant eq user1)
                 }
                 
                 println("✅ Se eliminaron ${count1 + count2} solicitudes entre $user1 y $user2")
                 true
             }
         } catch (e: Exception) {
-            println("❌ Error al eliminar solicitudes entre usuarios: ${e.message}")
+            println("Error al eliminar solicitudes entre usuarios: ${e.message}")
             e.printStackTrace()
             false
+        }
+    }
+
+    fun obtenirSolicitudesPerActivitat(idActivitat: Int): List<SolicitudUnio> {
+        println("🔍 Debug: Obteniendo solicitudes para la actividad con ID: $idActivitat")
+        return transaction {
+            SolicitudsTable.select {
+                SolicitudsTable.idActivitat eq idActivitat
+            }.map { row ->
+                SolicitudUnio(
+                    usernameAnfitrio = row[SolicitudsTable.usernameAnfitrio],
+                    usernameSolicitant = row[SolicitudsTable.usernameSolicitant],
+                    idActivitat = row[SolicitudsTable.idActivitat]
+                )
+            }
         }
     }
 }

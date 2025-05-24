@@ -5,12 +5,33 @@ plugins {
     id("jvm-test-suite") // Add this plugin for test suites support
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17)) // Set the Java
+        version
+    }
+}
+
 group = "org.example"
 version = "1.0"
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17)) // Set the Java version
+    }
+}
+
 
 repositories {
     mavenCentral()
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(20)) // Set the Java
+        version
+    }
 }
 
 dependencies {

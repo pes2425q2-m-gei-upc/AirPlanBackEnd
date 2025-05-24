@@ -4,6 +4,7 @@ import org.example.database.ReportTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.example.models.Report
 
 class ReportRepository {
 
@@ -43,6 +44,19 @@ class ReportRepository {
                 (ReportTable.reporterUsername eq reporterUsername) and
                         (ReportTable.reportedUsername eq reportedUsername)
             }.count() > 0
+        }
+    }
+
+    fun getAllReports(): List<Report> {
+        return transaction {
+            ReportTable.selectAll().map {
+                Report(
+                    reporterUsername = it[ReportTable.reporterUsername],
+                    reportedUsername = it[ReportTable.reportedUsername],
+                    reason = it[ReportTable.reason],
+                    timestamp = it[ReportTable.timestamp].toString() // Convert to LocalDateTime
+                )
+            }
         }
     }
 }

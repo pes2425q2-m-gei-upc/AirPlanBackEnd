@@ -5,9 +5,8 @@ import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 
 @Serializable
-data class Report(
-    val reporterUsername: String,
-    val reportedUsername: String,
-    val reason: String,
-    val timestamp: String
+data class TrofeusUsuari(
+    val usuari: String,
+    val trofeuId: Int,
+    @Contextual val dataObtencio: LocalDateTime
 )
