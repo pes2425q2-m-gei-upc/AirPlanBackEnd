@@ -145,7 +145,8 @@ fun main() {
                         nom = "Carlos Gómez",
                         email = "carlos.gomez@example.com",
                         idioma = Idioma.Castellano.toString(),
-                        isAdmin = false
+                        isAdmin = false,
+                        esExtern = false
                     )
 
                     val usuarios = controladorUsuario.listarUsuarios()

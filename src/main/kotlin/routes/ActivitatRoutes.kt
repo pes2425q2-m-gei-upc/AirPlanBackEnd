@@ -5,7 +5,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.http.*
-import kotlinx.datetime.toKotlinLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import org.example.controllers.ControladorActivitat
 import org.example.repositories.ParticipantsActivitatsRepository
@@ -13,9 +12,7 @@ import org.example.models.Activitat
 import repositories.ActivitatFavoritaRepository
 import repositories.ActivitatRepository
 import org.example.repositories.UserBlockRepository
-import java.sql.Timestamp
 
-import ControladorValoracio
 import ValoracioRepository
 import kotlinx.serialization.json.*
 import org.example.models.ParticipantsActivitats
@@ -59,7 +56,7 @@ fun Route.activitatRoutes() {
             try {
                 val receivedText = call.receiveText()
                 println("Dades rebudes: $receivedText")
-                val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
+                val activitat = Json.decodeFromString<Activitat>(receivedText)
                 activitatController.afegirActivitat(
                     nom = activitat.nom,
                     descripcio = activitat.descripcio,
@@ -79,6 +76,7 @@ fun Route.activitatRoutes() {
 
         get {
             try {
+                activitatController.crearActivitatsReadUs()
                 val activitats = activitatController.obtenirTotesActivitats()
                 call.respond(HttpStatusCode.OK, activitats)
             } catch (e: Exception) {
@@ -92,11 +90,7 @@ fun Route.activitatRoutes() {
 
             if (id != null) {
                 val activitat = activitatController.obtenirActivitatPerId(id)
-                if (activitat != null) {
-                    call.respond(HttpStatusCode.OK, activitat)
-                } else {
-                    call.respond(HttpStatusCode.NotFound, "Activitat no trobada")
-                }
+                call.respond(HttpStatusCode.OK, activitat)
             } else {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un ID")
             }
@@ -124,7 +118,7 @@ fun Route.activitatRoutes() {
                 try {
                     val receivedText = call.receiveText()
                     println("Dades rebudes: $receivedText")
-                    val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
+                    val activitat = Json.decodeFromString<Activitat>(receivedText)
                     val modified = activitatController.modificarActivitat(
                         id = id,
                         nom = activitat.nom,

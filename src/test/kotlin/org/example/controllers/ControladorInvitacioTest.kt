@@ -5,6 +5,7 @@ import org.example.models.ParticipantsActivitats
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.repositories.UsuarioRepository
+import org.example.utils.webSocketManager
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -26,7 +27,8 @@ class ControladorInvitacioTest {
         controladorInvitacions = ControladorInvitacions(
             participantsActivitatsRepository,
             invitacioRepository,
-            usuarioRepository
+            usuarioRepository,
+            webSocketManager
         )
     }
 

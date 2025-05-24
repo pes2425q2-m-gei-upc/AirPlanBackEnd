@@ -45,6 +45,7 @@ fun Route.usuarioRoutes() {
                         email = usuario.email,
                         idioma = usuario.idioma.toString(), // Convertir Idioma a String
                         isAdmin = usuario.isAdmin,
+                        esExtern = false
                     )
                 } catch (e: InappropriateContentException) {
                     call.respond(HttpStatusCode.BadRequest, mapOf(
@@ -196,7 +197,7 @@ fun Route.usuarioRoutes() {
 
             if (username != null) {
                 val usuario = usuarioController.obtenerUsuarioPorUsername(username)
-                if (usuario != null) {
+                 if (usuario != null) {
                     // Devolver los datos del usuario en lugar de solo un mensaje
                     call.respond(HttpStatusCode.OK, usuario)
                 } else {

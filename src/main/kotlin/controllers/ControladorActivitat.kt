@@ -1,22 +1,26 @@
 package org.example.controllers
 
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import kotlinx.datetime.LocalDateTime
-import org.example.database.ActivitatFavoritaTable
 import org.example.models.Activitat
 import org.example.models.ParticipantsActivitats
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Localitzacio
 import repositories.ActivitatRepository
 import repositories.ActivitatFavoritaRepository
-import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
-
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.Clock
-import kotlinx.datetime.toJavaLocalDateTime
-import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.toLocalDateTime
 import org.example.services.PerspectiveService
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.example.repositories.UsuarioRepository
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -42,7 +46,14 @@ class ControladorActivitat(
 
     private val activitats = mutableListOf<Activitat>()
 
-    fun afegirActivitat(nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime, creador: String) {
+    fun afegirActivitat(
+        nom: String,
+        descripcio: String,
+        ubicacio: Localitzacio,
+        dataInici: LocalDateTime,
+        dataFi: LocalDateTime,
+        creador: String,
+    ) {
         // Batch validate title and description via perspective service
         val results = runBlocking { perspectiveService.analyzeMessages(listOf(nom, descripcio)) }
         if (results.any { it }) throw IllegalArgumentException("Títol o descripció bloquejats per ser inapropiats")
@@ -196,5 +207,83 @@ class ControladorActivitat(
 
         val searchRadius = 5.0 + minDistance
         return activitats.filter { distanceKm(localitzacio, it.ubicacio) <= searchRadius }
+    }
+
+    suspend fun crearActivitatsReadUs() {
+        val esdeveniments = fetchEsdeveniments()
+        // Crear activitats a partir dels esdeveniments obtinguts
+        crearActivitatsPerEsdeveniments(esdeveniments)
+        eliminarActivitatsExpirades(esdeveniments)
+    }
+
+    private suspend fun fetchEsdeveniments(): List<Activitat> {
+        val esdeveniments = emptyList<Activitat>().toMutableList()
+        val client = HttpClient(CIO)
+
+        val response = client.get("http://nattech.fib.upc.edu:40380/esdeveniments/presencials")
+        val responseBody = Json.parseToJsonElement(response.bodyAsText()).jsonArray
+        for (esdeveniment in responseBody) {
+            val nom = esdeveniment.jsonObject["nom"]!!.jsonPrimitive.content
+            val descripcio = esdeveniment.jsonObject["descripcio"]!!.jsonPrimitive.content
+            val ubicacio = Localitzacio(esdeveniment.jsonObject["latitud"]!!.jsonPrimitive.content.toFloat(),esdeveniment.jsonObject["longitud"]!!.jsonPrimitive.content.toFloat())
+            val dataHora = esdeveniment.jsonObject["dataHora"]!!.jsonPrimitive.content
+            val nomClub = esdeveniment.jsonObject["nom_club"]!!.jsonPrimitive.content
+
+            val original: LocalDateTime = LocalDateTime.parse(dataHora)
+            val oneHourLater = LocalDateTime(original.year, original.month, original.dayOfMonth, original.hour + 1, original.minute, original.second)
+
+            esdeveniments += Activitat(0, nom, descripcio, ubicacio, original, oneHourLater,nomClub)
+        }
+        client.close()
+        return esdeveniments
+    }
+
+    private fun crearActivitatsPerEsdeveniments(esdeveniments: List<Activitat>) {
+        for (activitat in esdeveniments) {
+            val controladorUsuarios = ControladorUsuarios(UsuarioRepository())
+
+            if (!controladorUsuarios.comprobarNombreUsuario(activitat.creador)) {
+                controladorUsuarios.crearUsuario(
+                    activitat.creador,
+                    activitat.creador,
+                    "",
+                    "Catala",
+                    false,
+                    esExtern = true,
+                )
+            }
+            if (activitatNoExisteix(activitat)) {
+                afegirActivitat(
+                    activitat.nom,
+                    activitat.descripcio,
+                    activitat.ubicacio,
+                    activitat.dataInici,
+                    activitat.dataFi,
+                    activitat.creador
+                )
+            }
+        }
+    }
+
+    private fun activitatNoExisteix(activitat: Activitat): Boolean {
+        val activitatsAmbNom = ActivitatRepository.getActivitatPerNom(activitat.nom)
+        for (act in activitatsAmbNom) {
+            if (act.nom == activitat.nom && act.dataInici == activitat.dataInici && act.dataFi == activitat.dataFi && act.creador == activitat.creador && act.ubicacio.latitud == activitat.ubicacio.latitud && act.ubicacio.longitud == activitat.ubicacio.longitud) {
+                return false // L'activitat ja existeix
+            }
+        }
+        return true
+    }
+
+    private fun eliminarActivitatsExpirades(esdeveniments: List<Activitat>) {
+        val clubs = ControladorUsuarios(UsuarioRepository()).obtenirExterns()
+        for (club in clubs) {
+            val activitatsDelClub = ActivitatRepository.obtenirActivitatsPerCreador(club.username)
+            for (activitat in activitatsDelClub) {
+                if (esdeveniments.find { it.nom == activitat.nom } == null) {
+                    ActivitatRepository.eliminarActividad(activitat.id)
+                }
+            }
+        }
     }
 }

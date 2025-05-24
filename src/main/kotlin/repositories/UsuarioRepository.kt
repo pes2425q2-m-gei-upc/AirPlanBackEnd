@@ -19,6 +19,7 @@ class UsuarioRepository {
                 it[idioma] = usuario.idioma.toString()
                 it[sesionIniciada] = usuario.sesionIniciada
                 it[isAdmin] = usuario.isAdmin
+                it[esExtern] = usuario.esExtern
             }.insertedCount > 0
         }
     }
@@ -39,7 +40,8 @@ class UsuarioRepository {
                         email = it[UsuarioTable.email],
                         idioma = Idioma.valueOf(it[UsuarioTable.idioma]),  // Asumiendo que se ha mapeado adecuadamente
                         sesionIniciada = it[UsuarioTable.sesionIniciada],
-                        isAdmin = it[UsuarioTable.isAdmin]
+                        isAdmin = it[UsuarioTable.isAdmin],
+                        esExtern = it[UsuarioTable.esExtern] // Añadido para obtener el campo esExtern
                     )
                 }.singleOrNull() // Devuelve el único usuario o null si no se encuentra
         }
@@ -57,7 +59,8 @@ class UsuarioRepository {
                         email = it[UsuarioTable.email],
                         idioma = Idioma.valueOf(it[UsuarioTable.idioma]),
                         sesionIniciada = it[UsuarioTable.sesionIniciada],
-                        isAdmin = it[UsuarioTable.isAdmin]
+                        isAdmin = it[UsuarioTable.isAdmin],
+                        esExtern = it[UsuarioTable.esExtern]
                     )
                 }.singleOrNull() // Devuelve el único usuario o null si no se encuentra
         }
@@ -189,6 +192,24 @@ class UsuarioRepository {
                 .select { UsuarioTable.email eq email }
                 .map { it[UsuarioTable.photourl] }
                 .singleOrNull()
+        }
+    }
+
+    fun obtenirExterns(): List<Usuario> {
+        return transaction {
+            UsuarioTable
+                .select { UsuarioTable.esExtern eq true }
+                .map {
+                    Usuario(
+                        username = it[UsuarioTable.username],
+                        nom = it[UsuarioTable.nom],
+                        email = it[UsuarioTable.email],
+                        idioma = Idioma.valueOf(it[UsuarioTable.idioma]),
+                        sesionIniciada = it[UsuarioTable.sesionIniciada],
+                        isAdmin = it[UsuarioTable.isAdmin],
+                        esExtern = it[UsuarioTable.esExtern]
+                    )
+                }
         }
     }
 }

@@ -16,5 +16,6 @@ class Cliente(
     email = email,
     idioma = idioma,
     sesionIniciada = false,
-    isAdmin = false // Siempre false para clientes
+    isAdmin = false, // Siempre false para clientes
+    esExtern = false
 )

@@ -1,13 +1,9 @@
 package org.example.models
 
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toKotlinLocalDateTime
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
-import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.PreparedStatement
 import java.sql.Timestamp
 
 @Serializable
@@ -26,7 +22,7 @@ class Activitat(
         descripcio: String,
         ubicacio: Localitzacio,
         dataInici: Timestamp,
-        dataFi: Timestamp
+        dataFi: Timestamp,
     ) {
         this.nom = nom
         this.descripcio = descripcio

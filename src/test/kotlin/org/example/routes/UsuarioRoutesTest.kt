@@ -65,7 +65,8 @@ class UsuarioRoutesTest {
                 email = "test@example.com", 
                 idioma = Idioma.English, 
                 sesionIniciada = false, 
-                isAdmin = false
+                isAdmin = false,
+                esExtern = false
             ))
         }
         assertEquals(HttpStatusCode.Created, response.status)
@@ -107,7 +108,8 @@ class UsuarioRoutesTest {
                 email = "duplicate@example.com", 
                 idioma = Idioma.English, 
                 sesionIniciada = false, 
-                isAdmin = false
+                isAdmin = false,
+                esExtern = false
             ))
         }
         assertEquals(HttpStatusCode.Conflict, response.status)
