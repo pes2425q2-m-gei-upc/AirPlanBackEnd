@@ -12,7 +12,6 @@ object ActivitatTable : Table("activitats") {
     var dataFi = datetime("datafi")
     var descripcio = varchar("descripcio", 255)
     var username_creador = varchar("username_creador", 100)
-    var imatge = varchar("imatge", 200)
 
     override val primaryKey = PrimaryKey(id_activitat, name = "PK_id_activitat")
 }

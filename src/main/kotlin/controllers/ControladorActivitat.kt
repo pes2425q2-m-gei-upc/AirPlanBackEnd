@@ -16,7 +16,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.toLocalDateTime
 import org.example.services.PerspectiveService
 import kotlinx.coroutines.runBlocking
-import java.time.LocalDateTime as JavaLocalDateTime
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -54,7 +53,6 @@ class ControladorActivitat(
         dataInici: LocalDateTime,
         dataFi: LocalDateTime,
         creador: String,
-        imatge: String
     ) {
         // Batch validate title and description via perspective service
         val results = runBlocking { perspectiveService.analyzeMessages(listOf(nom, descripcio)) }
@@ -66,8 +64,7 @@ class ControladorActivitat(
             ubicacio = ubicacio,
             dataInici = dataInici,
             dataFi = dataFi,
-            creador = creador,
-            imatge = imatge
+            creador = creador
         )
 
         val activitatId = ActivitatRepository.afegirActivitat(novaActivitat)
@@ -214,13 +211,9 @@ class ControladorActivitat(
 
     suspend fun crearActivitatsReadUs() {
         val esdeveniments = fetchEsdeveniments()
-        // Eliminar activitats existents dels clubs externs
-        val clubs = ControladorUsuarios(UsuarioRepository()).obtenirExterns()
-        for (club in clubs) {
-            ActivitatRepository.eliminarActivitatsUsuari(club.username)
-        }
         // Crear activitats a partir dels esdeveniments obtinguts
         crearActivitatsPerEsdeveniments(esdeveniments)
+        eliminarActivitatsExpirades(esdeveniments)
     }
 
     private suspend fun fetchEsdeveniments(): List<Activitat> {
@@ -235,12 +228,11 @@ class ControladorActivitat(
             val ubicacio = Localitzacio(esdeveniment.jsonObject["latitud"]!!.jsonPrimitive.content.toFloat(),esdeveniment.jsonObject["longitud"]!!.jsonPrimitive.content.toFloat())
             val dataHora = esdeveniment.jsonObject["dataHora"]!!.jsonPrimitive.content
             val nomClub = esdeveniment.jsonObject["nom_club"]!!.jsonPrimitive.content
-            val imatge = esdeveniment.jsonObject["imatge_llibre"]!!.jsonPrimitive.content
 
             val original: LocalDateTime = LocalDateTime.parse(dataHora)
             val oneHourLater = LocalDateTime(original.year, original.month, original.dayOfMonth, original.hour + 1, original.minute, original.second)
 
-            esdeveniments += Activitat(0, nom, descripcio, ubicacio, original, oneHourLater,nomClub, imatge)
+            esdeveniments += Activitat(0, nom, descripcio, ubicacio, original, oneHourLater,nomClub)
         }
         client.close()
         return esdeveniments
@@ -260,15 +252,38 @@ class ControladorActivitat(
                     esExtern = true,
                 )
             }
-            afegirActivitat(
-                activitat.nom,
-                activitat.descripcio,
-                activitat.ubicacio,
-                activitat.dataInici,
-                activitat.dataFi,
-                activitat.creador,
-                activitat.imatge
-            )
+            if (activitatNoExisteix(activitat)) {
+                afegirActivitat(
+                    activitat.nom,
+                    activitat.descripcio,
+                    activitat.ubicacio,
+                    activitat.dataInici,
+                    activitat.dataFi,
+                    activitat.creador
+                )
+            }
+        }
+    }
+
+    private fun activitatNoExisteix(activitat: Activitat): Boolean {
+        val activitatsAmbNom = ActivitatRepository.getActivitatPerNom(activitat.nom)
+        for (act in activitatsAmbNom) {
+            if (act.nom == activitat.nom && act.dataInici == activitat.dataInici && act.dataFi == activitat.dataFi && act.creador == activitat.creador && act.ubicacio.latitud == activitat.ubicacio.latitud && act.ubicacio.longitud == activitat.ubicacio.longitud) {
+                return false // L'activitat ja existeix
+            }
+        }
+        return true
+    }
+
+    private fun eliminarActivitatsExpirades(esdeveniments: List<Activitat>) {
+        val clubs = ControladorUsuarios(UsuarioRepository()).obtenirExterns()
+        for (club in clubs) {
+            val activitatsDelClub = ActivitatRepository.obtenirActivitatsPerCreador(club.username)
+            for (activitat in activitatsDelClub) {
+                if (esdeveniments.find { it.nom == activitat.nom } == null) {
+                    ActivitatRepository.eliminarActividad(activitat.id)
+                }
+            }
         }
     }
 }

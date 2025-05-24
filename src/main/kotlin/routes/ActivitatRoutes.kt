@@ -56,15 +56,14 @@ fun Route.activitatRoutes() {
             try {
                 val receivedText = call.receiveText()
                 println("Dades rebudes: $receivedText")
-                val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
+                val activitat = Json.decodeFromString<Activitat>(receivedText)
                 activitatController.afegirActivitat(
                     nom = activitat.nom,
                     descripcio = activitat.descripcio,
                     ubicacio = activitat.ubicacio,
                     dataInici = activitat.dataInici,
                     dataFi = activitat.dataFi,
-                    creador = activitat.creador,
-                    imatge = activitat.imatge
+                    creador = activitat.creador
                 )
                 call.respond(HttpStatusCode.Created, "Activitat creada correctament")
             } catch (e: IllegalArgumentException) {
@@ -119,7 +118,7 @@ fun Route.activitatRoutes() {
                 try {
                     val receivedText = call.receiveText()
                     println("Dades rebudes: $receivedText")
-                    val activitat = kotlinx.serialization.json.Json.decodeFromString<Activitat>(receivedText)
+                    val activitat = Json.decodeFromString<Activitat>(receivedText)
                     val modified = activitatController.modificarActivitat(
                         id = id,
                         nom = activitat.nom,

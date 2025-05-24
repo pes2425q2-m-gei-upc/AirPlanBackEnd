@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.TestInstance
 import kotlinx.serialization.json.*
-import org.example.routes.activitatRoutes
 import org.example.database.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -126,7 +125,7 @@ class ActivitatRoutesTest {
         val jsonArray = Json.decodeFromString<JsonArray>(responseBody)
         
         // La respuesta debe ser un array (vacío o con elementos)
-        assertTrue(jsonArray is JsonArray, "La respuesta debe ser un array JSON")
+        assertTrue(true, "La respuesta debe ser un array JSON")
     }
 
     @Test
@@ -164,7 +163,6 @@ class ActivitatRoutesTest {
                 it[dataInici] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0)
                 it[dataFi] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0)
                 it[username_creador] = "testUser"
-                it[imatge] = ""
             }
 
             // Make user a participant
@@ -185,8 +183,8 @@ class ActivitatRoutesTest {
         val jsonArray = Json.decodeFromString<JsonArray>(responseBody)
 
         // Response should be a JSON array with at least one element
-        assertTrue(jsonArray is JsonArray)
-        assertTrue(jsonArray.size >= 1)
+        assertTrue(true)
+        assertTrue(jsonArray.isNotEmpty())
 
         // Check first activity details
         val firstActivity = jsonArray[0].jsonObject

@@ -58,8 +58,7 @@ class InvitacioRepository {
                         ),
                         dataInici = it[ActivitatTable.dataInici],
                         dataFi = it[ActivitatTable.dataFi],
-                        creador = it[ActivitatTable.username_creador],
-                        imatge = it[ActivitatTable.imatge]
+                        creador = it[ActivitatTable.username_creador]
                     )
                 }
         }

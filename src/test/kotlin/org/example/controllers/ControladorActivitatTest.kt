@@ -60,8 +60,7 @@ class ControladorActivitatTest {
             ubicacio,
             dataInici,
             dataFi,
-            creador,
-            ""
+            creador
         )
 
         verify(activitatRepository).afegirActivitat(any())
@@ -78,8 +77,7 @@ class ControladorActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
 
         `when`(activitatRepository.obtenirActivitats()).thenReturn(listOf(activitat))
@@ -135,8 +133,7 @@ class ControladorActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
 
         whenever(activitatFavoritaRepository.obtenirActivitatsFavoritesPerUsuari("user")).thenReturn(listOf(activitat))
@@ -171,8 +168,7 @@ class ControladorActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
 
         `when`(activitatRepository.obtenirActivitatsExcluintUsuaris(listOf("blockedUser"))).thenReturn(listOf(activitat))
@@ -194,8 +190,7 @@ class ControladorActivitatTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
 
         `when`(participantsActivitatsRepository.obtenirActivitatsPerParticipant("user1")).thenReturn(listOf(activitat))
@@ -226,7 +221,7 @@ class ControladorActivitatTest {
 
         // Assert that creating activity with inappropriate title throws exception
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            controladorActivitat.afegirActivitat(titolInapropiat, descripcioBona, ubicacio, dataInici, dataFi, creador, imatge = "")
+            controladorActivitat.afegirActivitat(titolInapropiat, descripcioBona, ubicacio, dataInici, dataFi, creador)
         }
 
         assertEquals("Títol o descripció bloquejats per ser inapropiats", exception.message)
@@ -258,7 +253,7 @@ class ControladorActivitatTest {
 
         // Assert that creating activity with inappropriate description throws exception
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            controladorActivitat.afegirActivitat(titolBo, descripcioInapropiada, ubicacio, dataInici, dataFi, creador, imatge = "")
+            controladorActivitat.afegirActivitat(titolBo, descripcioInapropiada, ubicacio, dataInici, dataFi, creador)
         }
 
         assertEquals("Títol o descripció bloquejats per ser inapropiats", exception.message)
@@ -356,7 +351,7 @@ class ControladorActivitatTest {
         whenever(participantsActivitatsRepository.afegirParticipant(any())).thenReturn(true)
 
         // No exception should be thrown here
-        controladorActivitat.afegirActivitat(titolBo, descripcioBona, ubicacio, dataInici, dataFi, creador, imatge = "")
+        controladorActivitat.afegirActivitat(titolBo, descripcioBona, ubicacio, dataInici, dataFi, creador)
 
         // Verify PerspectiveService was called
         runBlocking {

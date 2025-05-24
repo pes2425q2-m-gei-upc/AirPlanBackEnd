@@ -9,8 +9,6 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.example.database.*
 import org.jetbrains.exposed.sql.Database
@@ -93,7 +91,6 @@ class InvitacioRoutesTest {
                 it[dataInici] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0)
                 it[dataFi] = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0)
                 it[username_creador] = "user1"
-                it[imatge] = ""
             }
         }
     }

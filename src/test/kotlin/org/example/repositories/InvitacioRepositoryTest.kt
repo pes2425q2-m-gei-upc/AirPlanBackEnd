@@ -11,7 +11,6 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.*
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -56,8 +55,7 @@ class InvitacioRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
         transaction {
             ActivitatTable.insert {
@@ -69,7 +67,6 @@ class InvitacioRepositoryTest {
                 it[dataInici] = activitat.dataInici
                 it[dataFi] = activitat.dataFi
                 it[username_creador] = activitat.creador
-                it[imatge] = activitat.imatge
             }
         }
 
@@ -89,8 +86,7 @@ class InvitacioRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
         transaction {
             ActivitatTable.insert {
@@ -102,7 +98,6 @@ class InvitacioRepositoryTest {
                 it[dataInici] = activitat.dataInici
                 it[dataFi] = activitat.dataFi
                 it[username_creador] = activitat.creador
-                it[imatge] = activitat.imatge
             }
         }
 
@@ -122,8 +117,7 @@ class InvitacioRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
         transaction {
             ActivitatTable.insert {
@@ -135,7 +129,6 @@ class InvitacioRepositoryTest {
                 it[dataInici] = activitat.dataInici
                 it[dataFi] = activitat.dataFi
                 it[username_creador] = activitat.creador
-                it[imatge] = activitat.imatge
             }
         }
 
@@ -146,8 +139,7 @@ class InvitacioRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = kotlinx.datetime.LocalDateTime(2024, 6, 1, 20, 0),
             dataFi = kotlinx.datetime.LocalDateTime(2024, 6, 1, 23, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
         transaction {
             ActivitatTable.insert {
@@ -159,7 +151,6 @@ class InvitacioRepositoryTest {
                 it[dataInici] = activitat2.dataInici
                 it[dataFi] = activitat2.dataFi
                 it[username_creador] = activitat2.creador
-                it[imatge] = activitat2.imatge
             }
         }
 
@@ -181,8 +172,7 @@ class InvitacioRepositoryTest {
             ubicacio = Localitzacio(41.40338f, 2.17403f),
             dataInici = kotlinx.datetime.LocalDateTime(2024, 5, 1, 10, 0),
             dataFi = kotlinx.datetime.LocalDateTime(2024, 5, 1, 18, 0),
-            creador = "anfitrioUser",
-            imatge = ""
+            creador = "anfitrioUser"
         )
         transaction {
             ActivitatTable.insert {
@@ -194,7 +184,6 @@ class InvitacioRepositoryTest {
                 it[dataInici] = activitat.dataInici
                 it[dataFi] = activitat.dataFi
                 it[username_creador] = activitat.creador
-                it[imatge] = activitat.imatge
             }
         }
 

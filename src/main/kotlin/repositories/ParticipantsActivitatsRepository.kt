@@ -66,8 +66,7 @@ class ParticipantsActivitatsRepository {
                         ),
                         dataInici = row[ActivitatTable.dataInici],
                         dataFi = row[ActivitatTable.dataFi],
-                        creador = row[ActivitatTable.username_creador],
-                        imatge = row[ActivitatTable.imatge]
+                        creador = row[ActivitatTable.username_creador]
                     )
                 }
         }
