@@ -8,16 +8,16 @@ import org.example.database.ParticipantsActivitatsTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.repositories.NotificationRepository
-import org.example.repositories.UsuarioRepository
 import org.example.websocket.WebSocketManager
+import org.example.repositories.UsuarioRepository
 
+val fcmManager = FCMManager()
+val usuarioRepository = UsuarioRepository()
 val notifiedActivities = mutableSetOf<Int>()
 val notifiedNotes = mutableSetOf<Int>()
 val notificationRepository = NotificationRepository()
 val notaRepository = NotaRepository()
 val webSocketManager = WebSocketManager.instance
-private val fcmManager = FCMManager()
-private val usuarioRepository = UsuarioRepository()
 
 object NotificationScheduler {
     @OptIn(DelicateCoroutinesApi::class)
@@ -80,29 +80,28 @@ object NotificationScheduler {
 
                 println("Actividad: '$activityName' a punto de empezar en $minutesRemaining minutos")
 
-                participants.forEach { username ->
-                    val message = "La actividad '$activityName' empieza en $minutesRemaining minutos."
+                val message = "La actividad '$activityName' empieza en $minutesRemaining minutos."
 
-                    // WebSocket notification
+                participants.forEach { username ->
+                    // Siempre enviar notificación en tiempo real
                     webSocketManager.notifyRealTimeEvent(
                         username = username,
                         message = message,
                         type = "ACTIVITY_REMINDER"
                     )
 
-                    // FCM push notification
+                    // Intentar enviar notificación push si hay token FCM
                     try {
-                        val fcmToken = usuarioRepository.getFCMToken(username)
-                        if (fcmToken != null) {
+                        val userToken = usuarioRepository.getFCMToken(username)
+                        if (!userToken.isNullOrEmpty()) {
                             fcmManager.sendNotification(
-                                token = fcmToken,
-                                title = "Recordatorio de Actividad",
+                                token = userToken,
+                                title = "Recordatorio de actividad",
                                 body = message
                             )
-                            println("✅ Notificación push de actividad enviada a $username")
                         }
                     } catch (e: Exception) {
-                        println("❌ Error enviando notificación push de actividad: ${e.message}")
+                        println("Error al enviar notificación FCM: ${e.message}")
                     }
                 }
 
@@ -121,7 +120,6 @@ object NotificationScheduler {
             println("Notas a notificar: ${notesToNotify.size}")
 
             notesToNotify.forEach { nota ->
-                // Calcular minutos restantes
                 val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                 val reminderDateTime = nota.fechaCreacion.atTime(nota.horaRecordatorio)
                 val nowDateTime = now.date.atTime(now.time)
@@ -138,28 +136,25 @@ object NotificationScheduler {
                     "Recordatorio: ${nota.comentario}"
                 }
 
-                // Enviar notificación WebSocket
+                // Siempre enviar notificación en tiempo real
                 webSocketManager.notifyRealTimeEvent(
                     username = nota.username,
                     message = message,
                     type = "NOTE_REMINDER"
                 )
 
-                // Enviar notificación push via FCM
+                // Intentar enviar notificación push si hay token FCM
                 try {
-                    val fcmToken = usuarioRepository.getFCMToken(nota.username)
-                    if (fcmToken != null) {
+                    val userToken = usuarioRepository.getFCMToken(nota.username)
+                    if (!userToken.isNullOrEmpty()) {
                         fcmManager.sendNotification(
-                            token = fcmToken,
-                            title = "Recordatorio de Nota",
+                            token = userToken,
+                            title = "Recordatorio de nota",
                             body = message
                         )
-                        println("✅ Notificación push enviada a ${nota.username}")
-                    } else {
-                        println("⚠️ Usuario ${nota.username} no tiene token FCM registrado")
                     }
                 } catch (e: Exception) {
-                    println("❌ Error enviando notificación push: ${e.message}")
+                    println("Error al enviar notificación FCM: ${e.message}")
                 }
 
                 nota.id?.let { notifiedNotes.add(it) }
