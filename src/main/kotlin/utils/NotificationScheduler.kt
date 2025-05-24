@@ -80,7 +80,7 @@ object NotificationScheduler {
 
                 println("Actividad: '$activityName' a punto de empezar en $minutesRemaining minutos")
 
-                val message = "La actividad '$activityName' empieza en $minutesRemaining minutos."
+                val message = "$activityName,$minutesRemaining"
 
                 participants.forEach { username ->
                     // Siempre enviar notificación en tiempo real
@@ -131,9 +131,9 @@ object NotificationScheduler {
                 } else 0
 
                 val message = if (minutesRemaining > 0) {
-                    "Recordatorio en $minutesRemaining minutos: ${nota.comentario}"
+                    "$minutesRemaining,${nota.comentario}"
                 } else {
-                    "Recordatorio: ${nota.comentario}"
+                    "${nota.comentario}"
                 }
 
                 // Siempre enviar notificación en tiempo real

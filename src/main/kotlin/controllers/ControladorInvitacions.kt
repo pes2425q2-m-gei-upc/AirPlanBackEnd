@@ -27,7 +27,7 @@ class ControladorInvitacions(
 
         webSocketManager.notifyRealTimeEvent(
             username = usDestinatari,
-            message = "Tienes una nueva invitación para la actividad con ID: $idAct de $usAnfitrio.",
+            message = "$idAct,$usAnfitrio",
             clientId = null,
             type = "INVITACIONS"
         )
