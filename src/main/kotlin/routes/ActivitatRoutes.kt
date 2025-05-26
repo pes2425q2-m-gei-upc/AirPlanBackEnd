@@ -335,13 +335,10 @@ fun Route.activitatRoutes() {
                 call.respond(HttpStatusCode.OK, activitatsRecomanades)
             } catch (e: Exception) {
                 when (e) {
-                    is NumberFormatException -> {
-                        call.respond(HttpStatusCode.BadRequest, e.message.toString())
-                    }
                     is NoSuchElementException -> {
                         call.respond(HttpStatusCode.ServiceUnavailable, e.message.toString())
                     }
-                    else -> call.respond(HttpStatusCode.InternalServerError, "Error en processar la petició")
+                    else -> call.respond(HttpStatusCode.InternalServerError, e.message.toString())
                 }
             }
         }
