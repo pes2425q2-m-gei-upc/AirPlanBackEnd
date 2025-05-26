@@ -1,5 +1,5 @@
 # Imatge base amb Java 17
-FROM openjdk:17
+FROM openjdk:20
 
 # Defineix el directori de treball
 WORKDIR /app

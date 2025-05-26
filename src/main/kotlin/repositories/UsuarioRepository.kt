@@ -11,18 +11,24 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class UsuarioRepository {
     fun agregarUsuario(usuario: Usuario): Boolean {
-        return transaction {
-            UsuarioTable.insert {
-                it[username] = usuario.username
-                it[nom] = usuario.nom
-                it[email] = usuario.email
-                it[idioma] = usuario.idioma.toString()
-                it[sesionIniciada] = usuario.sesionIniciada
-                it[isAdmin] = usuario.isAdmin
-                it[esExtern] = usuario.esExtern
-            }.insertedCount > 0
+        try {
+            return transaction {
+                UsuarioTable.insert {
+                    it[username] = usuario.username
+                    it[nom] = usuario.nom
+                    it[email] = usuario.email
+                    it[idioma] = usuario.idioma.toString()
+                    it[sesionIniciada] = usuario.sesionIniciada
+                    it[isAdmin] = usuario.isAdmin
+                    it[esExtern] = usuario.esExtern
+                }.insertedCount > 0
+            }
+        } catch (e: Exception) {
+            println("Error al agregar usuario: ${e.message}")
+            return false
         }
     }
+
     fun eliminarUsuario(email: String): Boolean {
         return transaction {
             val filasEliminadas = UsuarioTable.deleteWhere { UsuarioTable.email eq email }
