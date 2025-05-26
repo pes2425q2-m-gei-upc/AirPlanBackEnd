@@ -90,16 +90,6 @@ fun Route.usuarioRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Cal proporcionar un email")
             }
         }
-
-        post("/register-token") {
-            val request = call.receive<TokenRegistration>()
-            try {
-                usuarioController.updateFCMToken(request.username, request.token)
-                call.respond(HttpStatusCode.OK, "Token registrado correctamente")
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, "Error al registrar el token")
-            }
-        }
         
         post("/login") {
             try {

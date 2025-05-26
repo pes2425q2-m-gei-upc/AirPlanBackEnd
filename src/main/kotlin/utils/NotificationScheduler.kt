@@ -1,6 +1,5 @@
 package org.example.utils
 
-import org.example.repositories.NotaRepository
 import kotlinx.coroutines.*
 import kotlinx.datetime.*
 import org.example.database.ActivitatTable
@@ -9,10 +8,8 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.repositories.NotificationRepository
 import org.example.websocket.WebSocketManager
-import org.example.repositories.UsuarioRepository
+import org.example.repositories.NotaRepository
 
-val fcmManager = FCMManager()
-val usuarioRepository = UsuarioRepository()
 val notifiedActivities = mutableSetOf<Int>()
 val notifiedNotes = mutableSetOf<Int>()
 val notificationRepository = NotificationRepository()
@@ -80,29 +77,13 @@ object NotificationScheduler {
 
                 println("Actividad: '$activityName' a punto de empezar en $minutesRemaining minutos")
 
-                val message = "$activityName,$minutesRemaining"
-
+                val message = "La actividad '$activityName' empieza en $minutesRemaining minutos."
                 participants.forEach { username ->
-                    // Siempre enviar notificación en tiempo real
                     webSocketManager.notifyRealTimeEvent(
                         username = username,
                         message = message,
                         type = "ACTIVITY_REMINDER"
                     )
-
-                    // Intentar enviar notificación push si hay token FCM
-                    try {
-                        val userToken = usuarioRepository.getFCMToken(username)
-                        if (!userToken.isNullOrEmpty()) {
-                            fcmManager.sendNotification(
-                                token = userToken,
-                                title = "Recordatorio de actividad",
-                                body = message
-                            )
-                        }
-                    } catch (e: Exception) {
-                        println("Error al enviar notificación FCM: ${e.message}")
-                    }
                 }
 
                 notifiedActivities.add(activityId)
@@ -120,6 +101,7 @@ object NotificationScheduler {
             println("Notas a notificar: ${notesToNotify.size}")
 
             notesToNotify.forEach { nota ->
+                // Calcular minutos restantes
                 val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                 val reminderDateTime = nota.fechaCreacion.atTime(nota.horaRecordatorio)
                 val nowDateTime = now.date.atTime(now.time)
@@ -131,32 +113,16 @@ object NotificationScheduler {
                 } else 0
 
                 val message = if (minutesRemaining > 0) {
-                    "$minutesRemaining,${nota.comentario}"
+                    "Recordatorio en $minutesRemaining minutos: ${nota.comentario}"
                 } else {
-                    "${nota.comentario}"
+                    "Recordatorio: ${nota.comentario}"
                 }
 
-                // Siempre enviar notificación en tiempo real
                 webSocketManager.notifyRealTimeEvent(
                     username = nota.username,
                     message = message,
                     type = "NOTE_REMINDER"
                 )
-
-                // Intentar enviar notificación push si hay token FCM
-                try {
-                    val userToken = usuarioRepository.getFCMToken(nota.username)
-                    if (!userToken.isNullOrEmpty()) {
-                        fcmManager.sendNotification(
-                            token = userToken,
-                            title = "Recordatorio de nota",
-                            body = message
-                        )
-                    }
-                } catch (e: Exception) {
-                    println("Error al enviar notificación FCM: ${e.message}")
-                }
-
                 nota.id?.let { notifiedNotes.add(it) }
             }
         }

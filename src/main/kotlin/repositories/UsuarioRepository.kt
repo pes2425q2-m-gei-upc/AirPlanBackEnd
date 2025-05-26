@@ -29,23 +29,6 @@ class UsuarioRepository {
         }
     }
 
-    fun updateFCMToken(username: String, token: String) {
-        transaction {
-            UsuarioTable.update({ UsuarioTable.username eq username }) {
-                it[fcmToken] = token
-            }
-        }
-    }
-
-    fun getFCMToken(username: String): String? {
-        return transaction {
-            UsuarioTable
-                .select { UsuarioTable.username eq username }
-                .map { it[UsuarioTable.fcmToken] }
-                .firstOrNull()
-        }
-    }
-
     fun obtenerUsuarioPorEmail(email: String): Usuario? {
         return transaction {
             UsuarioTable
