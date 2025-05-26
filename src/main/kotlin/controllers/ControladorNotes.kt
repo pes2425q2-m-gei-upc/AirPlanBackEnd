@@ -20,4 +20,8 @@ class ControladorNotes(private val notaRepository: NotaRepository) {
     fun editarNota(id: Int, novaNota: Nota): Boolean {
         return notaRepository.editarNota(id, novaNota)
     }
+
+    fun obtenirNotaPerId(id: Int): Nota? {
+        return notaRepository.obtenirNotaPerId(id)
+    }
 }

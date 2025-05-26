@@ -475,3 +475,8 @@ fun Route.usuarioRoutes() {
         }
     }
 }
+
+data class TokenRegistration(
+    val username: String,
+    val token: String
+)

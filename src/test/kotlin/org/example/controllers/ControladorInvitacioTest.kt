@@ -1,11 +1,13 @@
 package org.example.controllers
 
+import kotlinx.coroutines.test.runTest
 import org.example.models.Invitacio
 import org.example.models.ParticipantsActivitats
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.repositories.UsuarioRepository
 import org.example.utils.webSocketManager
+import org.example.websocket.WebSocketManager
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -17,6 +19,7 @@ class ControladorInvitacioTest {
     private lateinit var participantsActivitatsRepository: ParticipantsActivitatsRepository
     private lateinit var invitacioRepository: InvitacioRepository
     private lateinit var usuarioRepository: UsuarioRepository
+    private lateinit var webSocketManager: WebSocketManager
     private lateinit var controladorInvitacions: ControladorInvitacions
 
     @BeforeEach
@@ -24,6 +27,7 @@ class ControladorInvitacioTest {
         participantsActivitatsRepository = mock()
         invitacioRepository = mock()
         usuarioRepository = mock()
+        webSocketManager = mock()
         controladorInvitacions = ControladorInvitacions(
             participantsActivitatsRepository,
             invitacioRepository,
@@ -34,7 +38,7 @@ class ControladorInvitacioTest {
 
     @Test
     @DisplayName("Test crear invitació")
-    fun testCrearInvitacio() {
+    fun testCrearInvitacio() = runTest {
         whenever(usuarioRepository.existeUsuario("destinatariUser")).thenReturn(true)
 
         val result = controladorInvitacions.crearInvitacio(1, "anfitrioUser", "destinatariUser")
@@ -45,7 +49,7 @@ class ControladorInvitacioTest {
 
     @Test
     @DisplayName("Test crear invitació con usuario inexistente")
-    fun testCrearInvitacioUsuarioInexistente() {
+    fun testCrearInvitacioUsuarioInexistente() = runTest {
         whenever(usuarioRepository.existeUsuario("destinatariUser")).thenReturn(false)
 
         val result = controladorInvitacions.crearInvitacio(1, "anfitrioUser", "destinatariUser")
@@ -56,7 +60,7 @@ class ControladorInvitacioTest {
 
     @Test
     @DisplayName("Test aceptar invitación")
-    fun testAcceptarInvitacio() {
+    fun testAcceptarInvitacio() = runTest {
         val invitacio = Invitacio(1, "anfitrioUser", "destinatariUser")
         whenever(invitacioRepository.eliminarInvitacio(invitacio)).thenReturn(true)
         whenever(participantsActivitatsRepository.afegirParticipant(any())).thenReturn(true)
@@ -69,7 +73,7 @@ class ControladorInvitacioTest {
 
     @Test
     @DisplayName("Test rechazar invitación")
-    fun testRebutjarInvitacio() {
+    fun testRebutjarInvitacio() = runTest {
         val invitacio = Invitacio(1, "anfitrioUser", "destinatariUser")
         whenever(invitacioRepository.eliminarInvitacio(invitacio)).thenReturn(true)
 
@@ -81,7 +85,7 @@ class ControladorInvitacioTest {
 
     @Test
     @DisplayName("Test listar invitaciones")
-    fun testListarInvitacions() {
+    fun testListarInvitacions() = runTest {
         val invitacio = Invitacio(1, "anfitrioUser", "destinatariUser")
         whenever(invitacioRepository.obtenirTotesInvitacions()).thenReturn(listOf(invitacio))
 

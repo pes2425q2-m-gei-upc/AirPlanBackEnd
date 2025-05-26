@@ -267,7 +267,7 @@ private suspend fun handleRegularMessage(
     repo.sendMessage(missatgeObj) { msg ->
         webSocketManager.notifyRealTimeEvent(
             username = msg.usernameReceiver,
-            message = "Tienes un nuevo mensaje de ${msg.usernameSender}",
+            message = "${msg.usernameSender}",
             clientId = null,
             type = "MESSAGE"
         )

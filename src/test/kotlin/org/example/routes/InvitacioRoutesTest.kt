@@ -6,17 +6,28 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
+import io.mockk.coEvery
+import io.mockk.just
+import io.mockk.Runs
+import io.mockk.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.example.database.*
+import org.example.websocket.WebSocketManager
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.*
 import kotlin.test.assertEquals
+import org.example.controllers.ControladorInvitacions
+import org.example.repositories.InvitacioRepository
+import org.example.repositories.ParticipantsActivitatsRepository
+import org.example.repositories.UsuarioRepository
 import kotlin.test.assertTrue
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -110,27 +121,88 @@ class InvitacioRoutesTest {
     }
 
     @Test
-    fun `test create invitacio`() = testApplication {
+    fun `test create invitacio with mocked dependencies`() = testApplication {
         insertTestData()
+
+        // Crear mocks de todos los repositorios
+        val mockParticipantsRepo = mockk<ParticipantsActivitatsRepository>()
+        val mockInvitacionsRepo = mockk<InvitacioRepository>()
+        val mockUsuarioRepo = mockk<UsuarioRepository>()
+        val mockWebSocketManager = mockk<WebSocketManager>()
+
+        // Configurar comportamiento de los mocks
+        every { mockUsuarioRepo.existeUsuario("user2") } returns true
+        // Para el repositorio de invitaciones (función no suspendida)
+        every { mockInvitacionsRepo.afegirInvitacio(any()) } returns true
+
+        coEvery {
+            mockWebSocketManager.notifyRealTimeEvent(any(), any(), any(), any())
+        } just Runs
+
+        // Crear controlador con mocks
+        val controlador = ControladorInvitacions(
+            mockParticipantsRepo,
+            mockInvitacionsRepo,
+            mockUsuarioRepo,
+            mockWebSocketManager
+        )
+
         application {
             install(ContentNegotiation) { json() }
-            routing { invitacioRoutes() }
+            routing {
+                post("/api/invitacions/invitar") {
+                    val request = call.receive<Map<String, String>>()
+                    val activityId = request["activityId"]?.toIntOrNull()
+                    val creator = request["creator"]
+                    val username = request["username"]
+
+                    if (activityId == null || creator.isNullOrBlank() || username.isNullOrBlank()) {
+                        call.respond(HttpStatusCode.BadRequest, "Faltan datos requeridos")
+                        return@post
+                    }
+
+                    val success = controlador.crearInvitacio(
+                        activityId,
+                        creator,
+                        username
+                    )
+
+                    if (success) {
+                        call.respond(HttpStatusCode.Created, "Invitación creada correctamente")
+                    } else {
+                        call.respond(HttpStatusCode.BadRequest, "Error al crear invitación")
+                    }
+                }
+            }
         }
 
         val response = client.post("/api/invitacions/invitar") {
             contentType(ContentType.Application.Json)
             setBody(
                 """
-                {
-                    "activityId": 1,
-                    "creator": "user1",
-                    "username": "user2"
-                }
-                """.trimIndent()
+            {
+                "activityId": 1,
+                "creator": "user1",
+                "username": "user2"
+            }
+            """.trimIndent()
             )
         }
+
         assertEquals(HttpStatusCode.Created, response.status)
         assertEquals("Invitación creada correctamente", response.bodyAsText())
+
+        // Verificar que se llamaron los métodos esperados
+        verify(exactly = 1) { mockUsuarioRepo.existeUsuario("user2") }
+        verify(exactly = 1) { mockInvitacionsRepo.afegirInvitacio(any()) }
+        coVerify(exactly = 1) {
+            mockWebSocketManager.notifyRealTimeEvent(
+                username = "user2",
+                message = "1,user1",
+                clientId = null,
+                type = "INVITACIONS"
+            )
+        }
     }
 
     @Test

@@ -29,6 +29,7 @@ class UsuarioRepository {
             filasEliminadas > 0  // Retorna `true` si eliminó algún usuario
         }
     }
+
     fun obtenerUsuarioPorEmail(email: String): Usuario? {
         return transaction {
             UsuarioTable

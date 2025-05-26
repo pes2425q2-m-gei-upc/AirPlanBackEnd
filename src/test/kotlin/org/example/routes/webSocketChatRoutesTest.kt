@@ -450,7 +450,15 @@ class WebSocketChatRoutesTest {
                                         }
                                         
                                         // Si llega aquí, no es inapropiado
-                                        repo.sendMessage(missatgeObj)
+                                        repo.sendMessage(
+                                            missatgeObj,
+                                            notify = { message ->
+                                                val messageJson = Json.encodeToString(message)
+                                                sessionsInRoom.forEach { session ->
+                                                    session.send(Frame.Text(messageJson))
+                                                }
+                                            }
+                                        )
                                         val messageJson = Json.encodeToString(missatgeObj)
                                         sessionsInRoom.forEach { session ->
                                             session.send(Frame.Text(messageJson))

@@ -8,9 +8,12 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.repositories.NotificationRepository
 import org.example.websocket.WebSocketManager
+import org.example.repositories.NotaRepository
 
 val notifiedActivities = mutableSetOf<Int>()
+val notifiedNotes = mutableSetOf<Int>()
 val notificationRepository = NotificationRepository()
+val notaRepository = NotaRepository()
 val webSocketManager = WebSocketManager.instance
 
 object NotificationScheduler {
@@ -19,6 +22,7 @@ object NotificationScheduler {
         GlobalScope.launch {
             while (true) {
                 checkAndNotifyUpcomingActivities()
+                checkAndNotifyUpcomingNotes()
                 delay(60 * 1000L) // cada minuto
             }
         }
@@ -71,9 +75,8 @@ object NotificationScheduler {
                     activityStartTime.toJavaLocalDateTime()
                 ).toMinutes()
 
-                println("Actividad: '$activityName' a punto de empezar en $minutesRemaining minutos")
 
-                val message = "La actividad '$activityName' empieza en $minutesRemaining minutos."
+                val message = "$activityName,$minutesRemaining"
                 participants.forEach { username ->
                     webSocketManager.notifyRealTimeEvent(
                         username = username,
@@ -86,5 +89,41 @@ object NotificationScheduler {
             }
         }
     }
-}
 
+    private suspend fun checkAndNotifyUpcomingNotes() {
+        withContext(Dispatchers.IO) {
+            println("Verificando notas próximas...")
+
+            val notesToNotify = notaRepository.obtenirNotesProperes(30)
+                .filter { nota -> !notifiedNotes.contains(nota.id) }
+
+            println("Notas a notificar: ${notesToNotify.size}")
+
+            notesToNotify.forEach { nota ->
+                // Calcular minutos restantes
+                val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                val reminderDateTime = nota.fechaCreacion.atTime(nota.horaRecordatorio)
+                val nowDateTime = now.date.atTime(now.time)
+
+                val minutesRemaining = if (reminderDateTime > nowDateTime) {
+                    val duration = reminderDateTime.toInstant(TimeZone.currentSystemDefault()) -
+                            nowDateTime.toInstant(TimeZone.currentSystemDefault())
+                    duration.inWholeMinutes
+                } else 0
+
+                val message = if (minutesRemaining > 0) {
+                    "Recordatorio en $minutesRemaining minutos: ${nota.comentario}"
+                } else {
+                    "Recordatorio: ${nota.comentario}"
+                }
+
+                webSocketManager.notifyRealTimeEvent(
+                    username = nota.username,
+                    message = message,
+                    type = "NOTE_REMINDER"
+                )
+                nota.id?.let { notifiedNotes.add(it) }
+            }
+        }
+    }
+}

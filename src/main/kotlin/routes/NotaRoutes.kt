@@ -24,6 +24,26 @@ fun Route.notaRoutes() {
                 call.respond(HttpStatusCode.BadRequest, "Username is required")
             }
         }
+        // Get a specific note by ID
+        get("id/{id}") {
+            val id = call.parameters["id"]?.toIntOrNull()
+
+            if (id != null) {
+                try {
+                    val nota = controladorNotes.obtenirNotaPerId(id)
+                    if (nota != null) {
+                        call.respond(HttpStatusCode.OK, nota)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, "Nota no encontrada")
+                    }
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.InternalServerError, "Error al obtener la nota: ${e.message}")
+                }
+            } else {
+                call.respond(HttpStatusCode.BadRequest, "ID inválido")
+            }
+        }
+
 
         // Add a new note
         post {

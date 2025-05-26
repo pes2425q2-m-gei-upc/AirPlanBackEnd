@@ -65,15 +65,10 @@ class MissatgeRepositoryTest {
             isEdited = false
         )
 
-        val wasSaved = missatgeRepository.sendMessage(missatge)
+        val wasSaved = missatgeRepository.sendMessage(missatge) { _ -> }
 
-        // Verifica que la función devolvió true
         assertTrue(wasSaved)
-
-        // Ahora recuperamos los mensajes para comprobar que efectivamente se guardó
         val messages = missatgeRepository.getMessagesBetweenUsers("user1", "user2")
-
-        // Verificamos que al menos haya 1 mensaje y que coincida con lo que enviamos
         assertEquals(1, messages.size)
         val savedMessage = messages.first()
         assertEquals("user1", savedMessage.usernameSender)
@@ -99,8 +94,8 @@ class MissatgeRepositoryTest {
             isEdited = false
         )
 
-        missatgeRepository.sendMessage(missatge1)
-        missatgeRepository.sendMessage(missatge2)
+        missatgeRepository.sendMessage(missatge1) { _ -> }
+        missatgeRepository.sendMessage(missatge2) { _ -> }
 
         val messages = missatgeRepository.getMessagesBetweenUsers("user1", "user2")
 
@@ -127,18 +122,18 @@ class MissatgeRepositoryTest {
             isEdited = false
         )
 
-        missatgeRepository.sendMessage(missatge1)
-        missatgeRepository.sendMessage(missatge2)
+        missatgeRepository.sendMessage(missatge1) { _ -> }
+        missatgeRepository.sendMessage(missatge2) { _ -> }
 
         val chats = missatgeRepository.getLatestChatsForUser("user1")
 
         assertEquals(2, chats.size)
         assertTrue(chats.any { it.usernameSender == "user1" || it.usernameReceiver == "user1" })
     }
+
     @Test
     @DisplayName("Test editar un missatge")
     fun testEditMessage() = runBlocking {
-        // Create and save original message
         val originalMessage = Missatge(
             usernameSender = "user1",
             usernameReceiver = "user2",
@@ -147,22 +142,17 @@ class MissatgeRepositoryTest {
             isEdited = false
         )
 
-        missatgeRepository.sendMessage(originalMessage)
+        missatgeRepository.sendMessage(originalMessage) { _ -> }
 
-        // Edit the message
         val timestampStr = "2025-05-01T12:00:00"
         val newContent = "Edited message"
         val editSuccessful = missatgeRepository.editMessage("user1", timestampStr, newContent)
 
-        // Verify the edit was successful
         assertTrue(editSuccessful)
-
-        // Check the updated message content
         val messages = missatgeRepository.getMessagesBetweenUsers("user1", "user2")
         assertEquals(1, messages.size)
         val editedMessage = messages.first()
         assertEquals(newContent, editedMessage.missatge)
         assertTrue(editedMessage.isEdited)
     }
-
 }
