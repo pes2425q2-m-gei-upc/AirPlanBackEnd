@@ -1,7 +1,6 @@
 package org.example.controllers
 
 import kotlinx.datetime.LocalDateTime
-import kotlinx.serialization.json.Json
 import org.example.models.*
 import org.example.repositories.*
 import repositories.ActivitatRepository
@@ -55,7 +54,14 @@ class ControladorActivitatTest {
         whenever(activitatRepository.afegirActivitat(any())).thenReturn(1)
         whenever(participantsActivitatsRepository.afegirParticipant(any())).thenReturn(true)
 
-        controladorActivitat.afegirActivitat("Excursió", "Excursió a la muntanya", ubicacio, dataInici, dataFi, creador)
+        controladorActivitat.afegirActivitat(
+            "Excursió",
+            "Excursió a la muntanya",
+            ubicacio,
+            dataInici,
+            dataFi,
+            creador
+        )
 
         verify(activitatRepository).afegirActivitat(any())
         verify(participantsActivitatsRepository).afegirParticipant(any())

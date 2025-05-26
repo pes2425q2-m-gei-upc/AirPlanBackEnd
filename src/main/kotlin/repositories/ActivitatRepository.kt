@@ -8,8 +8,6 @@ import org.example.models.Activitat
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.notInList
-import java.sql.Timestamp
 import kotlinx.datetime.LocalDate
 
 
@@ -38,21 +36,25 @@ class ActivitatRepository {
     }
 
     fun obtenirActivitats(): List<Activitat> {
-        return transaction {
-            ActivitatTable.selectAll().map { row ->
-                Activitat(
-                    id = row[ActivitatTable.id_activitat],
-                    nom = row[ActivitatTable.nom],
-                    descripcio = row[ActivitatTable.descripcio],
-                    ubicacio = Localitzacio(
-                        latitud = row[ActivitatTable.latitud],
-                        longitud = row[ActivitatTable.longitud]
-                    ),
-                    dataInici = row[ActivitatTable.dataInici],
-                    dataFi = row[ActivitatTable.dataFi],
-                    creador = row[ActivitatTable.username_creador]
-                )
+        return try {
+            transaction {
+                ActivitatTable.selectAll().map { row ->
+                    Activitat(
+                        id = row[ActivitatTable.id_activitat],
+                        nom = row[ActivitatTable.nom],
+                        descripcio = row[ActivitatTable.descripcio],
+                        ubicacio = Localitzacio(
+                            latitud = row[ActivitatTable.latitud],
+                            longitud = row[ActivitatTable.longitud]
+                        ),
+                        dataInici = row[ActivitatTable.dataInici],
+                        dataFi = row[ActivitatTable.dataFi],
+                        creador = row[ActivitatTable.username_creador]
+                    )
+                }
             }
+        } catch (e: Exception) {
+            throw Exception("Error while retrieving activities: ${e.message}") // Rethrow
         }
     }
 
@@ -65,6 +67,19 @@ class ActivitatRepository {
             }
         } catch (e: Exception) {
             println("Error al eliminar actividad: ${e.message}")
+            false
+        }
+    }
+
+    fun eliminarActivitatsUsuari(username: String): Boolean {
+        return try {
+            transaction {
+                // Eliminar directamente y verificar filas afectadas
+                val filasEliminadas = ActivitatTable.deleteWhere { ActivitatTable.username_creador eq username }
+                filasEliminadas > 0
+            }
+        } catch (e: Exception) {
+            println("Error al eliminar actividades del usuario: ${e.message}")
             false
         }
     }
@@ -113,6 +128,25 @@ class ActivitatRepository {
                 )
             }.firstOrNull()
         } ?: throw Exception("Activitat no trobada")
+    }
+
+    fun getActivitatPerNom(nom: String): List<Activitat> {
+        return transaction {
+            ActivitatTable.select { ActivitatTable.nom eq nom }.map { row ->
+                Activitat(
+                    id = row[ActivitatTable.id_activitat],
+                    nom = row[ActivitatTable.nom],
+                    descripcio = row[ActivitatTable.descripcio],
+                    ubicacio = Localitzacio(
+                        latitud = row[ActivitatTable.latitud],
+                        longitud = row[ActivitatTable.longitud]
+                    ),
+                    dataInici = row[ActivitatTable.dataInici],
+                    dataFi = row[ActivitatTable.dataFi],
+                    creador = row[ActivitatTable.username_creador]
+                )
+            }
+        }
     }
 
     /**
@@ -204,6 +238,25 @@ class ActivitatRepository {
                         creador = row[ActivitatTable.username_creador]
                     )
                 }
+        }
+    }
+
+    fun obtenirActivitatsPerCreador(username: String): List<Activitat> {
+        return transaction {
+            ActivitatTable.select { ActivitatTable.username_creador eq username }.map { row ->
+                Activitat(
+                    id = row[ActivitatTable.id_activitat],
+                    nom = row[ActivitatTable.nom],
+                    descripcio = row[ActivitatTable.descripcio],
+                    ubicacio = Localitzacio(
+                        latitud = row[ActivitatTable.latitud],
+                        longitud = row[ActivitatTable.longitud]
+                    ),
+                    dataInici = row[ActivitatTable.dataInici],
+                    dataFi = row[ActivitatTable.dataFi],
+                    creador = row[ActivitatTable.username_creador]
+                )
+            }
         }
     }
 }

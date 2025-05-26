@@ -11,6 +11,7 @@ open class Usuario(
     var idioma: Idioma,
     var sesionIniciada: Boolean,
     var isAdmin: Boolean,
+    var esExtern: Boolean,
     val activitats: MutableList<Activitat> = mutableListOf()
 ) {
 

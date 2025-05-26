@@ -71,7 +71,8 @@ class UsuarioRepositoryTest {
             email = testEmail,
             idioma = Idioma.Catala,
             sesionIniciada = false,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
         
         // Agregar usuario a la base de datos usando la conexión específica
@@ -107,7 +108,8 @@ class UsuarioRepositoryTest {
             email = testEmail,
             idioma = Idioma.Catala,
             sesionIniciada = false,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
         
         transaction(database) {
@@ -138,7 +140,8 @@ class UsuarioRepositoryTest {
             email = testEmail,
             idioma = Idioma.Catala,
             sesionIniciada = false,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
         
         transaction(database) {
@@ -169,7 +172,8 @@ class UsuarioRepositoryTest {
             email = testEmail,
             idioma = Idioma.Catala,
             sesionIniciada = false,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
         
         transaction(database) {
@@ -204,7 +208,8 @@ class UsuarioRepositoryTest {
             email = testEmail,
             idioma = Idioma.Catala,
             sesionIniciada = true,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
         
         transaction(database) {
@@ -242,7 +247,8 @@ class UsuarioRepositoryTest {
             email = testEmail,
             idioma = Idioma.Catala,
             sesionIniciada = false,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
         
         transaction(database) {
@@ -286,7 +292,8 @@ class UsuarioRepositoryTest {
             email = testEmail,
             idioma = Idioma.Catala,
             sesionIniciada = false,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
         
         transaction(database) {
@@ -326,7 +333,8 @@ class UsuarioRepositoryTest {
             email = testEmail,
             idioma = Idioma.Catala,
             sesionIniciada = false,
-            isAdmin = false
+            isAdmin = false,
+            esExtern = false
         )
         
         transaction(database) {

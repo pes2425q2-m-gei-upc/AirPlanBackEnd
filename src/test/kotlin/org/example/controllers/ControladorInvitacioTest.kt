@@ -6,6 +6,7 @@ import org.example.models.ParticipantsActivitats
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.repositories.UsuarioRepository
+import org.example.utils.webSocketManager
 import org.example.websocket.WebSocketManager
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach

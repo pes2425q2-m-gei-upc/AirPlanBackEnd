@@ -15,8 +15,6 @@ import io.mockk.just
 import io.mockk.Runs
 import io.mockk.*
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.example.database.*
 import org.example.websocket.WebSocketManager
@@ -82,6 +80,7 @@ class InvitacioRoutesTest {
                 it[idioma] = "en"
                 it[sesionIniciada] = false
                 it[isAdmin] = false
+                it[esExtern] = false
                 it[photourl] = null
             }
             UsuarioTable.insert {
@@ -91,6 +90,7 @@ class InvitacioRoutesTest {
                 it[idioma] = "en"
                 it[sesionIniciada] = false
                 it[isAdmin] = false
+                it[esExtern] = false
                 it[photourl] = null
             }
             ActivitatTable.insert {
