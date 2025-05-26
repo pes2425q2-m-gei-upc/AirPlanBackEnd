@@ -75,9 +75,8 @@ object NotificationScheduler {
                     activityStartTime.toJavaLocalDateTime()
                 ).toMinutes()
 
-                println("Actividad: '$activityName' a punto de empezar en $minutesRemaining minutos")
 
-                val message = "La actividad '$activityName' empieza en $minutesRemaining minutos."
+                val message = "$activityName,$minutesRemaining"
                 participants.forEach { username ->
                     webSocketManager.notifyRealTimeEvent(
                         username = username,
