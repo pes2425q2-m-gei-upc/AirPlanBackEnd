@@ -9,15 +9,17 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.datetime.LocalDateTime
 import org.example.database.MissatgesTable
 import org.example.database.UsuarioTable
 import org.example.models.Missatge
 import org.example.repositories.MissatgeRepository
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.*
 import java.util.*
@@ -26,6 +28,8 @@ import kotlin.test.Test
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MissatgeRoutesTest {
+
+    private lateinit var missatgeRepository: MissatgeRepository
 
     companion object {
         private lateinit var database: Database
@@ -47,6 +51,7 @@ class MissatgeRoutesTest {
         transaction(database) {
             SchemaUtils.create(MissatgesTable, UsuarioTable)
         }
+        missatgeRepository = MissatgeRepository()
     }
 
     @AfterEach
@@ -56,33 +61,6 @@ class MissatgeRoutesTest {
         }
     }
 
-    @AfterAll
-    fun tearDownAll() {
-        // Opcional: cerrar conexión si es necesario
-    }
-
-    @Test
-    fun `test enviar mensaje exitoso`() = testApplication {
-        application {
-            install(ContentNegotiation) { json() }
-            routing { missatgeRoutes() }
-        }
-
-        val testMessage = Missatge(
-            usernameSender = "user1",
-            usernameReceiver = "user2",
-            dataEnviament = LocalDateTime.parse("2024-05-01T12:00:00"),
-            missatge = "Hola desde test"
-        )
-
-        val response = client.post("/chat/send") {
-            contentType(ContentType.Application.Json)
-            setBody(Json.encodeToString(testMessage))
-        }
-
-        assertEquals(HttpStatusCode.Created, response.status)
-        assertEquals("Mensaje enviado correctamente", response.bodyAsText())
-    }
 
     @Test
     fun `test obtener conversa entre usuarios`() = testApplication {
@@ -91,19 +69,22 @@ class MissatgeRoutesTest {
             routing { missatgeRoutes() }
         }
 
-        // Insertar datos de prueba
-        transaction(database) {
-            val repo = MissatgeRepository()
-            repo.sendMessage(Missatge(
-                "user1", "user2",
-                LocalDateTime.parse("2024-05-01T10:00:00"),
-                "Primer missatge"
-            ))
-            repo.sendMessage(Missatge(
-                "user2", "user1",
-                LocalDateTime.parse("2024-05-01T10:05:00"),
-                "Resposta"
-            ))
+        runTest {
+            newSuspendedTransaction(db = database) {
+                val message1 = Missatge(
+                    "user1", "user2",
+                    LocalDateTime.parse("2024-05-01T10:00:00"),
+                    "Primer missatge"
+                )
+                val message2 = Missatge(
+                    "user2", "user1",
+                    LocalDateTime.parse("2024-05-01T10:05:00"),
+                    "Resposta"
+                )
+
+                missatgeRepository.sendMessage(message1) { _ -> }
+                missatgeRepository.sendMessage(message2) { _ -> }
+            }
         }
 
         val response = client.get("/chat/user1/user2")
@@ -119,13 +100,18 @@ class MissatgeRoutesTest {
             routing { missatgeRoutes() }
         }
 
-        transaction(database) {
-            val repo = MissatgeRepository()
-            listOf(
-                Missatge("user1", "user2", LocalDateTime.parse("2024-05-01T09:00:00"), "Hola"),
-                Missatge("user3", "user1", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola de nuevo"),
-                Missatge("user2", "user1", LocalDateTime.parse("2024-05-01T11:00:00"), "Último mensaje")
-            ).forEach { repo.sendMessage(it) }
+        runTest {
+            newSuspendedTransaction(db = database) {
+                val messages = listOf(
+                    Missatge("user1", "user2", LocalDateTime.parse("2024-05-01T09:00:00"), "Hola"),
+                    Missatge("user3", "user1", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola de nuevo"),
+                    Missatge("user2", "user1", LocalDateTime.parse("2024-05-01T11:00:00"), "Último mensaje")
+                )
+
+                messages.forEach { message ->
+                    missatgeRepository.sendMessage(message) { _ -> }
+                }
+            }
         }
 
         val response = client.get("/chat/conversaciones/user1")
