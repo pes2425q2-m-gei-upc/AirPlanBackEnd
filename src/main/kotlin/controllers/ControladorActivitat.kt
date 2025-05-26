@@ -219,20 +219,23 @@ class ControladorActivitat(
     private suspend fun fetchEsdeveniments(): List<Activitat> {
         val esdeveniments = emptyList<Activitat>().toMutableList()
         val client = HttpClient(CIO)
+        try {
+            val response = client.get("http://nattech.fib.upc.edu:40380/esdeveniments/presencials")
+            val responseBody = Json.parseToJsonElement(response.bodyAsText()).jsonArray
+            for (esdeveniment in responseBody) {
+                val nom = esdeveniment.jsonObject["nom"]!!.jsonPrimitive.content
+                val descripcio = esdeveniment.jsonObject["descripcio"]!!.jsonPrimitive.content
+                val ubicacio = Localitzacio(esdeveniment.jsonObject["latitud"]!!.jsonPrimitive.content.toFloat(),esdeveniment.jsonObject["longitud"]!!.jsonPrimitive.content.toFloat())
+                val dataHora = esdeveniment.jsonObject["dataHora"]!!.jsonPrimitive.content
+                val nomClub = esdeveniment.jsonObject["nom_club"]!!.jsonPrimitive.content
 
-        val response = client.get("http://nattech.fib.upc.edu:40380/esdeveniments/presencials")
-        val responseBody = Json.parseToJsonElement(response.bodyAsText()).jsonArray
-        for (esdeveniment in responseBody) {
-            val nom = esdeveniment.jsonObject["nom"]!!.jsonPrimitive.content
-            val descripcio = esdeveniment.jsonObject["descripcio"]!!.jsonPrimitive.content
-            val ubicacio = Localitzacio(esdeveniment.jsonObject["latitud"]!!.jsonPrimitive.content.toFloat(),esdeveniment.jsonObject["longitud"]!!.jsonPrimitive.content.toFloat())
-            val dataHora = esdeveniment.jsonObject["dataHora"]!!.jsonPrimitive.content
-            val nomClub = esdeveniment.jsonObject["nom_club"]!!.jsonPrimitive.content
+                val original: LocalDateTime = LocalDateTime.parse(dataHora)
+                val oneHourLater = LocalDateTime(original.year, original.month, original.dayOfMonth, original.hour + 1, original.minute, original.second)
 
-            val original: LocalDateTime = LocalDateTime.parse(dataHora)
-            val oneHourLater = LocalDateTime(original.year, original.month, original.dayOfMonth, original.hour + 1, original.minute, original.second)
-
-            esdeveniments += Activitat(0, nom, descripcio, ubicacio, original, oneHourLater,nomClub)
+                esdeveniments += Activitat(0, nom, descripcio, ubicacio, original, oneHourLater,nomClub)
+            }
+        } catch (e: Exception) {
+            println("Error API ReadUs: ${e.message}")
         }
         client.close()
         return esdeveniments
@@ -246,7 +249,7 @@ class ControladorActivitat(
                 controladorUsuarios.crearUsuario(
                     activitat.creador,
                     activitat.creador,
-                    "",
+                    "${activitat.creador}@${randomString(5)}.com",
                     "Catala",
                     false,
                     esExtern = true,
@@ -263,6 +266,13 @@ class ControladorActivitat(
                 )
             }
         }
+    }
+
+    private fun randomString(i: Int): String {
+        val chars = ('a'..'z') + ('0'..'9')
+        return (1..i)
+            .map { chars.random() }
+            .joinToString("")
     }
 
     private fun activitatNoExisteix(activitat: Activitat): Boolean {
