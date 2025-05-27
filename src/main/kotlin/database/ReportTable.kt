@@ -21,9 +21,4 @@ object ReportTable : Table("report") {
     val timestamp = timestamp("data_hora").defaultExpression(CurrentTimestamp())
 
     override val primaryKey = PrimaryKey(id, name = "PK_Report")
-
-    /*init {
-        uniqueIndex("uq_parella_report", usuariReportador, usuariReportat)
-        check("chk_diferents_usuaris") { usuariReportador neq usuariReportat }
-    }*/
 }
