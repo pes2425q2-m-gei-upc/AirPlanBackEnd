@@ -13,7 +13,7 @@ object DatabaseFactory {
     fun init() {
         // en cas de execucció local "jdbc:postgresql://nattech.fib.upc.edu:40351/midb"
         // en cas de execucció al servidor "jdbc:postgresql://172.16.4.35:8081/midb"
-        val url = "jdbc:postgresql://nattech.fib.upc.edu:40351/midb"
+        val url = "jdbc:postgresql://172.16.4.35:8081/midb"
         val user = "airplan"
         val password = "airplan1234"
 
