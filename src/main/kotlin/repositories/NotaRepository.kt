@@ -75,10 +75,10 @@ class NotaRepository {
 
     fun obtenirNotesProperes(minutosMargen: Long): List<Nota> {
         return transaction {
-            val madridZone = TimeZone.of("Europe/Madrid")
+            val timeZone = TimeZone.currentSystemDefault()
             val now = Clock.System.now()
                 .plus(2, DateTimeUnit.HOUR)
-                .toLocalDateTime(madridZone)
+                .toLocalDateTime(timeZone)
             val currentDate = now.date
             val currentTime = now.time
 
