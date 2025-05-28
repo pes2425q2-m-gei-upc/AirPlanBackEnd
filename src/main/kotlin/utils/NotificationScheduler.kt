@@ -30,11 +30,15 @@ object NotificationScheduler {
 
     suspend fun checkAndNotifyUpcomingActivities() {
         withContext(Dispatchers.IO) {
+            val timeZone = TimeZone.currentSystemDefault()
             val nowInstant = Clock.System.now()
-            val now = nowInstant.toLocalDateTime(TimeZone.currentSystemDefault())
-            val in30MinutesInstant = nowInstant.plus(30, DateTimeUnit.MINUTE)
-            val in30Minutes = in30MinutesInstant.toLocalDateTime(TimeZone.currentSystemDefault())
+                .plus(2, DateTimeUnit.HOUR)
 
+            val in30MinInstant = nowInstant
+                .plus(30, DateTimeUnit.MINUTE)
+
+            val now = nowInstant.toLocalDateTime(timeZone)
+            val in30Minutes = in30MinInstant.toLocalDateTime(timeZone)
             println("Verificando actividades entre $now y $in30Minutes")
 
             val activitiesToNotify = transaction {
@@ -99,30 +103,36 @@ object NotificationScheduler {
 
             println("Notas a notificar: ${notesToNotify.size}")
 
+            val timeZone = TimeZone.currentSystemDefault()
+            val now = Clock.System.now()
+                .plus(2, DateTimeUnit.HOUR)
+                .toLocalDateTime(timeZone)
+
             notesToNotify.forEach { nota ->
-                // Calcular minutos restantes
-                val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
                 val reminderDateTime = nota.fechaCreacion.atTime(nota.horaRecordatorio)
                 val nowDateTime = now.date.atTime(now.time)
 
                 val minutesRemaining = if (reminderDateTime > nowDateTime) {
-                    val duration = reminderDateTime.toInstant(TimeZone.currentSystemDefault()) -
-                            nowDateTime.toInstant(TimeZone.currentSystemDefault())
+                    val duration = reminderDateTime.toInstant(timeZone) -
+                            nowDateTime.toInstant(timeZone)
                     duration.inWholeMinutes
                 } else 0
 
-                val message = if (minutesRemaining > 0) {
-                    "Recordatorio en $minutesRemaining minutos: ${nota.comentario}"
-                } else {
-                    "Recordatorio: ${nota.comentario}"
-                }
+                // Notificar solo si faltan 30 minutos o menos
+                if (minutesRemaining in 1..30) {
+                    val message = if (minutesRemaining > 1) {
+                        "Recordatorio en $minutesRemaining minutos: ${nota.comentario}"
+                    } else {
+                        "Recordatorio en 1 minuto: ${nota.comentario}"
+                    }
 
-                webSocketManager.notifyRealTimeEvent(
-                    username = nota.username,
-                    message = message,
-                    type = "NOTE_REMINDER"
-                )
-                nota.id?.let { notifiedNotes.add(it) }
+                    webSocketManager.notifyRealTimeEvent(
+                        username = nota.username,
+                        message = message,
+                        type = "NOTE_REMINDER"
+                    )
+                    nota.id?.let { notifiedNotes.add(it) }
+                }
             }
         }
     }
