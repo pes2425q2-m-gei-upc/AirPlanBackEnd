@@ -4,6 +4,9 @@ FROM openjdk:20
 # Defineix el directori de treball
 WORKDIR /app
 
+# Copy the perspective settings file into the resources directory
+COPY perspective_settings.properties .
+
 # Copia l'arxiu JAR generat al contenidor
 COPY build/libs/*.jar app.jar
 
