@@ -30,10 +30,15 @@ object NotificationScheduler {
 
     suspend fun checkAndNotifyUpcomingActivities() {
         withContext(Dispatchers.IO) {
-            val nowInstant = Clock.System.now().toLocalDateTime(TimeZone.of("Europe/Madrid"))
-            val now = LocalDateTime(nowInstant.year, nowInstant.month, nowInstant.dayOfMonth, nowInstant.hour + 2, nowInstant.minute, nowInstant.second)
-            val in30Minutes = LocalDateTime(now.year, now.month, now.dayOfMonth, now.hour, now.minute + 30, now.second)
+            val madridZone = TimeZone.of("Europe/Madrid")
+            val nowInstant = Clock.System.now()
+                .plus(2, DateTimeUnit.HOUR)
 
+            val in30MinInstant = nowInstant
+                .plus(30, DateTimeUnit.MINUTE)
+
+            val now = nowInstant.toLocalDateTime(madridZone)
+            val in30Minutes = in30MinInstant.toLocalDateTime(madridZone)
             println("Verificando actividades entre $now y $in30Minutes")
 
             val activitiesToNotify = transaction {
@@ -99,8 +104,9 @@ object NotificationScheduler {
             println("Notas a notificar: ${notesToNotify.size}")
 
             val madridZone = TimeZone.of("Europe/Madrid")
-            val nowInstant = Clock.System.now().toLocalDateTime(madridZone)
-            val now = LocalDateTime(nowInstant.year, nowInstant.month, nowInstant.dayOfMonth, nowInstant.hour + 2, nowInstant.minute, nowInstant.second)
+            val now = Clock.System.now()
+                .plus(2, DateTimeUnit.HOUR)
+                .toLocalDateTime(madridZone)
 
             notesToNotify.forEach { nota ->
                 val reminderDateTime = nota.fechaCreacion.atTime(nota.horaRecordatorio)

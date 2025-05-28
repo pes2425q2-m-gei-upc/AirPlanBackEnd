@@ -75,23 +75,27 @@ class NotaRepository {
 
     fun obtenirNotesProperes(minutosMargen: Long): List<Nota> {
         return transaction {
-            val nowInstant = Clock.System.now().toLocalDateTime(TimeZone.of("Europe/Madrid"))
-            val now = LocalDateTime(nowInstant.year, nowInstant.month, nowInstant.dayOfMonth, nowInstant.hour + 2, nowInstant.minute, nowInstant.second)
+            val madridZone = TimeZone.of("Europe/Madrid")
+            val now = Clock.System.now()
+                .plus(2, DateTimeUnit.HOUR)
+                .toLocalDateTime(madridZone)
             val currentDate = now.date
             val currentTime = now.time
 
-            // Convertir tiempo actual a minutos desde medianoche
-            val currentMinutesFromMidnight = currentTime.hour * 60 + currentTime.minute
-            val limitMinutesFromMidnight = currentMinutesFromMidnight + minutosMargen.toInt()
+            // Manejar el desbordamiento de minutos de forma segura
+            var nextHours = currentTime.hour + ((currentTime.minute + minutosMargen) / 60).toInt()
+            var nextMinutes = (currentTime.minute + minutosMargen) % 60
 
-            // Crear tiempo límite (máximo 23:59)
-            val limitHour = minOf(limitMinutesFromMidnight / 60, 23)
-            val limitMinute = if (limitHour == 23) 59 else limitMinutesFromMidnight % 60
-            val limitTime = LocalTime(limitHour, limitMinute)
+            // Si las horas se desbordan al día siguiente, limitamos a 23:59
+            if (nextHours >= 24) {
+                nextHours = 23
+                nextMinutes = 59
+            }
+
+            val limitTime = LocalTime(nextHours, nextMinutes.toInt())
 
             println("Buscando notas entre ${currentTime} y ${limitTime} para fecha ${currentDate}")
 
-            // Buscar notas de hoy que estén entre la hora actual y la hora límite
             NotesTable.select {
                 (NotesTable.fechaCreacion eq currentDate) and
                         (NotesTable.horaRecordatorio greater currentTime) and
