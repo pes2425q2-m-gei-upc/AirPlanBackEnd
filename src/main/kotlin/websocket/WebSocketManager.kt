@@ -5,7 +5,10 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.example.controllers.ControladorNotificacions
 import java.util.concurrent.ConcurrentHashMap
+import org.example.repositories.NotificationRepository
+
 
 // Clase serializable para los mensajes de notificación
 @Serializable
@@ -34,6 +37,15 @@ data class AccountDeletedNotification(
     val clientId: String
 )
 
+@Serializable
+data class RealTimeEventNotification(
+    val type: String,
+    val message: String,
+    val username: String,
+    val timestamp: Long,
+    val clientId: String? = null
+)
+
 /**
  * WebSocketManager handles connections from multiple clients and manages notifications.
  * It maintains a map of connections organized by username/email to target specific users.
@@ -45,6 +57,7 @@ class WebSocketManager {
     private val emailSessions = ConcurrentHashMap<String, MutableSet<DefaultWebSocketSession>>()
     // Store clientId associated with each session for filtering
     private val sessionClientIds = ConcurrentHashMap<DefaultWebSocketSession, String>()
+    private val notificationController = ControladorNotificacions(notificationRepository = NotificationRepository())
     
     companion object {
         // Usando solo una forma de acceder a la instancia del singleton
@@ -239,6 +252,65 @@ class WebSocketManager {
         }
         
         println("📤 Total de notificaciones de eliminación enviadas: $notificationCount")
+    }
+
+    /**
+     * Notify all devices for a specific real-time event
+     */
+    suspend fun notifyRealTimeEvent(username: String, message: String, clientId: String? = null, type: String) {
+        // Crear un objeto serializable para el evento en tiempo real
+        val eventNotification = RealTimeEventNotification(
+            type = type,
+            message = message,
+            username = username,
+            timestamp = System.currentTimeMillis(),
+        )
+
+        // Serializar el objeto de notificación a un mensaje JSON
+        val notificationMessage = Json.encodeToString(eventNotification)
+
+        notificationController.addNotification(username, eventNotification.type, eventNotification.message)
+
+        // Obtener todas las sesiones activas para este usuario
+        val usernameSessions = userSessions[username] ?: emptySet()
+        val emailSessions = emailSessions[username] ?: emptySet()
+
+        // Combinar todas las sesiones activas de este usuario
+        val allSessions = (usernameSessions + emailSessions).toSet()
+
+        // Filtrar las sesiones para excluir la que tiene el mismo clientId que el que envía el evento
+        val filteredSessions = if (clientId != null) {
+            allSessions.filter { session ->
+                val sessionClientId = sessionClientIds[session]
+                // Conservar solo las sesiones con un clientId diferente
+                sessionClientId != clientId
+            }
+        } else {
+            allSessions
+        }
+
+        println("📢 EVENT NOTIFICATION: Sending to ${filteredSessions.size} of ${allSessions.size} sessions for user: $username")
+        if (clientId != null) {
+            println("🔄 Excluding notifications to originating device with clientId: $clientId")
+        }
+
+        if (filteredSessions.isEmpty()) {
+            println("⚠️ No active sessions to notify after filtering! No notifications will be sent.")
+            return
+        }
+
+        // Enviar la notificación a todas las sesiones filtradas
+        filteredSessions.forEachIndexed { index, session ->
+            try {
+                session.send(Frame.Text(notificationMessage))
+                println("✅ Successfully sent event notification #${index+1} to session for user: $username")
+            } catch (e: ClosedSendChannelException) {
+                println("⚠️ Failed to send event notification (channel closed) to session #${index+1}: ${e.message}")
+                unregisterSession(session)
+            } catch (e: Exception) {
+                println("⚠️ Error sending event notification to session #${index+1}: ${e.message}")
+            }
+        }
     }
 
     /**

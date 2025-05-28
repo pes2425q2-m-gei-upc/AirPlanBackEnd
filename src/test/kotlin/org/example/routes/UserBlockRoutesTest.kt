@@ -21,6 +21,8 @@ import io.ktor.server.config.*
 import org.jetbrains.exposed.sql.Database
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.plugins.contentnegotiation.*
+import org.example.database.ActivitatTable
+import org.example.database.ParticipantsActivitatsTable
 
 class UserBlockRoutesTest {
 
@@ -35,8 +37,8 @@ class UserBlockRoutesTest {
         )
 
         transaction {
-            SchemaUtils.drop(UserBlockTable, UsuarioTable)
-            SchemaUtils.create(UsuarioTable, UserBlockTable)
+            SchemaUtils.drop(ParticipantsActivitatsTable,UserBlockTable, UsuarioTable)
+            SchemaUtils.create(ParticipantsActivitatsTable, UsuarioTable, UserBlockTable)
 
             // Insert mock users
             UsuarioTable.insert {

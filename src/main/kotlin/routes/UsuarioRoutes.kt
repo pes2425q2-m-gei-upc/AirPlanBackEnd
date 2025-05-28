@@ -22,6 +22,7 @@ import org.example.services.FirebaseAdminService // Importación añadida
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.UUID
+import org.example.exceptions.InappropriateContentException  // Import from exceptions package
 
 fun Route.usuarioRoutes() {
     val usuarioController = ControladorUsuarios(UsuarioRepository())
@@ -37,13 +38,22 @@ fun Route.usuarioRoutes() {
                 val usuario = kotlinx.serialization.json.Json.decodeFromString<Usuario>(receivedText)
                 println("Usuari deserialitzat: $usuario")
 
-                val resultado = usuarioController.crearUsuario(
-                    username = usuario.username,
-                    nom = usuario.nom,
-                    email = usuario.email,
-                    idioma = usuario.idioma.toString(), // Convertir Idioma a String
-                    isAdmin = usuario.isAdmin,
-                )
+                val resultado = try {
+                    usuarioController.crearUsuario(
+                        username = usuario.username,
+                        nom = usuario.nom,
+                        email = usuario.email,
+                        idioma = usuario.idioma.toString(), // Convertir Idioma a String
+                        isAdmin = usuario.isAdmin,
+                        esExtern = false
+                    )
+                } catch (e: InappropriateContentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "field" to (e.message ?: ""),
+                        "error" to "El camp conte contingut inapropiat"
+                    ))
+                    return@post
+                }
 
                 if (resultado != null) {
                     call.respond(HttpStatusCode.Created, "Usuari creat correctament")
@@ -145,29 +155,39 @@ fun Route.usuarioRoutes() {
         }
         
         put("/editar/{email}") {
-            println("Ha llegado al backend")
-            val currentEmail = call.parameters["email"]
-            println("El correo actual es: $currentEmail")
-            if (currentEmail != null) {
-                try {
-                    val updatedData = call.receive<Map<String, String>>()
-                    val nuevoNom = updatedData["nom"]
-                    val nuevoUsername = updatedData["username"]
-                    val nuevoIdioma = updatedData["idioma"]
-                    val nuevoCorreo = updatedData["correo"]
+            try {
+                val currentEmail = call.parameters["email"]
+                if (currentEmail != null) {
+                    try {
+                        val updatedData = call.receive<Map<String, String>>()
+                        val nuevoNom = updatedData["nom"]
+                        val nuevoUsername = updatedData["username"]
+                        val nuevoIdioma = updatedData["idioma"]
+                        val nuevoCorreo = updatedData["correo"]
 
-                    val resultado = usuarioController.modificarUsuario(currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo)
+                        val resultado = try {
+                            usuarioController.modificarUsuario(currentEmail, nuevoNom, nuevoUsername, nuevoIdioma, nuevoCorreo)
+                        } catch (e: InappropriateContentException) {
+                            call.respond(HttpStatusCode.BadRequest, mapOf(
+                                "field" to (e.message ?: ""),
+                                "error" to "El camp conte contingut inapropiat"
+                            ))
+                            return@put
+                        }
 
-                    if (resultado) {
-                        call.respond(HttpStatusCode.OK, "Usuario actualizado correctamente")
-                    } else {
-                        call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
+                        if (resultado) {
+                            call.respond(HttpStatusCode.OK, "Usuario actualizado correctamente")
+                        } else {
+                            call.respond(HttpStatusCode.NotFound, "Usuario no encontrado")
+                        }
+                    } catch (e: ContentTransformationException) {
+                        call.respond(HttpStatusCode.BadRequest, "Error de formato en la solicitud")
                     }
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud: ${e.message}")
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, "Debe proporcionar un email válido")
                 }
-            } else {
-                call.respond(HttpStatusCode.BadRequest, "Debe proporcionar un email válido")
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Error al procesar la solicitud: ${e.message}")
             }
         }
 
@@ -177,7 +197,7 @@ fun Route.usuarioRoutes() {
 
             if (username != null) {
                 val usuario = usuarioController.obtenerUsuarioPorUsername(username)
-                if (usuario != null) {
+                 if (usuario != null) {
                     // Devolver los datos del usuario en lugar de solo un mensaje
                     call.respond(HttpStatusCode.OK, usuario)
                 } else {
@@ -312,10 +332,26 @@ fun Route.usuarioRoutes() {
                 
                 // Si hay un cambio de correo, generamos primero el token y luego actualizamos el correo
                 if (newEmail != null && currentEmail != newEmail) {
+                    // Inappropriate content check and DB update
+                    try {
+                        val emailUpdated = usuarioController.actualizarCorreoDirecto(currentEmail, newEmail, clientId)
+                        if (!emailUpdated) {
+                            call.respond(HttpStatusCode.InternalServerError, EmailUpdateResponse(
+                                success = false,
+                                error = "No se pudo actualizar el correo en la base de datos"
+                            ))
+                            return@post
+                        }
+                    } catch (e: InappropriateContentException) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf(
+                            "field" to (e.message ?: ""),
+                            "error" to "El camp conte contingut inapropiat"
+                        ))
+                        return@post
+                    }
                     emailChanged = true
-                    println("📱 Actualizando correo en perfil completo: $currentEmail → $newEmail")
-                    
-                    // Generar token personalizado y actualizar correo usando FirebaseAdminService
+
+                    // Generate custom token if needed
                     if (FirebaseAdminService.isInitialized()) {
                         val firebaseResult = FirebaseAdminService.updateEmailAndCreateCustomToken(currentEmail, newEmail)
                         customToken = firebaseResult["customToken"]?.toString()
@@ -328,29 +364,26 @@ fun Route.usuarioRoutes() {
                     } else {
                         println("⚠️ Firebase Admin SDK no inicializado, no se puede actualizar email en Firebase Auth")
                     }
-                    
-                    // Actualizar el correo en la base de datos
-                    val dbResult = usuarioController.actualizarCorreoDirecto(currentEmail, newEmail, clientId)
-                    
-                    if (!dbResult) {
-                        call.respond(HttpStatusCode.InternalServerError, EmailUpdateResponse(
-                            success = false,
-                            error = "No se pudo actualizar el correo en la base de datos"
-                        ))
-                        return@post
-                    }
                 }
                 
                 // Actualizamos el resto del perfil
                 val profileEmail = if (emailChanged) newEmail!! else currentEmail
-                val profileResult = usuarioController.modificarUsuario(
-                    currentEmail = profileEmail,
-                    nuevoNom = nom,
-                    nuevoUsername = username, 
-                    nuevoIdioma = idioma,
-                    nuevoCorreo = null, // El correo ya fue actualizado si era necesario
-                    nuevaPhotoUrl = photoURL // Pasar la URL de la foto para actualizar el perfil
-                )
+                val profileResult = try {
+                    usuarioController.modificarUsuario(
+                        currentEmail = profileEmail,
+                        nuevoNom = nom,
+                        nuevoUsername = username, 
+                        nuevoIdioma = idioma,
+                        nuevoCorreo = null, // El correo ya fue actualizado si era necesario
+                        nuevaPhotoUrl = photoURL // Pasar la URL de la foto para actualizar el perfil
+                    )
+                } catch (e: InappropriateContentException) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "field" to (e.message ?: ""),
+                        "error" to "El camp conte contingut inapropiat"
+                    ))
+                    return@post
+                }
                 
                 if (profileResult) {
                     // Notificar a otros dispositivos sobre la actualización del perfil (opcional)
@@ -442,3 +475,8 @@ fun Route.usuarioRoutes() {
         }
     }
 }
+
+data class TokenRegistration(
+    val username: String,
+    val token: String
+)

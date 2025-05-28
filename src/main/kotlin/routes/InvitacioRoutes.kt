@@ -10,9 +10,10 @@ import org.example.controllers.ControladorUsuarios
 import org.example.repositories.InvitacioRepository
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.repositories.UsuarioRepository
+import org.example.websocket.WebSocketManager
 
 fun Route.invitacioRoutes() {
-    val controladorInvitacions = ControladorInvitacions(ParticipantsActivitatsRepository(), InvitacioRepository(), UsuarioRepository())
+    val controladorInvitacions = ControladorInvitacions(ParticipantsActivitatsRepository(), InvitacioRepository(), UsuarioRepository(), WebSocketManager.instance)
     val controladorUsuarios = ControladorUsuarios(UsuarioRepository())
 
     route("/api/invitacions") {
@@ -56,7 +57,7 @@ fun Route.invitacioRoutes() {
                     return@post
                 }
 
-                val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari.equals(username)) }
+                val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari == username) }
                 println("Invitación encontrada: $invitacio")
                 if (invitacio == null) {
                     call.respond(HttpStatusCode.NotFound, "No se encontró la invitación")
@@ -98,7 +99,7 @@ fun Route.invitacioRoutes() {
                 }
 
                 // Buscar la invitación en la lista
-                val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari.equals(username)) }
+                val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari == username) }
                 println("Invitación encontrada: $invitacio")
                 if (invitacio == null) {
                     call.respond(HttpStatusCode.NotFound, "No se encontró la invitación")
@@ -154,7 +155,7 @@ fun Route.invitacioRoutes() {
             }
 
             // Comprobar si el usuario ha sido invitado a la actividad
-            val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari.equals(username)) }
+            val invitacio = controladorInvitacions.listarInvitacions().find { (it.id_act == activityId) and (it.us_destinatari == username) }
             val response = mapOf("hasInvitation" to (invitacio != null))
             call.respond(HttpStatusCode.OK, response)
         }

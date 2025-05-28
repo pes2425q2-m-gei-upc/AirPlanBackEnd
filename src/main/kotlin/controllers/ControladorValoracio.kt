@@ -3,13 +3,21 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.http.*
 import org.example.models.ValoracioInput
-
+import org.example.services.PerspectiveService
 
 class ControladorValoracio(
-    private val valoracioRepository: ValoracioRepository = ValoracioRepository()
+    private val valoracioRepository: ValoracioRepository = ValoracioRepository(),
+    private val perspectiveService: PerspectiveService = PerspectiveService()
 ) {
     suspend fun afegirValoracio(call: ApplicationCall) {
         val valoracio = call.receive<ValoracioInput>()
+        // Filter comment through PerspectiveService
+        valoracio.comentario?.let { comentario ->
+            if (perspectiveService.analyzeMessage(comentario)) {
+                call.respond(HttpStatusCode.BadRequest, "Comentari bloquejat per ser inapropiat")
+                return
+            }
+        }
         val resultat = valoracioRepository.afegirValoracio(valoracio)
 
         if (resultat) {

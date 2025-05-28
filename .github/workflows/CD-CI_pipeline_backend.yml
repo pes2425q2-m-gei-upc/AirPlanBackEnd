@@ -16,20 +16,17 @@ jobs:
     env:
       HERE_API_KEY: ${{ secrets.HERE_API_KEY }}
       ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      PERSPECTIVE_API_KEY: ${{ secrets.PERSPECTIVE_API_KEY }}
 
     steps:
-      - name: Generate secrets.properties
-        run: |
-          echo "ORS_API_KEY=${ORS_API_KEY}" >> secrets.properties
-          echo "HERE_API_KEY=${HERE_API_KEY}" > secrets.properties
-
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '20'
           distribution: 'temurin'
 
       - name: Grant execute permission for Gradle Wrapper
@@ -82,4 +79,4 @@ jobs:
       - run: |
           docker stop kot-backend || true
           docker rm kot-backend || true
-          docker run -d --name kot-backend -p 8080:8080 my-backend
+          docker run -d --name kot-backend -e FIREBASE_SERVICE_ACCOUNT=${{ secrets.FIREBASE_SERVICE_ACCOUNT }} -e HERE_API_KEY=${{ secrets.HERE_API_KEY }} -e ORS_API_KEY=${{ secrets.ORS_API_KEY }} -e PERSPECTIVE_API_KEY=${{ secrets.PERSPECTIVE_API_KEY }} -p 8080:8080 hospola/airplan-backend:latest

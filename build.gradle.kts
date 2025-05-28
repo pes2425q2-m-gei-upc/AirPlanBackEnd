@@ -8,9 +8,23 @@ plugins {
 group = "org.example"
 version = "1.0"
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(20)) // Set the Java version
+    }
+}
+
+
 repositories {
     mavenCentral()
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap") }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(20)) // Set the Java
+        version
+    }
 }
 
 dependencies {
@@ -25,6 +39,8 @@ dependencies {
     implementation("io.ktor:ktor-client-core:2.3.8")
     implementation("io.ktor:ktor-client-cio:2.3.8")
     implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
+    implementation("io.ktor:ktor-client-json:2.3.8") // Added for Ktor client JSON support
+    implementation("io.ktor:ktor-client-serialization:2.3.8") // Added for Ktor client serialization
 
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
@@ -78,6 +94,7 @@ tasks.test {
 application {
     mainClass.set("org.example.MainKt")
 }
+
 
 tasks.jar {
     manifest {

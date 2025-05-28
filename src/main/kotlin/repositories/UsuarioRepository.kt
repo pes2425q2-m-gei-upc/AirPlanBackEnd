@@ -11,23 +11,31 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class UsuarioRepository {
     fun agregarUsuario(usuario: Usuario): Boolean {
-        return transaction {
-            UsuarioTable.insert {
-                it[username] = usuario.username
-                it[nom] = usuario.nom
-                it[email] = usuario.email
-                it[idioma] = usuario.idioma.toString()
-                it[sesionIniciada] = usuario.sesionIniciada
-                it[isAdmin] = usuario.isAdmin
-            }.insertedCount > 0
+        try {
+            return transaction {
+                UsuarioTable.insert {
+                    it[username] = usuario.username
+                    it[nom] = usuario.nom
+                    it[email] = usuario.email
+                    it[idioma] = usuario.idioma.toString()
+                    it[sesionIniciada] = usuario.sesionIniciada
+                    it[isAdmin] = usuario.isAdmin
+                    it[esExtern] = usuario.esExtern
+                }.insertedCount > 0
+            }
+        } catch (e: Exception) {
+            println("Error al agregar usuario: ${e.message}")
+            return false
         }
     }
+
     fun eliminarUsuario(email: String): Boolean {
         return transaction {
             val filasEliminadas = UsuarioTable.deleteWhere { UsuarioTable.email eq email }
             filasEliminadas > 0  // Retorna `true` si eliminó algún usuario
         }
     }
+
     fun obtenerUsuarioPorEmail(email: String): Usuario? {
         return transaction {
             UsuarioTable
@@ -39,7 +47,8 @@ class UsuarioRepository {
                         email = it[UsuarioTable.email],
                         idioma = Idioma.valueOf(it[UsuarioTable.idioma]),  // Asumiendo que se ha mapeado adecuadamente
                         sesionIniciada = it[UsuarioTable.sesionIniciada],
-                        isAdmin = it[UsuarioTable.isAdmin]
+                        isAdmin = it[UsuarioTable.isAdmin],
+                        esExtern = it[UsuarioTable.esExtern] // Añadido para obtener el campo esExtern
                     )
                 }.singleOrNull() // Devuelve el único usuario o null si no se encuentra
         }
@@ -57,7 +66,8 @@ class UsuarioRepository {
                         email = it[UsuarioTable.email],
                         idioma = Idioma.valueOf(it[UsuarioTable.idioma]),
                         sesionIniciada = it[UsuarioTable.sesionIniciada],
-                        isAdmin = it[UsuarioTable.isAdmin]
+                        isAdmin = it[UsuarioTable.isAdmin],
+                        esExtern = it[UsuarioTable.esExtern]
                     )
                 }.singleOrNull() // Devuelve el único usuario o null si no se encuentra
         }
@@ -189,6 +199,24 @@ class UsuarioRepository {
                 .select { UsuarioTable.email eq email }
                 .map { it[UsuarioTable.photourl] }
                 .singleOrNull()
+        }
+    }
+
+    fun obtenirExterns(): List<Usuario> {
+        return transaction {
+            UsuarioTable
+                .select { UsuarioTable.esExtern eq true }
+                .map {
+                    Usuario(
+                        username = it[UsuarioTable.username],
+                        nom = it[UsuarioTable.nom],
+                        email = it[UsuarioTable.email],
+                        idioma = Idioma.valueOf(it[UsuarioTable.idioma]),
+                        sesionIniciada = it[UsuarioTable.sesionIniciada],
+                        isAdmin = it[UsuarioTable.isAdmin],
+                        esExtern = it[UsuarioTable.esExtern]
+                    )
+                }
         }
     }
 }
