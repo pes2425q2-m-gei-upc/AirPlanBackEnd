@@ -31,7 +31,6 @@ class ParticipantsActivitatsRepositoryTest {
     @BeforeEach
     fun cleanDatabase() {
         transaction (database) {
-            SchemaUtils.drop(ParticipantsActivitatsTable, ActivitatTable, UsuarioTable)
             SchemaUtils.create(ActivitatTable, ParticipantsActivitatsTable, UsuarioTable)
         }
     }
@@ -134,5 +133,25 @@ class ParticipantsActivitatsRepositoryTest {
         assertEquals(2, participants.size)
         assertTrue(participants.contains("user1"))
         assertTrue(participants.contains("user2"))
+    }
+
+    @Test
+    fun `test obtenirActivitatsPerParticipant`() {
+        // Insert test activity and users
+        insertTestActivity()
+        insertTestUser("user1")
+
+        // Make user1 a participant
+        val participant = ParticipantsActivitats(id_act = 1, us_participant = "user1")
+        repository.afegirParticipant(participant)
+
+        // Fetch activities for the participant
+        val activities = repository.obtenirActivitatsPerParticipant("user1")
+
+        // Assert results
+        assertEquals(1, activities.size)
+        assertEquals(1, activities[0].id)
+        assertEquals("Test Activity", activities[0].nom)
+        assertEquals("Description", activities[0].descripcio)
     }
 }

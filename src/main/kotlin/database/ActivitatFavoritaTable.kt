@@ -2,7 +2,6 @@ package org.example.database
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.kotlin.datetime.timestamp
 
 object ActivitatFavoritaTable : Table("activitatsfavoritas") {
     val id_activitat = integer ("id_activitat")

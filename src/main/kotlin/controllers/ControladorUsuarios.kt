@@ -7,11 +7,26 @@ import org.example.enums.Idioma
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.example.websocket.WebSocketManager
 import kotlinx.coroutines.runBlocking
+import org.example.services.PerspectiveService  // Add import for PerspectiveService
+import org.example.exceptions.InappropriateContentException  // Import exception from new package
 
-class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
+class ControladorUsuarios(
+    private val usuarioRepository: UsuarioRepository,
+    private val perspectiveService: PerspectiveService = PerspectiveService() // Inject PerspectiveService
+) {
 
     // Crear nuevo usuario
-    fun crearUsuario(username: String, nom: String, email: String, idioma: String, isAdmin: Boolean): Usuario? {
+    fun crearUsuario(username: String, nom: String, email: String, idioma: String, isAdmin: Boolean, esExtern: Boolean): Usuario? {
+        // Block inappropriate content via Perspective API (batch)
+        val inputs = listOf(nom, username, email)
+        val results = runBlocking { perspectiveService.analyzeMessages(inputs) }
+        if (results.any { it }) {
+            val fields = listOf("nom", "username", "email")
+            val flaggedIndex = results.indexOfFirst { it }
+            // Throw exception indicating which field is inappropriate
+            throw InappropriateContentException(fields[flaggedIndex])
+        }
+
         val idiomaEnum = try {
             Idioma.valueOf(idioma)
         } catch (e: IllegalArgumentException) {
@@ -24,7 +39,8 @@ class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
             email = email,
             idioma = idiomaEnum,
             sesionIniciada = false, // Por defecto, no tiene la sesión iniciada
-            isAdmin = isAdmin
+            isAdmin = isAdmin,
+            esExtern = esExtern  // Por defecto, no es externo,
         )
 
         val success = usuarioRepository.agregarUsuario(usuario)
@@ -118,6 +134,16 @@ class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
         nuevoCorreo: String?,
         nuevaPhotoUrl: String? = null // Añadir parámetro para la URL de la foto
     ): Boolean {
+        // Content filtering: check new name and new email if provided
+        val toCheck = listOfNotNull(nuevoNom, nuevoCorreo)
+        if (toCheck.isNotEmpty()) {
+            val results = runBlocking { perspectiveService.analyzeMessages(toCheck) }
+            if (results.any { it }) {
+                val fields = listOf("nom", "email")
+                val idx = results.indexOfFirst { it }
+                throw InappropriateContentException(fields[idx])
+            }
+        }
         // Simplemente pasamos todos los parámetros al método actualizarUsuario del repositorio
         // y devolvemos el resultado, sin la notificación duplicada
         return usuarioRepository.actualizarUsuario(
@@ -157,6 +183,11 @@ class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
 
     // Método para actualizar directamente el correo electrónico
     fun actualizarCorreoDirecto(oldEmail: String, newEmail: String, clientId: String? = null): Boolean {
+        // Content filtering: check new email
+        val results = runBlocking { perspectiveService.analyzeMessages(listOf(newEmail)) }
+        if (results.firstOrNull() == true) {
+            throw InappropriateContentException("email")
+        }
         val usuario = usuarioRepository.obtenerUsuarioPorEmail(oldEmail)
         val success = usuarioRepository.actualizarCorreoDirecto(oldEmail, newEmail)
 
@@ -194,5 +225,9 @@ class ControladorUsuarios(private val usuarioRepository: UsuarioRepository) {
     // Obtener la URL de la foto de perfil de un usuario
     fun obtenerPhotoUrlPorEmail(email: String): String? {
         return usuarioRepository.obtenerPhotoUrlPorEmail(email)
+    }
+
+    fun obtenirExterns(): List<Usuario> {
+        return usuarioRepository.obtenirExterns()
     }
 }

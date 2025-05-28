@@ -8,9 +8,7 @@ import io.ktor.server.request.*
 import io.ktor.http.*
 import io.ktor.server.response.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.example.websocket.WebSocketManager
-import org.example.websocket.ProfileUpdateNotification
 import java.time.Duration
 
 // Request data para la API REST
@@ -29,6 +27,13 @@ data class ApiResponse(
     val message: String? = null,
     val error: String? = null,
     val connections: Int? = null
+)
+
+@Serializable
+data class NotificationRequest(
+    val message: String,   // El mensaje de la notificación
+    val clientId: String?,  // El ID del cliente que envía la notificación (opcional)
+    val type: String
 )
 
 fun Application.configureWebSockets() {
@@ -144,4 +149,41 @@ fun Route.webSocketRoutes() {
             ))
         }
     }
+    post("/api/notifications/message") {
+        try {
+            // Recibimos el cuerpo del request como JSON (con message y clientId)
+            val payload = call.receive<NotificationRequest>()  // ← definiremos esta clase abajo
+
+            val username = call.request.queryParameters["username"]
+            val message = payload.message
+            val clientId = payload.clientId
+            val type = payload.type
+
+            if (username != null) {
+                println("🔔 Sending message notification to user: $username (clientId: $clientId)")
+
+                // Enviar notificación al WebSocket manager
+                webSocketManager.notifyRealTimeEvent(username, message, clientId, type)
+
+                call.respond(ApiResponse(
+                    success = true,
+                    message = "Notification sent to user: $username"
+                ))
+            } else {
+                call.respond(ApiResponse(
+                    success = false,
+                    error = "Username is required"
+                ))
+            }
+        } catch (e: Exception) {
+            println("❌ Error sending message notification: ${e.message}")
+            e.printStackTrace()
+
+            call.respond(ApiResponse(
+                success = false,
+                error = "Failed to process notification: ${e.message}"
+            ))
+        }
+    }
+
 }

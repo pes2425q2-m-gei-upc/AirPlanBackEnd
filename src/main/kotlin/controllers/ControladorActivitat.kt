@@ -1,33 +1,62 @@
 package org.example.controllers
 
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import kotlinx.datetime.LocalDateTime
-import org.example.database.ActivitatFavoritaTable
 import org.example.models.Activitat
 import org.example.models.ParticipantsActivitats
 import org.example.repositories.ParticipantsActivitatsRepository
 import org.example.models.Localitzacio
 import repositories.ActivitatRepository
 import repositories.ActivitatFavoritaRepository
-import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
-
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.Clock
-import kotlinx.datetime.toJavaLocalDateTime
-import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.toLocalDateTime
+import org.example.services.PerspectiveService
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import org.example.repositories.UsuarioRepository
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class ControladorActivitat(
     private val ActivitatRepository: ActivitatRepository,
     private val ParticipantsActivitatsRepository: ParticipantsActivitatsRepository,
-    private val ActivitatFavoritaRepository: ActivitatFavoritaRepository
+    private val ActivitatFavoritaRepository: ActivitatFavoritaRepository,
+    private val perspectiveService: PerspectiveService = PerspectiveService()
 ) {
+    // Secondary constructor for test compatibility without passing PerspectiveService
+    constructor(
+        ActivitatRepository: ActivitatRepository,
+        ParticipantsActivitatsRepository: ParticipantsActivitatsRepository,
+        ActivitatFavoritaRepository: ActivitatFavoritaRepository
+    ) : this(
+        ActivitatRepository,
+        ParticipantsActivitatsRepository,
+        ActivitatFavoritaRepository,
+        PerspectiveService()
+    )
+
     private val activitats = mutableListOf<Activitat>()
 
-    fun obtenirActivitats(): List<Activitat> {
-        return activitats
-    }
-
-    fun afegirActivitat(nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime, creador: String) {
+    fun afegirActivitat(
+        nom: String,
+        descripcio: String,
+        ubicacio: Localitzacio,
+        dataInici: LocalDateTime,
+        dataFi: LocalDateTime,
+        creador: String,
+    ) {
+        // Batch validate title and description via perspective service
+        val results = runBlocking { perspectiveService.analyzeMessages(listOf(nom, descripcio)) }
+        if (results.any { it }) throw IllegalArgumentException("Títol o descripció bloquejats per ser inapropiats")
         val novaActivitat = Activitat(
             id = 0,
             nom = nom,
@@ -66,7 +95,10 @@ class ControladorActivitat(
     }
 
     fun modificarActivitat(id: Int, nom: String, descripcio: String, ubicacio: Localitzacio, dataInici: LocalDateTime, dataFi: LocalDateTime): Boolean {
-        return ActivitatRepository.modificarActivitat(id,nom, descripcio, ubicacio, dataInici, dataFi)
+        // Batch validate content before modification
+        val results = runBlocking { perspectiveService.analyzeMessages(listOf(nom, descripcio)) }
+        if (results.any { it }) throw IllegalArgumentException("Títol o descripció bloquejats per ser inapropiats")
+        return ActivitatRepository.modificarActivitat(id, nom, descripcio, ubicacio, dataInici, dataFi)
     }
 
     fun eliminarActivitat(id: Int): Boolean {
@@ -140,5 +172,128 @@ class ControladorActivitat(
     fun obtenirActivitatsStartingToday(): List<Activitat> {
         val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         return ActivitatRepository.obtenirActivitatsStartingToday(today)
+    }
+
+    fun obtenirActivitatsPerParticipant(username: String): List<Activitat> {
+        return ParticipantsActivitatsRepository.obtenirActivitatsPerParticipant(username)
+    }
+
+    fun obtenirActivitatsRecomanades(localitzacio: Localitzacio): List<Activitat> {
+        val activitats = ActivitatRepository.obtenirActivitats()
+        if (activitats.isEmpty()) {
+            throw IllegalStateException("No hi han activitats al sistema.")
+        }
+
+        // Helper to calculate distance in km using Haversine formula
+        fun distanceKm(loc1: Localitzacio, loc2: Localitzacio): Double {
+            val R = 6371.0 // Earth radius in km
+            val dLat = Math.toRadians((loc2.latitud - loc1.latitud).toDouble())
+            val dLon = Math.toRadians((loc2.longitud - loc1.longitud).toDouble())
+            val a = sin(dLat / 2) * sin(dLat / 2) +
+                    cos(Math.toRadians(loc1.latitud.toDouble())) * cos(Math.toRadians(loc2.latitud.toDouble())) *
+                    sin(dLon / 2) * sin(dLon / 2)
+            val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            return R * c
+        }
+
+        // Find the closest activity
+        val closest = activitats.minByOrNull { distanceKm(localitzacio, it.ubicacio) }
+            ?: throw IllegalStateException("No hi han activitats al sistema.")
+
+        val minDistance = distanceKm(localitzacio, closest.ubicacio)
+        if (minDistance > 50.0) {
+            throw NoSuchElementException("Les activitats més properes es troben a més de 50 km.")
+        }
+
+        val searchRadius = 5.0 + minDistance
+        return activitats.filter { distanceKm(localitzacio, it.ubicacio) <= searchRadius }
+    }
+
+    suspend fun crearActivitatsReadUs() {
+        val esdeveniments = fetchEsdeveniments()
+        // Crear activitats a partir dels esdeveniments obtinguts
+        crearActivitatsPerEsdeveniments(esdeveniments)
+        eliminarActivitatsExpirades(esdeveniments)
+    }
+
+    private suspend fun fetchEsdeveniments(): List<Activitat> {
+        val esdeveniments = emptyList<Activitat>().toMutableList()
+        val client = HttpClient(CIO)
+        try {
+            val response = client.get("http://172.16.4.38:8080/esdeveniments/presencials")
+            val responseBody = Json.parseToJsonElement(response.bodyAsText()).jsonArray
+            for (esdeveniment in responseBody) {
+                val nom = esdeveniment.jsonObject["nom"]!!.jsonPrimitive.content
+                val descripcio = esdeveniment.jsonObject["descripcio"]!!.jsonPrimitive.content
+                val ubicacio = Localitzacio(esdeveniment.jsonObject["latitud"]!!.jsonPrimitive.content.toFloat(),esdeveniment.jsonObject["longitud"]!!.jsonPrimitive.content.toFloat())
+                val dataHora = esdeveniment.jsonObject["dataHora"]!!.jsonPrimitive.content
+                val nomClub = esdeveniment.jsonObject["nom_club"]!!.jsonPrimitive.content
+
+                val original: LocalDateTime = LocalDateTime.parse(dataHora)
+                val oneHourLater = LocalDateTime(original.year, original.month, original.dayOfMonth, original.hour + 1, original.minute, original.second)
+
+                esdeveniments += Activitat(0, nom, descripcio, ubicacio, original, oneHourLater,nomClub)
+            }
+        } catch (e: Exception) {
+            println("Error API ReadUs: ${e.message}")
+        }
+        client.close()
+        return esdeveniments
+    }
+
+    private fun crearActivitatsPerEsdeveniments(esdeveniments: List<Activitat>) {
+        for (activitat in esdeveniments) {
+            val controladorUsuarios = ControladorUsuarios(UsuarioRepository())
+
+            if (!controladorUsuarios.comprobarNombreUsuario(activitat.creador)) {
+                controladorUsuarios.crearUsuario(
+                    activitat.creador,
+                    activitat.creador,
+                    "${activitat.creador}@${randomString(5)}.com",
+                    "Catala",
+                    false,
+                    esExtern = true,
+                )
+            }
+            if (activitatNoExisteix(activitat)) {
+                afegirActivitat(
+                    activitat.nom,
+                    activitat.descripcio,
+                    activitat.ubicacio,
+                    activitat.dataInici,
+                    activitat.dataFi,
+                    activitat.creador
+                )
+            }
+        }
+    }
+
+    private fun randomString(i: Int): String {
+        val chars = ('a'..'z') + ('0'..'9')
+        return (1..i)
+            .map { chars.random() }
+            .joinToString("")
+    }
+
+    private fun activitatNoExisteix(activitat: Activitat): Boolean {
+        val activitatsAmbNom = ActivitatRepository.getActivitatPerNom(activitat.nom)
+        for (act in activitatsAmbNom) {
+            if (act.nom == activitat.nom && act.dataInici == activitat.dataInici && act.dataFi == activitat.dataFi && act.creador == activitat.creador && act.ubicacio.latitud == activitat.ubicacio.latitud && act.ubicacio.longitud == activitat.ubicacio.longitud) {
+                return false // L'activitat ja existeix
+            }
+        }
+        return true
+    }
+
+    private fun eliminarActivitatsExpirades(esdeveniments: List<Activitat>) {
+        val clubs = ControladorUsuarios(UsuarioRepository()).obtenirExterns()
+        for (club in clubs) {
+            val activitatsDelClub = ActivitatRepository.obtenirActivitatsPerCreador(club.username)
+            for (activitat in activitatsDelClub) {
+                if (esdeveniments.find { it.nom == activitat.nom } == null) {
+                    ActivitatRepository.eliminarActividad(activitat.id)
+                }
+            }
+        }
     }
 }

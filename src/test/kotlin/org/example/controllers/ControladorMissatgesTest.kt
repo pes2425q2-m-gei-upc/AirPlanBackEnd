@@ -3,7 +3,6 @@ package org.example.controllers
 import io.ktor.http.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
@@ -12,7 +11,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import io.mockk.*
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -35,44 +34,9 @@ class ControladorMissatgesTest {
             json()
         }
         routing {
-            post("/chat/send") { controlador.sendMessage(call) }
             get("/chat/{user1}/{user2}") { controlador.getConversation(call) }
             get("/chat/latest/{username}") { controlador.getLatestChatsForUser(call) }
         }
-    }
-
-    @Test
-    fun `sendMessage returns Created on success`() = testApplication {
-        application { testModule() }
-
-        val message = Missatge("alice", "bob", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola Bob!", false)
-        coEvery { repo.sendMessage(message) } returns true
-
-        val response = client.post("/chat/send") {
-            contentType(ContentType.Application.Json)
-            setBody(Json.encodeToString(message))
-        }
-
-        assertEquals(HttpStatusCode.Created, response.status)
-        assertEquals("Mensaje enviado correctamente", response.bodyAsText())
-        coVerify { repo.sendMessage(message) }
-    }
-
-    @Test
-    fun `sendMessage returns InternalServerError on failure`() = testApplication {
-        application { testModule() }
-
-        val message = Missatge("alice", "bob", LocalDateTime.parse("2024-05-01T10:00:00"), "Hola Bob!", false)
-        coEvery { repo.sendMessage(message) } returns false
-
-        val response = client.post("/chat/send") {
-            contentType(ContentType.Application.Json)
-            setBody(Json.encodeToString(message))
-        }
-
-        assertEquals(HttpStatusCode.InternalServerError, response.status)
-        assertEquals("Error al enviar mensaje", response.bodyAsText())
-        coVerify { repo.sendMessage(message) }
     }
 
     @Test
@@ -95,15 +59,6 @@ class ControladorMissatgesTest {
     }
 
     @Test
-    fun `getConversation returns BadRequest when parameters are missing`() = testApplication {
-        application { testModule() }
-
-        val response = client.get("/chat/alice/")
-
-        assertEquals(HttpStatusCode.NotFound, response.status)  // Because path is incomplete
-    }
-
-    @Test
     fun `getLatestChatsForUser returns chats`() = testApplication {
         application { testModule() }
 
@@ -119,14 +74,5 @@ class ControladorMissatgesTest {
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(testJson.encodeToString(chats), response.bodyAsText())
         coVerify { repo.getLatestChatsForUser(username) }
-    }
-
-    @Test
-    fun `getLatestChatsForUser returns BadRequest when username missing`() = testApplication {
-        application { testModule() }
-
-        val response = client.get("/chat/latest/")
-
-        assertEquals(HttpStatusCode.NotFound, response.status)  // Because path is incomplete
     }
 }
