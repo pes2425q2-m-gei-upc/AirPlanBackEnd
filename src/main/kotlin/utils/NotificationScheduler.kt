@@ -97,31 +97,34 @@ object NotificationScheduler {
 
             println("Notas a notificar: ${notesToNotify.size}")
 
+            val madridZone = TimeZone.of("Europe/Madrid")
+            val now = Clock.System.now().toLocalDateTime(madridZone)
+
             notesToNotify.forEach { nota ->
-                // Calcular minutos restantes
-                val now = Clock.System.now().toLocalDateTime(TimeZone.of("Europe/Madrid"))
-                val in30Minutes = LocalDateTime(now.year, now.month, now.dayOfMonth, now.hour, now.minute + 30, now.second)
                 val reminderDateTime = nota.fechaCreacion.atTime(nota.horaRecordatorio)
                 val nowDateTime = now.date.atTime(now.time)
 
                 val minutesRemaining = if (reminderDateTime > nowDateTime) {
-                    val duration = reminderDateTime.toInstant(TimeZone.currentSystemDefault()) -
-                            nowDateTime.toInstant(TimeZone.currentSystemDefault())
+                    val duration = reminderDateTime.toInstant(madridZone) -
+                            nowDateTime.toInstant(madridZone)
                     duration.inWholeMinutes
                 } else 0
 
-                val message = if (minutesRemaining > 0) {
-                    "Recordatorio en $minutesRemaining minutos: ${nota.comentario}"
-                } else {
-                    "Recordatorio: ${nota.comentario}"
-                }
+                // Notificar solo si faltan 30 minutos o menos
+                if (minutesRemaining in 1..30) {
+                    val message = if (minutesRemaining > 1) {
+                        "Recordatorio en $minutesRemaining minutos: ${nota.comentario}"
+                    } else {
+                        "Recordatorio en 1 minuto: ${nota.comentario}"
+                    }
 
-                webSocketManager.notifyRealTimeEvent(
-                    username = nota.username,
-                    message = message,
-                    type = "NOTE_REMINDER"
-                )
-                nota.id?.let { notifiedNotes.add(it) }
+                    webSocketManager.notifyRealTimeEvent(
+                        username = nota.username,
+                        message = message,
+                        type = "NOTE_REMINDER"
+                    )
+                    nota.id?.let { notifiedNotes.add(it) }
+                }
             }
         }
     }
