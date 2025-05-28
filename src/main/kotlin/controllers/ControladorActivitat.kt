@@ -220,7 +220,7 @@ class ControladorActivitat(
         val esdeveniments = emptyList<Activitat>().toMutableList()
         val client = HttpClient(CIO)
         try {
-            val response = client.get("http://nattech.fib.upc.edu:40380/esdeveniments/presencials")
+            val response = client.get("http://172.16.4.38:8080/esdeveniments/presencials")
             val responseBody = Json.parseToJsonElement(response.bodyAsText()).jsonArray
             for (esdeveniment in responseBody) {
                 val nom = esdeveniment.jsonObject["nom"]!!.jsonPrimitive.content
