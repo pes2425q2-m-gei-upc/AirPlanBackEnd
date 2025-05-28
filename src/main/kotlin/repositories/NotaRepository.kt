@@ -75,7 +75,8 @@ class NotaRepository {
 
     fun obtenirNotesProperes(minutosMargen: Long): List<Nota> {
         return transaction {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.of("Europe/Madrid"))
+            val nowInstant = Clock.System.now().toLocalDateTime(TimeZone.of("Europe/Madrid"))
+            val now = LocalDateTime(nowInstant.year, nowInstant.month, nowInstant.dayOfMonth, nowInstant.hour + 2, nowInstant.minute, nowInstant.second)
             val currentDate = now.date
             val currentTime = now.time
 
